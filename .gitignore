@@ -1,0 +1,13 @@
+__pycache__
+*.pyc
+.env
+devdata.db
+*.egg-info
+*.egg
+build/
+dist/
+eggs/
+wheels/
+sdist/
+pip-log.txt
+
