@@ -1,4 +1,4 @@
-from tg import expose
+from tg import expose, abort
 from algobowl.lib.base import BaseController
 from algobowl.model import DBSession, Competition
 
@@ -13,8 +13,12 @@ class CompetitionController(BaseController):
 class CompetitionsController(BaseController):
     @expose()
     def _lookup(self, comp_id, *args):
-        competition = (DBSession.query(Competition)
-                                .filter(Competition.id == comp_id)
-                                .one_or_none())
+        try:
+            comp_id = int(comp_id)
+        except ValueError:
+            abort(404, "Invalid input for competition id")
+        competition = DBSession.query(Competition).get(comp_id)
+        if not competition:
+            abort(404, "No such competition")
 
         return CompetitionController(competition), args

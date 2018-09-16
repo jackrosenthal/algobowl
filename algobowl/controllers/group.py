@@ -29,7 +29,7 @@ class GroupsController(BaseController):
         except ValueError:
             abort(404, "Not a valid group identifier.")
         user = request.identity['user']
-        group = DBSession.query(Group).filter(Group.id == group_id).first()
+        group = DBSession.query(Group).get(group_id)
         if not group:
             abort(404, "No such group.")
         if user not in group.users:
