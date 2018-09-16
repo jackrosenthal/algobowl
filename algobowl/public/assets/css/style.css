@@ -6,23 +6,28 @@ html {
 
 .footer {
   position: absolute;
+  display: table;
   bottom: 0;
   width: 100%;
 
   /* Set the fixed height of the footer here */
-  height: 60px;
+  height: 80px;
 
   /* Vertically center the text there */
-  line-height: 60px;
   color: rgba(255, 255, 255, 0.4);
   background-color: #212529;
+}
+
+.footer-vertical-centering {
+  display: table-cell;
+  vertical-align: middle;
 }
 
 body {
   padding-top: 75px;
   
   /* footer */
-  margin-bottom: 60px;
+  margin-bottom: 80px;
 }
 
 .navbar-brand {
