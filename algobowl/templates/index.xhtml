@@ -1,0 +1,21 @@
+<html py:extends="master.xhtml" py:strip="True">
+  <py:block name="title">
+    Home
+  </py:block>
+  <body py:block="body" py:strip="True">
+    <div class="container">
+      <div class="jumbotron">
+        <h1 class="display-4">Welcome to AlgoBOWL</h1>
+        <p class="lead">Students compete in groups to create the best heuristic to an NP-hard problem.</p>
+        <hr />
+        <div class="compete-link text-center">
+          <h4 class="font-weight-light">Are you enrolled?</h4>
+          <a class="btn btn-primary btn-lg" href="/competitions/auto" role="button">
+            <i class="fas fa-users fa-lg"></i>
+            Click Here to Compete
+          </a>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

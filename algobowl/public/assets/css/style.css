@@ -1,0 +1,45 @@
+html {
+  /* required for footer */
+  position: relative;
+  min-height: 100%;
+}
+
+.footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+
+  /* Set the fixed height of the footer here */
+  height: 60px;
+
+  /* Vertically center the text there */
+  line-height: 60px;
+  color: rgba(255, 255, 255, 0.4);
+  background-color: #212529;
+}
+
+body {
+  padding-top: 75px;
+  
+  /* footer */
+  margin-bottom: 60px;
+}
+
+.navbar-brand {
+  padding-top: 0px;
+  text-transform: none;
+  font-size: 20px;
+}
+
+.navbar-dark .navbar-nav .nav-link {
+  color: #ffffff;
+}
+
+.nav-link {
+  padding-top: 0.3rem;
+  padding-bottom: 0.5rem;
+}
+
+.compete-link {
+  padding-top: 2rem;
+}

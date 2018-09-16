@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="${response.charset}" />
+
+  <title>
+    AlgoBOWL: <py:block name="title">Competition</py:block>
+  </title>
+
+  <link rel="stylesheet" type="text/css" media="screen" href="${tg.url('/assets/css/bootstrap.min.css')}" />
+  <link rel="stylesheet" type="text/css" media="screen" href="${tg.url('/assets/fontawesome/css/all.min.css')}" />
+  <link rel="stylesheet" type="text/css" media="screen" href="${tg.url('/assets/css/style.css')}" />
+
+  <!-- Favicons -->
+  <link rel="apple-touch-icon-precomposed" sizes="57x57"    href="${tg.url('/assets/img/apple-touch-icon-57x57.png')}" />
+  <link rel="apple-touch-icon-precomposed" sizes="114x114"  href="${tg.url('/assets/img/apple-touch-icon-114x114.png')}" />
+  <link rel="apple-touch-icon-precomposed" sizes="72x72"    href="${tg.url('/assets/img/apple-touch-icon-72x72.png')}" />
+  <link rel="apple-touch-icon-precomposed" sizes="144x144"  href="${tg.url('/assets/img/apple-touch-icon-144x144.png')}" />
+  <link rel="apple-touch-icon-precomposed" sizes="120x120"  href="${tg.url('/assets/img/apple-touch-icon-120x120.png')}" />
+  <link rel="apple-touch-icon-precomposed" sizes="152x152"  href="${tg.url('/assets/img/apple-touch-icon-152x152.png')}" />
+  <link rel="icon" type="image/png" href="${tg.url('/assets/img/favicon-32x32.png')}" sizes="32x32" />
+  <link rel="icon" type="image/png" href="${tg.url('/assets/img/favicon-16x16.png')}" sizes="16x16" />
+  <meta name="application-name" content="AlgoBOWL" />
+  <meta name="msapplication-TileColor" content="#FFFFFF" />
+  <meta name="msapplication-TileImage" content="${tg.url('/assets/img/mstile-144x144.pg')}" />
+  <link rel="shortcut icon" href="${tg.url('/assets/img/favicon.ico')}" />
+  <!-- End Favicons -->
+
+  <py:block name="head"></py:block>
+</head>
+
+<body>
+  <!-- Navbar -->
+  <nav class="navbar fixed-top navbar-dark bg-primary navbar-expand-md">
+    <div class="container">
+      <a class="navbar-brand" href="${tg.url('/')}">
+        AlgoBOWL
+      </a>
+
+      <button class="navbar-toggler"
+              type="button"
+              data-toggle="collapse"
+              data-target="#navcollapse"
+              aria-controls="navcollapse"
+              aria-expanded="false"
+              aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navcollapse">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="/">Home</a>
+          </li>
+        </ul>
+        <div py:if="not request.identity">
+          <a class="btn btn-outline-light" href="${tg.url('/login')}">Login</a>
+        </div>
+        <ul class="navbar-nav" py:if="request.identity">
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#"
+               id="user-menu-dropdown-link"
+               role="button" data-toggle="dropdown"
+               aria-haspopup="true" aria-expanded="false">
+               <i class="fas fa-user"></i>
+               ${request.identity['user']}
+            </a>
+            <div class="dropdown-menu" aria-labelledby="user-menu-dropdown-link">
+              <a class="dropdown-item" py:if="request.identity['user'].admin"
+                 href="${tg.url('/admin')}">
+                <i class="fas fa-user-secret fa-fw"></i>
+                Admin
+              </a>
+              <a class="dropdown-item" href="${tg.url('logout')}">
+                <i class="fas fa-sign-out-alt fa-fw"></i>
+                Logout
+              </a>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Flash messages -->
+  <py:with vars="flash=tg.flash_obj">
+    <py:if test="flash.message">
+      <div class="container">
+        <py:with vars="status={'error': 'danger', 'ok': 'primary'}.get(flash.status, flash.status)">
+          <div class="alert alert-${status}" role="alert" py:content="flash.message" />
+        </py:with>
+      </div>
+    </py:if>
+  </py:with>
+
+  <!-- Main included content -->
+  <py:block name="body"></py:block>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      AlgoBOWL is
+      <a href="https://github.com/jackrosenthal/algobowl" target="_blank">
+        open source software</a> designed by
+      <a href="http://inside.mines.edu/~jrosenth" target="_blank">
+        Jack Rosenthal</a> released under an
+      <a href="https://en.wikipedia.org/wiki/MIT_License" target="_blank">
+        MIT License</a>.
+      <i class="fas fa-heart"></i>
+    </div>
+  </footer>
+
+  <script src="${tg.url('/assets/js/jquery-3.3.1.slim.min.js')}"></script>
+  <script src="${tg.url('/assets/js/bootstrap.min.js')}"></script>
+</body>
+</html>

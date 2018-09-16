@@ -1,0 +1,24 @@
+<html py:extends="master.xhtml" py:strip="True">
+  <py:block name="title">
+    Error ${code}
+  </py:block>
+
+  <body py:block="body" py:strip="True">
+    <div class="container">
+      <h1>Error ${code}</h1>
+
+<?python
+import re
+mf = re.compile(r'(</?)script', re.IGNORECASE)
+def fixmessage(message):
+    return mf.sub(r'\1noscript', message)
+?>
+      <p>${literal(fixmessage(message))}</p>
+      <p>
+        If you've reached this page through a normal sequence of actions,
+        please <a href="https://github.com/jackrosenthal/algobowl/issues"
+                  target="_blank">submit a bug</a>.
+      </p>
+      </div>
+  </body>
+</html>

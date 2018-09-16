@@ -1,0 +1,54 @@
+import tg
+import algobowl.model
+from algobowl.model import DBSession
+from tg import expose, flash, require, url, lurl
+from tg import redirect, tmpl_context
+from tg import predicates
+from tg.exceptions import HTTPFound
+from repoze.who.api import get_api
+
+from algobowl.config.app_cfg import AdminConfig
+from algobowl.lib.base import BaseController
+from tgext.admin.controller import AdminController
+from algobowl.controllers.error import ErrorController
+
+__all__ = ['RootController']
+
+
+class RootController(BaseController):
+    admin = AdminController(
+        algobowl.model,
+        DBSession,
+        config_type=AdminConfig)
+    error = ErrorController()
+
+    def _before(self, *args, **kw):
+        tmpl_context.project_name = "algobowl"
+
+    @expose('algobowl.templates.index')
+    def index(self):
+        """Handle the front-page."""
+        return dict(page='index')
+
+    @expose()
+    @require(predicates.not_anonymous())
+    def login(self):
+        flash("You are already logged in.")
+        redirect(url('/'))
+
+    @expose()
+    @require(predicates.not_anonymous())
+    def logout(self):
+        who_api = get_api(tg.request.environ)
+        headers = who_api.logout()
+        return HTTPFound(headers=headers)
+
+    @expose()
+    def post_login(self, came_from=lurl('/')):
+        user = tg.request.identity['user']
+        if user:
+            flash("Welcome, {}!".format(user), 'success')
+            redirect(came_from)
+        else:
+            flash("Login failure", 'error')
+            redirect(lurl('/'))

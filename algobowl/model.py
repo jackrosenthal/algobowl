@@ -1,9 +1,26 @@
 import enum
 import datetime
-import flask_sqlalchemy
+import sqlalchemy as sa
+from sqlalchemy.orm import relationship, relation
+from zope.sqlalchemy import ZopeTransactionExtension
+from sqlalchemy.orm import scoped_session, sessionmaker
+from sqlalchemy.ext.declarative import declarative_base
 from depot.fields.sqlalchemy import UploadedFileField
 
-db = flask_sqlalchemy.SQLAlchemy()
+maker = sessionmaker(autoflush=True, autocommit=False,
+                     extension=ZopeTransactionExtension())
+DBSession = scoped_session(maker)
+DeclarativeBase = declarative_base()
+DeclarativeBase.query = DBSession.query_property()
+metadata = DeclarativeBase.metadata
+
+
+def init_model(engine):
+    """
+    Call me before using any of the tables or classes in the model.
+    """
+    DBSession.configure(bind=engine)
+    return DBSession
 
 
 class VerificationStatus(enum.Enum):
@@ -12,52 +29,54 @@ class VerificationStatus(enum.Enum):
     rejected = 2
 
 
-class Competition(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String, nullable=False)
-    input_verifier_code = db.Column(db.Unicode, nullable=False, default='')
-    output_verifier_code = db.Column(db.Unicode)
-    problem_statement = db.Column(UploadedFileField, nullable=True)
-    allow_custom_team_names = db.Column(db.Boolean, default=True)
+class Competition(DeclarativeBase):
+    __tablename__ = 'competition'
 
-    input_upload_begins = db.Column(db.DateTime, nullable=False)
-    input_upload_ends = db.Column(
-        db.DateTime,
-        db.CheckConstraint('input_upload_ends > input_upload_begins'),
+    id = sa.Column(sa.Integer, primary_key=True)
+    name = sa.Column(sa.String, nullable=False)
+    input_verifier_code = sa.Column(sa.Unicode, nullable=False, default='')
+    output_verifier_code = sa.Column(sa.Unicode)
+    problem_statement = sa.Column(UploadedFileField, nullable=True)
+    allow_custom_team_names = sa.Column(sa.Boolean, default=True)
+
+    input_upload_begins = sa.Column(sa.DateTime, nullable=False)
+    input_upload_ends = sa.Column(
+        sa.DateTime,
+        sa.CheckConstraint('input_upload_ends > input_upload_begins'),
         nullable=False)
-    output_upload_begins = db.Column(
-        db.DateTime,
-        db.CheckConstraint('output_upload_begins > input_upload_ends'),
+    output_upload_begins = sa.Column(
+        sa.DateTime,
+        sa.CheckConstraint('output_upload_begins > input_upload_ends'),
         nullable=False)
-    output_upload_ends = db.Column(
-        db.DateTime,
-        db.CheckConstraint('output_upload_ends > output_upload_begins'),
+    output_upload_ends = sa.Column(
+        sa.DateTime,
+        sa.CheckConstraint('output_upload_ends > output_upload_begins'),
         nullable=False)
-    verification_begins = db.Column(
-        db.DateTime,
-        db.CheckConstraint('verification_begins > output_upload_ends'),
+    verification_begins = sa.Column(
+        sa.DateTime,
+        sa.CheckConstraint('verification_begins > output_upload_ends'),
         nullable=True)
-    verification_ends = db.Column(
-        db.DateTime,
-        db.CheckConstraint('verification_ends > verification_begins'),
+    verification_ends = sa.Column(
+        sa.DateTime,
+        sa.CheckConstraint('verification_ends > verification_begins'),
         nullable=True)
-    open_verification_begins = db.Column(
-        db.DateTime,
-        db.CheckConstraint('open_verification_begins > verification_ends'),
+    open_verification_begins = sa.Column(
+        sa.DateTime,
+        sa.CheckConstraint('open_verification_begins > verification_ends'),
         nullable=True)
-    open_verification_ends = db.Column(
-        db.DateTime,
-        db.CheckConstraint(
+    open_verification_ends = sa.Column(
+        sa.DateTime,
+        sa.CheckConstraint(
             'open_verification_ends > open_verification_begins'),
         nullable=True)
-    evaluation_begins = db.Column(db.DateTime, nullable=True)
-    evaluation_ends = db.Column(
-        db.DateTime,
-        db.CheckConstraint('evaluation_ends > evaluation_begins'),
+    evaluation_begins = sa.Column(sa.DateTime, nullable=True)
+    evaluation_ends = sa.Column(
+        sa.DateTime,
+        sa.CheckConstraint('evaluation_ends > evaluation_begins'),
         nullable=True)
 
-    groups = db.relationship("Group", back_populates="competition")
-    evaluations = db.relationship(
+    groups = relationship("Group", back_populates="competition")
+    evaluations = relationship(
         "Evaluation",
         back_populates="competition")
 
@@ -108,28 +127,34 @@ class Competition(db.Model):
         return self.name
 
 
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.Unicode, unique=True, nullable=False)
-    email = db.Column(db.Unicode, unique=True, nullable=False)
-    full_name = db.Column(db.Unicode)
-    admin = db.Column(db.Boolean, nullable=False, default=False)
+class User(DeclarativeBase):
+    __tablename__ = 'user'
 
-    submitted_evaluations = db.relationship(
+    id = sa.Column(sa.Integer, primary_key=True)
+    username = sa.Column(sa.Unicode, unique=True, nullable=False)
+    email = sa.Column(sa.Unicode, unique=True, nullable=False)
+    full_name = sa.Column(sa.Unicode)
+    admin = sa.Column(sa.Boolean, nullable=False, default=False)
+
+    submitted_evaluations = relationship(
         "Evaluation",
         back_populates="from_student",
         foreign_keys="Evaluation.from_student_id")
-    received_evaluations = db.relationship(
+    received_evaluations = relationship(
         "Evaluation",
         back_populates="to_student",
         foreign_keys="Evaluation.to_student_id")
 
-    submitted_protests = db.relationship(
+    submitted_protests = relationship(
         "VerificationProtest",
         back_populates="submitter")
 
-    groups = db.relation(
+    groups = relation(
         'Group', secondary='user_group_xref', back_populates='users')
+
+    @classmethod
+    def from_username(cls, username):
+        return DBSession.query(cls.username == username).one_or_none()
 
     @property
     def is_authenticated(self) -> bool:
@@ -164,22 +189,24 @@ class User(db.Model):
         return self.full_name or self.username
 
 
-class Group(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.Unicode(100), nullable=False)
-    penalty = db.Column(db.Integer, nullable=False, default=0)
+class Group(DeclarativeBase):
+    __tablename__ = 'group'
 
-    competition_id = db.Column(
-        db.Integer,
-        db.ForeignKey('competition.id'),
+    id = sa.Column(sa.Integer, primary_key=True)
+    name = sa.Column(sa.Unicode(100), nullable=False)
+    penalty = sa.Column(sa.Integer, nullable=False, default=0)
+
+    competition_id = sa.Column(
+        sa.Integer,
+        sa.ForeignKey('competition.id'),
         nullable=False)
-    competition = db.relationship("Competition", back_populates="groups")
+    competition = relationship("Competition", back_populates="groups")
 
-    input = db.relationship("Input", uselist=False, back_populates="group")
-    outputs = db.relationship("Output", back_populates="group")
+    input = relationship("Input", uselist=False, back_populates="group")
+    outputs = relationship("Output", back_populates="group")
 
-    users = db.relation('User', secondary='user_group_xref',
-                        back_populates='groups')
+    users = relation('User', secondary='user_group_xref',
+                     back_populates='groups')
 
     def __repr__(self):
         if self.name:
@@ -192,117 +219,125 @@ class Group(db.Model):
 # Why may a user be a part of M groups? Consider the case where a user
 # fails the course, or a test account that was made part of many groups
 # over time.
-user_group_xref = db.Table('user_group_xref', db.metadata,
-                           db.Column('user_id', db.Integer,
-                                     db.ForeignKey('user.id',
+user_group_xref = sa.Table('user_group_xref', metadata,
+                           sa.Column('user_id', sa.Integer,
+                                     sa.ForeignKey('user.id',
                                                    onupdate="CASCADE",
                                                    ondelete="CASCADE"),
                                      primary_key=True),
-                           db.Column('group_id', db.Integer,
-                                     db.ForeignKey('group.id',
+                           sa.Column('group_id', sa.Integer,
+                                     sa.ForeignKey('group.id',
                                                    onupdate="CASCADE",
                                                    ondelete="CASCADE"),
                                      primary_key=True))
 
 
-class Input(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    data = db.Column(UploadedFileField, nullable=False)
+class Input(DeclarativeBase):
+    __tablename__ = 'input'
 
-    group_id = db.Column(
-        db.Integer,
-        db.ForeignKey('group.id'),
+    id = sa.Column(sa.Integer, primary_key=True)
+    data = sa.Column(UploadedFileField, nullable=False)
+
+    group_id = sa.Column(
+        sa.Integer,
+        sa.ForeignKey('group.id'),
         nullable=False)
-    group = db.relationship("Group", back_populates="input")
+    group = relationship("Group", back_populates="input")
 
-    outputs = db.relationship("Output", back_populates="input")
+    outputs = relationship("Output", back_populates="input")
 
     def __repr__(self):
         return "Input from [{!r}]".format(self.group)
 
 
-class Output(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+class Output(DeclarativeBase):
+    __tablename__ = 'output'
+
+    id = sa.Column(sa.Integer, primary_key=True)
 
     # The score is separated from the data, allowing for database
     # server-side sorting
-    score = db.Column(db.Numeric, nullable=False)
-    data = db.Column(UploadedFileField, nullable=False)
+    score = sa.Column(sa.Numeric, nullable=False)
+    data = sa.Column(UploadedFileField, nullable=False)
 
-    verification = db.Column(
-        db.Enum(VerificationStatus),
+    verification = sa.Column(
+        sa.Enum(VerificationStatus),
         nullable=False,
         default=VerificationStatus.waiting)
-    verification_reason = db.Column(db.Unicode(1000))
+    verification_reason = sa.Column(sa.Unicode(1000))
 
-    input_id = db.Column(
-        db.Integer,
-        db.ForeignKey('input.id'),
+    input_id = sa.Column(
+        sa.Integer,
+        sa.ForeignKey('input.id'),
         nullable=False)
-    input = db.relationship("Input", back_populates="outputs")
+    input = relationship("Input", back_populates="outputs")
 
-    group_id = db.Column(
-        db.Integer,
-        db.ForeignKey('group.id'),
+    group_id = sa.Column(
+        sa.Integer,
+        sa.ForeignKey('group.id'),
         nullable=False)
-    group = db.relationship("Group", back_populates="outputs")
+    group = relationship("Group", back_populates="outputs")
 
-    protests = db.relationship("VerificationProtest", back_populates="output")
+    protests = relationship("VerificationProtest", back_populates="output")
 
     def __repr__(self):
         return "Output from [{!r}] for {!r}".format(self.group, self.input)
 
 
-class VerificationProtest(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    correction = db.Column(
-        db.Enum(VerificationStatus),
-        nullable=False)
-    message = db.Column(db.Unicode(1000), nullable=False)
+class VerificationProtest(DeclarativeBase):
+    __tablename__ = 'verificationprotest'
 
-    submitter_id = db.Column(
-        db.Integer,
-        db.ForeignKey('user.id'),
+    id = sa.Column(sa.Integer, primary_key=True)
+    correction = sa.Column(
+        sa.Enum(VerificationStatus),
         nullable=False)
-    submitter = db.relationship("User", back_populates="submitted_protests")
+    message = sa.Column(sa.Unicode(1000), nullable=False)
 
-    output_id = db.Column(
-        db.Integer,
-        db.ForeignKey('output.id'),
+    submitter_id = sa.Column(
+        sa.Integer,
+        sa.ForeignKey('user.id'),
         nullable=False)
-    output = db.relationship("Output", back_populates="protests")
+    submitter = relationship("User", back_populates="submitted_protests")
+
+    output_id = sa.Column(
+        sa.Integer,
+        sa.ForeignKey('output.id'),
+        nullable=False)
+    output = relationship("Output", back_populates="protests")
 
     def __repr__(self):
         return "Protest {}, from [{!r}] on {!r}".format(
             self.id, self.submitter, self.output)
 
 
-class Evaluation(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    score = db.Column(db.Float, nullable=False)
+class Evaluation(DeclarativeBase):
+    __tablename__ = 'evaluation'
 
-    from_student_id = db.Column(
-        db.Integer,
-        db.ForeignKey('user.id'),
+    id = sa.Column(sa.Integer, primary_key=True)
+    score = sa.Column(sa.Float, nullable=False)
+
+    from_student_id = sa.Column(
+        sa.Integer,
+        sa.ForeignKey('user.id'),
         nullable=False)
-    from_student = db.relationship(
+    from_student = relationship(
         "User",
         back_populates="submitted_evaluations",
         foreign_keys=from_student_id)
 
-    to_student_id = db.Column(
-        db.Integer,
-        db.ForeignKey('user.id'),
+    to_student_id = sa.Column(
+        sa.Integer,
+        sa.ForeignKey('user.id'),
         nullable=False)
-    to_student = db.relationship(
+    to_student = relationship(
         "User",
         back_populates="received_evaluations",
         foreign_keys=to_student_id)
 
-    competition_id = db.Column(
-        db.Integer,
-        db.ForeignKey('competition.id'),
+    competition_id = sa.Column(
+        sa.Integer,
+        sa.ForeignKey('competition.id'),
         nullable=False)
-    competition = db.relationship(
+    competition = relationship(
         "Competition",
         back_populates="evaluations")
