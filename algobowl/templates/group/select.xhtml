@@ -1,0 +1,30 @@
+<html py:extends="master.xhtml" py:strip="True">
+  <py:block name="title">
+    Select Group
+  </py:block>
+  <body py:block="body" py:strip="True">
+    <div class="container">
+      <py:if test="groups">
+        <h1>Select Group</h1>
+        <p>
+          You are a member of multiple groups. Please select the group you
+          would like to use.
+        </p>
+        <div class="list-group">
+          <a py:for="group in groups"
+             class="list-group-item"
+             href="${tg.url('/group/{}'.format(group.id))}">
+             <h4>${group.competition.name}: ${group.name}</h4>
+             <p>${', '.join(map(repr, group.users))}</p>
+          </a>
+        </div>
+      </py:if><py:else>
+        <h1>No Groups</h1>
+        <p>
+          You are not a member of any groups. Please contact your course
+          instructor if you believe this to be a mistake.
+        </p>
+      </py:else>
+    </div>
+  </body>
+</html>

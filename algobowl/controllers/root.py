@@ -11,6 +11,7 @@ from algobowl.config.app_cfg import AdminConfig
 from algobowl.lib.base import BaseController
 from tgext.admin.controller import AdminController
 from algobowl.controllers.error import ErrorController
+from algobowl.controllers.group import GroupsController
 
 __all__ = ['RootController']
 
@@ -21,6 +22,7 @@ class RootController(BaseController):
         DBSession,
         config_type=AdminConfig)
     error = ErrorController()
+    group = GroupsController()
 
     def _before(self, *args, **kw):
         tmpl_context.project_name = "algobowl"
@@ -31,9 +33,10 @@ class RootController(BaseController):
         return dict(page='index')
 
     @expose()
-    @require(predicates.not_anonymous())
     def login(self):
-        flash("You are already logged in.")
+        if not tg.request.identity:
+            who_api = get_api(tg.request.environ)
+            return who_api.challenge()
         redirect(url('/'))
 
     @expose()
@@ -45,10 +48,15 @@ class RootController(BaseController):
 
     @expose()
     def post_login(self, came_from=lurl('/')):
-        user = tg.request.identity['user']
-        if user:
+        if tg.request.identity:
+            user = tg.request.identity['user']
             flash("Welcome, {}!".format(user), 'success')
-            redirect(came_from)
+            u = tg.request.relative_url(str(came_from),
+                                        to_application=True)
+            if not u.startswith(tg.request.application_url):
+                flash("Dangerous redirect prevented", "warning")
+                redirect('/')
+            redirect(u)
         else:
             flash("Login failure", 'error')
-            redirect(lurl('/'))
+            redirect('/')

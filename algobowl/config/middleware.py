@@ -2,6 +2,7 @@
 """WSGI middleware initialization for the algobowl application."""
 from algobowl.config.app_cfg import base_config
 from algobowl.config.environment import load_environment
+from depot.manager import DepotManager
 
 __all__ = ['make_app']
 
@@ -29,7 +30,6 @@ def make_app(global_conf, full_stack=True, **app_conf):
     under ``[app:main]``.
     """
     app = make_base_app(global_conf, full_stack=True, **app_conf)
-
-    # Wrap your base TurboGears 2 application with custom middleware here
+    app = DepotManager.make_middleware(app)
 
     return app

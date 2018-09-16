@@ -9,8 +9,10 @@ import algobowl
 from algobowl import model
 from algobowl.config.auth import (AuthMetadata, APITokenAuthenticator,
                                   MPAPIAuthenticator)
-from tg.configuration import AppConfig
-from tgext.admin.tgadminconfig import BootstrapTGAdminConfig as TGAdminConfig
+from tg.configuration import AppConfig, milestones
+from tgext.admin.config import AdminConfig
+from tgext.admin.layouts import GroupedBootstrapAdminLayout
+from depot.manager import DepotManager
 
 base_config = AppConfig()
 base_config.renderers = []
@@ -58,9 +60,21 @@ base_config.sa_auth.authenticators = [
     ('mpapi', mpapi_authenticator)]
 
 base_config.sa_auth.form_plugin = mpapi_authenticator
+base_config['depot.storage_path'] = '/tmp/depot'
 
 
-class AdminConfig(TGAdminConfig):
+def config_ready():
+    """ Executed once the configuration is ready. """
+    # Configure default depot
+    DepotManager.configure('default', tg.config)
+
+
+milestones.config_ready.register(config_ready)
+
+
+class AdminConfig(AdminConfig):
+    project_name = 'AlgoBOWL'
+    layout = GroupedBootstrapAdminLayout
     allow_only = tg.predicates.has_permission('admin')
 
 

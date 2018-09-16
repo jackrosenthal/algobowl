@@ -123,9 +123,9 @@ class MPAPIAuthenticator:
         Provide ``IChallenger`` interface.
         """
         request = Request(environ)
-        return_url = request.application_url + '/post_login'
-        if 'came_from' in request.params.keys():
-            return_url += '?came_from={}'.format(request.params('came_from'))
+        return_url = tg.url(
+            request.application_url + '/post_login',
+            {'came_from': request.path_qs})
         headers = [
             ('Location',
                 '{}?{}'.format(

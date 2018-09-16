@@ -46,7 +46,7 @@ class Competition(DeclarativeBase):
         nullable=False)
     output_upload_begins = sa.Column(
         sa.DateTime,
-        sa.CheckConstraint('output_upload_begins > input_upload_ends'),
+        sa.CheckConstraint('output_upload_begins >= input_upload_ends'),
         nullable=False)
     output_upload_ends = sa.Column(
         sa.DateTime,
@@ -54,7 +54,7 @@ class Competition(DeclarativeBase):
         nullable=False)
     verification_begins = sa.Column(
         sa.DateTime,
-        sa.CheckConstraint('verification_begins > output_upload_ends'),
+        sa.CheckConstraint('verification_begins >= output_upload_ends'),
         nullable=True)
     verification_ends = sa.Column(
         sa.DateTime,
@@ -62,12 +62,12 @@ class Competition(DeclarativeBase):
         nullable=True)
     open_verification_begins = sa.Column(
         sa.DateTime,
-        sa.CheckConstraint('open_verification_begins > verification_ends'),
+        sa.CheckConstraint('open_verification_begins >= verification_ends'),
         nullable=True)
     open_verification_ends = sa.Column(
         sa.DateTime,
         sa.CheckConstraint(
-            'open_verification_ends > open_verification_begins'),
+            'open_verification_ends >= open_verification_begins'),
         nullable=True)
     evaluation_begins = sa.Column(sa.DateTime, nullable=True)
     evaluation_ends = sa.Column(
@@ -75,7 +75,8 @@ class Competition(DeclarativeBase):
         sa.CheckConstraint('evaluation_ends > evaluation_begins'),
         nullable=True)
 
-    groups = relationship("Group", back_populates="competition")
+    groups = relationship(
+        "Group", back_populates="competition", lazy='dynamic')
     evaluations = relationship(
         "Evaluation",
         back_populates="competition")
@@ -139,7 +140,7 @@ class User(DeclarativeBase):
     submitted_evaluations = relationship(
         "Evaluation",
         back_populates="from_student",
-        foreign_keys="Evaluation.from_student_id")
+        foreign_keys="Evaluation.from_student_id", lazy='dynamic')
     received_evaluations = relationship(
         "Evaluation",
         back_populates="to_student",
@@ -147,43 +148,16 @@ class User(DeclarativeBase):
 
     submitted_protests = relationship(
         "VerificationProtest",
-        back_populates="submitter")
+        back_populates="submitter", lazy='dynamic')
 
     groups = relation(
         'Group', secondary='user_group_xref', back_populates='users')
 
     @classmethod
     def from_username(cls, username):
-        return DBSession.query(cls.username == username).one_or_none()
-
-    @property
-    def is_authenticated(self) -> bool:
-        """
-        Return ``True`` if the user is authenticated.
-        """
-        return True
-
-    @property
-    def is_active(self) -> bool:
-        """
-        Return ``True`` if the current user has been "activated".
-
-        Potentially, subclasses may wish to override this.
-        """
-        return True
-
-    @property
-    def is_anonymous(self) -> bool:
-        """
-        Return ``True`` if the user is **not** authenticated.
-        """
-        return not self.is_authenticated
-
-    def get_id(self) -> str:
-        """
-        Return a unique string for the user.
-        """
-        return self.username
+        return (DBSession.query(User)
+                         .filter(cls.username == username)
+                         .one_or_none())
 
     def __repr__(self):
         return self.full_name or self.username
@@ -203,10 +177,10 @@ class Group(DeclarativeBase):
     competition = relationship("Competition", back_populates="groups")
 
     input = relationship("Input", uselist=False, back_populates="group")
-    outputs = relationship("Output", back_populates="group")
+    outputs = relationship("Output", back_populates="group", lazy='dynamic')
 
     users = relation('User', secondary='user_group_xref',
-                     back_populates='groups')
+                     back_populates='groups', lazy='dynamic')
 
     def __repr__(self):
         if self.name:
@@ -244,7 +218,7 @@ class Input(DeclarativeBase):
         nullable=False)
     group = relationship("Group", back_populates="input")
 
-    outputs = relationship("Output", back_populates="input")
+    outputs = relationship("Output", back_populates="input", lazy='dynamic')
 
     def __repr__(self):
         return "Input from [{!r}]".format(self.group)
@@ -278,7 +252,8 @@ class Output(DeclarativeBase):
         nullable=False)
     group = relationship("Group", back_populates="outputs")
 
-    protests = relationship("VerificationProtest", back_populates="output")
+    protests = relationship("VerificationProtest",
+                            back_populates="output", lazy='dynamic')
 
     def __repr__(self):
         return "Output from [{!r}] for {!r}".format(self.group, self.input)
