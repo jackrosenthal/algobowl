@@ -12,6 +12,7 @@ from algobowl.lib.base import BaseController
 from tgext.admin.controller import AdminController
 from algobowl.controllers.error import ErrorController
 from algobowl.controllers.group import GroupsController
+from algobowl.controllers.competition import CompetitionsController
 
 __all__ = ['RootController']
 
@@ -23,6 +24,7 @@ class RootController(BaseController):
         config_type=AdminConfig)
     error = ErrorController()
     group = GroupsController()
+    competition = CompetitionsController()
 
     def _before(self, *args, **kw):
         tmpl_context.project_name = "algobowl"

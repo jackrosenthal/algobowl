@@ -1,0 +1,27 @@
+<html py:extends="master.xhtml" py:strip="True">
+  <py:block name="title">
+    Competitions List
+  </py:block>
+  <body py:block="body" py:strip="True">
+    <div class="container">
+      <py:def function="comp_list(comps)">
+        <div class="list-group">
+          <a py:for="c in comps"
+             class="list-group-item"
+             href="${tg.url('/competition/{}'.format(c.id))}">
+             <h4>${c.name}</h4>
+             <p>${c.input_upload_begins} — ${c.evaluation_ends}</p>
+          </a>
+        </div>
+      </py:def>
+      <py:if test="active">
+        <h1>Active Competitions</h1>
+        ${comp_list(active)}
+      </py:if>
+      <py:if test="historical">
+        <h1>Historical Competitions</h1>
+        ${comp_list(historical)}
+      </py:if>
+    </div>
+  </body>
+</html>

@@ -1,3 +1,4 @@
+import datetime
 from tg import expose, abort
 from algobowl.lib.base import BaseController
 from algobowl.model import DBSession, Competition
@@ -22,3 +23,15 @@ class CompetitionsController(BaseController):
             abort(404, "No such competition")
 
         return CompetitionController(competition), args
+
+    @expose('algobowl.templates.competition.list')
+    def index(self):
+        now = datetime.datetime.now()
+        active = (DBSession.query(Competition)
+                           .filter(Competition.input_upload_begins <= now)
+                           .filter(Competition.evaluation_ends > now)
+                           .order_by(Competition.evaluation_ends))
+        historical = (DBSession.query(Competition)
+                               .filter(Competition.evaluation_ends < now)
+                               .order_by(Competition.evaluation_ends))
+        return {'active': active, 'historical': historical}

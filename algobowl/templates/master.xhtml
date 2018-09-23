@@ -51,7 +51,10 @@
       <div class="collapse navbar-collapse" id="navcollapse">
         <ul class="navbar-nav mr-auto">
           <li class="nav-item">
-            <a class="nav-link" href="/">Home</a>
+            <a class="nav-link" href="${tg.url('/')}">Home</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="${tg.url('/competition')}">Competitions</a>
           </li>
         </ul>
         <div py:if="not request.identity">
