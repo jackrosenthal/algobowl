@@ -1,10 +1,14 @@
 import enum
 import datetime
 import sqlalchemy as sa
+from weakref import WeakValueDictionary
+from types import ModuleType
 from sqlalchemy.orm import relationship, relation
 from zope.sqlalchemy import ZopeTransactionExtension
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
+from depot.io.utils import file_from_content
+from depot.fields.upload import UploadedFile
 from depot.fields.sqlalchemy import UploadedFileField
 
 maker = sessionmaker(autoflush=True, autocommit=False,
@@ -29,15 +33,56 @@ class VerificationStatus(enum.Enum):
     rejected = 2
 
 
+class UploadedPythonModule(UploadedFile):
+    module_cache = WeakValueDictionary()
+
+    def process_content(self, content, *args, **kwargs):
+        mod = ModuleType('uploaded_module')
+        content = file_from_content(content)
+        content = content.read()
+        exec(content.decode('utf-8'), mod.__dict__)
+        self.ensure_module(mod)
+        super().process_content(content, *args, **kwargs)
+        UploadedPythonModule.module_cache[self['file_id']] = mod
+
+    def ensure_module(self, module):
+        """
+        Overridden by subclasses to make assertions about
+        the module's contents.
+        """
+
+    @property
+    def module(self):
+        mod = UploadedPythonModule.module_cache.get(self['file_id'])
+        if mod is None:
+            mod = ModuleType('uploaded_module')
+            exec(self.file.read().decode('utf-8'), mod.__dict__)
+            UploadedPythonModule.module_cache[self['file_id']] = mod
+        return mod
+
+
+class VerifierModule(UploadedPythonModule):
+    def ensure_module(self, module):
+        if not hasattr(module, 'VerificationError'):
+            raise TypeError('Verifier must define VerificationError')
+        if not hasattr(module, 'verify'):
+            raise TypeError('Verifier must define veriy')
+        if not hasattr(module.verify, '__call__'):
+            raise TypeError('verify must be callable')
+
+
 class Competition(DeclarativeBase):
     __tablename__ = 'competition'
 
     id = sa.Column(sa.Integer, primary_key=True)
     name = sa.Column(sa.String, nullable=False)
 
-    # TODO: Change to depot files
-    input_verifier_code = sa.Column(sa.Unicode, nullable=False, default='')
-    output_verifier_code = sa.Column(sa.Unicode)
+    input_verifier = sa.Column(
+        UploadedFileField(upload_type=VerifierModule),
+        nullable=False)
+    output_verifier = sa.Column(
+        UploadedFileField(upload_type=VerifierModule),
+        nullable=False)
 
     problem_statement = sa.Column(UploadedFileField, nullable=True)
     allow_custom_team_names = sa.Column(sa.Boolean, default=True)
@@ -80,9 +125,6 @@ class Competition(DeclarativeBase):
 
     groups = relationship(
         "Group", back_populates="competition", lazy='dynamic')
-    evaluations = relationship(
-        "Evaluation",
-        back_populates="competition")
 
     @property
     def input_upload_open(self):
@@ -184,6 +226,10 @@ class Group(DeclarativeBase):
 
     users = relation('User', secondary='user_group_xref',
                      back_populates='groups', lazy='dynamic')
+
+    evaluations = relationship(
+        "Evaluation",
+        back_populates="group")
 
     def __repr__(self):
         if self.name:
@@ -312,11 +358,10 @@ class Evaluation(DeclarativeBase):
         back_populates="received_evaluations",
         foreign_keys=to_student_id)
 
-    # TODO: change to group association
-    competition_id = sa.Column(
+    group_id = sa.Column(
         sa.Integer,
-        sa.ForeignKey('competition.id'),
+        sa.ForeignKey('group.id'),
         nullable=False)
-    competition = relationship(
-        "Competition",
+    group = relationship(
+        "Group",
         back_populates="evaluations")

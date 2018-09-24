@@ -48,11 +48,8 @@ class GroupController(BaseController):
 
             if len(contents) > 1E6:
                 abort(400, "Your input exceeds the maxiumum size.")
+            verif_mod = self.group.competition.input_verifier.module
 
-            input_verifier = self.group.competition.input_verifier_code
-
-            verif_mod = ModuleType('verif_mod')
-            exec(input_verifier, verif_mod.__dict__)
             try:
                 verif_mod.verify_input(StringIO(contents))
             except verif_mod.InputVerificationError as e:
