@@ -34,8 +34,11 @@ class Competition(DeclarativeBase):
 
     id = sa.Column(sa.Integer, primary_key=True)
     name = sa.Column(sa.String, nullable=False)
+
+    # TODO: Change to depot files
     input_verifier_code = sa.Column(sa.Unicode, nullable=False, default='')
     output_verifier_code = sa.Column(sa.Unicode)
+
     problem_statement = sa.Column(UploadedFileField, nullable=True)
     allow_custom_team_names = sa.Column(sa.Boolean, default=True)
 
@@ -167,7 +170,7 @@ class Group(DeclarativeBase):
     __tablename__ = 'group'
 
     id = sa.Column(sa.Integer, primary_key=True)
-    name = sa.Column(sa.Unicode(100), nullable=False)
+    name = sa.Column(sa.Unicode(100), nullable=True)
     penalty = sa.Column(sa.Integer, nullable=False, default=0)
 
     competition_id = sa.Column(
@@ -309,6 +312,7 @@ class Evaluation(DeclarativeBase):
         back_populates="received_evaluations",
         foreign_keys=to_student_id)
 
+    # TODO: change to group association
     competition_id = sa.Column(
         sa.Integer,
         sa.ForeignKey('competition.id'),
