@@ -1,7 +1,9 @@
+import zipfile
 import datetime
-from tg import expose, abort
+from io import BytesIO
+from tg import expose, abort, request, response
 from algobowl.lib.base import BaseController
-from algobowl.model import DBSession, Competition
+from algobowl.model import DBSession, Competition, Input, Group
 
 __all__ = ['CompetitionsController', 'CompetitionController']
 
@@ -9,6 +11,28 @@ __all__ = ['CompetitionsController', 'CompetitionController']
 class CompetitionController(BaseController):
     def __init__(self, competition):
         self.competition = competition
+
+    @expose()
+    def all_inputs(self):
+        user = request.identity and request.identity['user']
+        now = datetime.datetime.now()
+        comp = self.competition
+        if not (user and user.admin) and now < comp.output_upload_begins:
+            abort(403, "Input downloading is not available until the output"
+                       " upload stage begins.")
+        f = BytesIO()
+        archive = zipfile.ZipFile(f, mode='w', compresslevel=6)
+        inputs = (DBSession.query(Input)
+                           .join(Input.group)
+                           .filter(Group.competition_id == comp.id))
+        for iput in inputs:
+            archive.writestr(
+                'inputs/{}'.format(iput.data.filename),
+                iput.data.file.read())
+        archive.close()
+        f.seek(0)
+        response.content_type = 'application/zip'
+        return f.read()
 
 
 class CompetitionsController(BaseController):
