@@ -26,17 +26,17 @@ class GroupController(BaseController):
 
     @expose('algobowl.templates.group.index')
     def index(self):
+        submitted_outputs = {o.input.id: o for o in self.group.outputs}
         return {'competition': self.group.competition,
-                'group': self.group}
+                'group': self.group,
+                'submitted_outputs': submitted_outputs}
 
     @expose()
     def input_upload(self, input_upload=None, team_name=None):
         if not self.group.competition.input_upload_open:
             abort(403, "Sorry, input upload stage is closed.")
 
-        if input_upload is not None:
-            if not hasattr(input_upload, "file"):
-                abort(400, "input_upload provided, but not a file")
+        if hasattr(input_upload, "file"):
             try:
                 contents = file_normalize(input_upload.file.read())
             except UnicodeDecodeError:

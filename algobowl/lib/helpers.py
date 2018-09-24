@@ -23,7 +23,7 @@ def ftime(dt, duration=None, show_day=False):
         date_fmt = tg.config.get('locale.dow_date_fmt', '%A, %B %-d, %Y')
     else:
         date_fmt = tg.config.get('locale.date_fmt', '%B %-d, %Y')
-    time_fmt = tg.config.get('locale.time_fmt', '%I:%M %p')
+    time_fmt = tg.config.get('locale.time_fmt', '%-I:%M %p')
     dt_sep = tg.config.get('locale.dt_sep', ' at ')
     dt_duration_sep = tg.config.get('locale.dt_duration_sep', ' from ')
     duration_time_sep = tg.config.get('locale.duration_time_sep', ' to ')

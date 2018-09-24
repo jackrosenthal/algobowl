@@ -1,4 +1,59 @@
 <div class="input-upload-stage" py:if="competition.output_upload_open">
   <h1>Output Upload</h1>
-  Let's get started!
+  <p class="lead">
+    Download the inputs from the other teams and run them on your program.
+    You have until <strong>${h.ftime(competition.output_upload_ends)}</strong>
+    to submit your outputs.
+  </p>
+  <a class="btn btn-primary"
+     href="${tg.url('/competition/{}/all_inputs.zip'.format(competition.id))}">
+    <i class="fas fa-file-archive fa-fw fa-lg"></i>
+    Download All Inputs as a ZIP Archive
+  </a>
+  <noscript>
+    <div class="alert alert-warning">
+      <strong>Warning:</strong> This page may not work fully without JavaScript
+      enabled for this domain.
+    </div>
+  </noscript>
+  <table class="table table-striped mt-3">
+    <thead>
+      <tr>
+        <th>Input File</th>
+        <th>Upload Output</th>
+        <th>Your Submission</th>
+      </tr>
+    </thead>
+    <tbody>
+      <py:for each="g in competition.groups">
+        <tr py:if="g.input is not None">
+          <td>
+            <a href="${g.input.data.url}">
+              <tt py:content="g.input.data.filename" />
+            </a>
+          </td>
+          <td>
+            <form enctype="multipart/form-data" class="form-inline">
+              <div class="form-group">
+                <input type="file" class="form-control-file" id="file-input-i${g.id}" />
+              </div>
+            </form>
+          </td>
+          <td id="download-link-i${g.id}">
+            <py:if test="g.input.id in submitted_outputs.keys()">
+              <a href="${submitted_outputs[g.input.id].data.url}"
+                 class="btn btn-info">
+                <i class="fas fa-file-upload fa-fw"></i>
+                Download Submission
+              </a>
+            </py:if><py:else>
+              <span class="text-muted">
+                Nothing submitted yet
+              </span>
+            </py:else>
+          </td>
+        </tr>
+      </py:for>
+    </tbody>
+  </table>
 </div>
