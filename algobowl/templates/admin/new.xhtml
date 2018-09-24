@@ -1,0 +1,15 @@
+<html py:extends="master.xhtml" py:strip="True">
+
+  <head py:block="head" py:strip="True">
+    <py:block name="title">
+      New ${model}
+    </py:block>
+  </head>
+
+  <body py:block="body" py:strip="True">
+    <div class="container">
+      <h1 class="page-header">New $model</h1>
+      ${Markup(tmpl_context.widget(value=value, action='./'))}
+    </div>
+  </body>
+</html>

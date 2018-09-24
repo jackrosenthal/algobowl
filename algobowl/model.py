@@ -73,6 +73,7 @@ class VerifierModule(UploadedPythonModule):
 
 class Competition(DeclarativeBase):
     __tablename__ = 'competition'
+    db_icon = 'fas fa-clipboard-list'
 
     id = sa.Column(sa.Integer, primary_key=True)
     name = sa.Column(sa.String, nullable=False)
@@ -175,6 +176,7 @@ class Competition(DeclarativeBase):
 
 class User(DeclarativeBase):
     __tablename__ = 'user'
+    db_icon = 'fas fa-user'
 
     id = sa.Column(sa.Integer, primary_key=True)
     username = sa.Column(sa.Unicode, unique=True, nullable=False)
@@ -210,6 +212,7 @@ class User(DeclarativeBase):
 
 class Group(DeclarativeBase):
     __tablename__ = 'group'
+    db_icon = 'fas fa-users'
 
     id = sa.Column(sa.Integer, primary_key=True)
     name = sa.Column(sa.Unicode(100), nullable=True)
@@ -257,6 +260,7 @@ user_group_xref = sa.Table('user_group_xref', metadata,
 
 class Input(DeclarativeBase):
     __tablename__ = 'input'
+    db_icon = 'far fa-file'
 
     id = sa.Column(sa.Integer, primary_key=True)
     data = sa.Column(UploadedFileField, nullable=False)
@@ -275,6 +279,7 @@ class Input(DeclarativeBase):
 
 class Output(DeclarativeBase):
     __tablename__ = 'output'
+    db_icon = 'far fa-copy'
 
     id = sa.Column(sa.Integer, primary_key=True)
 
@@ -310,6 +315,7 @@ class Output(DeclarativeBase):
 
 class VerificationProtest(DeclarativeBase):
     __tablename__ = 'verificationprotest'
+    db_icon = 'far fa-thumbs-down'
 
     id = sa.Column(sa.Integer, primary_key=True)
     correction = sa.Column(
@@ -336,6 +342,7 @@ class VerificationProtest(DeclarativeBase):
 
 class Evaluation(DeclarativeBase):
     __tablename__ = 'evaluation'
+    db_icon = 'fas fa-sliders-h'
 
     id = sa.Column(sa.Integer, primary_key=True)
     score = sa.Column(sa.Float, nullable=False)

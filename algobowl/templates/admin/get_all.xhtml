@@ -1,0 +1,80 @@
+<html py:extends="master.xhtml" py:strip="True">
+
+  <head py:block="head" py:strip="True">
+    <py:block name="title">
+      ${model} Listing
+    </py:block>
+  </head>
+
+  <body py:block="body" py:strip="True">
+<?python
+PAGER_ARGS = tmpl_context.make_pager_args(link=mount_point+'/',
+                                          page_link_template='<li><a%s>%s</a></li>',
+                                          page_plain_template='<li%s><span>%s</span></li>',
+                                          curpage_attr={'class': 'active'})
+?>
+
+    <div class="container" py:with="leftmenu=getattr(tmpl_context, 'menu_items', False)">
+      <ul class="nav nav-pills">
+        <li py:for="mname in tmpl_context.menu_items.values()"
+            py:with="m=getattr(config['model'], mname)"
+            class="nav-item">
+            <a href="../${mname.lower()}s"
+               class="nav-link${' active' if model == mname else ''}">
+              <i class="${getattr(m, 'db_icon', 'fas fa-database')} fa-fw"></i>
+              ${mname}s
+            </a>
+        </li>
+      </ul>
+
+      <h1 class="mt-3 mb-3">$model Listing</h1>
+
+        <div class="row">
+          <div class="col-md-auto">
+            <a class="btn btn-success"
+              href='${tg.url("new", params=tmpl_context.kept_params)}'>
+              <i class="fas fa-plus fa-fw"></i>
+              New $model
+            </a>
+          </div>
+
+          <div class="col-md text-center">
+            <ul py:if="value_list" class="pagination pull-sm-right" style="margin:0;"
+                py:with="paginator=tmpl_context.paginators.value_list"
+                py:content="paginator.pager(**PAGER_ARGS)"/>
+          </div>
+
+          <div class="col-md-auto">
+              <form py:if="search_fields" class="form-inline">
+                <div class="form-group mr-2">
+                  <select id="crud_search_field" class="form-control"
+                          onchange="crud_search_field_changed(this);">
+                    <py:for each="field, name, selected in search_fields" py:switch="selected">
+                      <option py:case="False" value="${field}">${name}</option>
+                      <option py:else="" value="${field}" selected="selected">${name}</option>
+                    </py:for>
+                  </select>
+                </div>
+
+                <div class="form-group mr-2">
+                  <input id="crud_search_value" class="form-control" type="text"
+                        placeholder="equals / contains"
+                        name="${current_search[0]}" value="${current_search[1]}"/>
+                </div>
+
+                <button type="submit" class="btn btn-info">
+                  <i class="fas fa-search"></i>
+                </button>
+              </form>
+          </div>
+        </div>
+
+        <br/>
+
+        <div class="table-responsive">
+          ${Markup(tmpl_context.widget(value=value_list, action=mount_point+'.json'))}
+        </div>
+
+    </div>
+  </body>
+</html>

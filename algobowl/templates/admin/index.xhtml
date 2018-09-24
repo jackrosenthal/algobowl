@@ -1,0 +1,27 @@
+<html py:extends="master.xhtml" py:strip="True">
+  <head py:block="head" py:strip="True">
+    <py:block name="title">
+      Administration
+    </py:block>
+  </head>
+  <body py:block="body" py:strip="True">
+    <div class="container">
+      <h1 class="mb-1">${value_of('project_name', 'AlgoBOWL')} Administration</h1>
+
+      <h2>Database Object Editor</h2>
+      <div class="admin-button-group">
+        <a py:for="model in config.models.values()"
+           href='${model.__name__.lower()}s/'>
+          <div class="btn btn-primary big-icon-button">
+            <div>
+              <i class="${getattr(model, 'db_icon', 'fas fa-database')} fa-5x"></i>
+              <p>
+                ${model.__name__}s
+              </p>
+            </div>
+          </div>
+        </a>
+      </div>
+    </div>
+  </body>
+</html>

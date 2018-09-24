@@ -11,8 +11,10 @@ from algobowl.config.auth import (AuthMetadata, APITokenAuthenticator,
                                   MPAPIAuthenticator)
 from tg.configuration import AppConfig, milestones
 from tgext.admin.config import AdminConfig
-from tgext.admin.layouts import GroupedBootstrapAdminLayout
+from tgext.admin.layouts import BootstrapAdminLayout
+from tgext.admin.widgets import BootstrapAdminTableFiller
 from depot.manager import DepotManager
+from markupsafe import Markup
 
 base_config = AppConfig()
 base_config.renderers = []
@@ -72,9 +74,35 @@ def config_ready():
 milestones.config_ready.register(config_ready)
 
 
+class AdminTableFiller(BootstrapAdminTableFiller):
+    def __actions__(self, obj):
+        primary_fields = self.__provider__.get_primary_fields(self.__entity__)
+        pklist = '/'.join(map(lambda x: str(getattr(obj, x)), primary_fields))
+
+        return Markup('''
+    <a href="{pklist}/edit" class="btn btn-secondary">
+        <i class="fas fa-pen fa-fw"></i>
+    </a>
+    <form method="POST" action="{pklist}" style="display: inline">
+        <input type="hidden" name="_method" value="DELETE" />
+        <button type="submit" class="btn btn-danger"
+                onclick="return confirm('Are you sure?')">
+            <i class="fas fa-trash fa-fw"></i>
+        </button>
+    </form>'''.format(pklist=pklist))
+
+
+class AdminLayout(BootstrapAdminLayout):
+    template_index = 'algobowl.templates.admin.index'
+    crud_templates = {'get_all': ['kajiki:algobowl.templates.admin.get_all'],
+                      'edit': ['kajiki:algobowl.templates.admin.edit'],
+                      'new': ['kajiki:algobowl.templates.admin.new']}
+    TableFiller = AdminTableFiller
+
+
 class AdminConfig(AdminConfig):
     project_name = 'AlgoBOWL'
-    layout = GroupedBootstrapAdminLayout
+    layout = AdminLayout
     allow_only = tg.predicates.has_permission('admin')
 
 

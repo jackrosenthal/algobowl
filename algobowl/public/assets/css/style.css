@@ -11,7 +11,7 @@ html {
   width: 100%;
 
   /* Set the fixed height of the footer here */
-  height: 80px;
+  height: 85px;
 
   /* Vertically center the text there */
   color: rgba(255, 255, 255, 0.4);
@@ -27,7 +27,7 @@ body {
   padding-top: 75px;
   
   /* footer */
-  margin-bottom: 80px;
+  margin-bottom: 120px;
 }
 
 .navbar-brand {
@@ -47,4 +47,26 @@ body {
 
 .compete-link {
   padding-top: 2rem;
+}
+
+.big-icon-button {
+  position: relative;
+
+  float: left;
+  width: 200px;
+  height: 200px;
+  text-align: center;
+  margin: 10px;
+}
+
+.big-icon-button > div {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+}
+
+.big-icon-button > div > p {
+  display: block;
+  margin-top: 8px;
+  font-size: 22px;
 }
