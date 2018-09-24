@@ -1,12 +1,13 @@
+import datetime
+import zipfile
 from io import StringIO, BytesIO
-from tg import expose, redirect, url, request, abort, flash
+from tg import expose, redirect, url, request, abort, flash, response
 from tg.predicates import not_anonymous
 from depot.io.utils import FileIntent
 
 from algobowl.lib.helpers import ftime
 from algobowl.lib.base import BaseController
 from algobowl.model import DBSession, Group, Input
-from types import ModuleType
 
 __all__ = ['GroupsController', 'GroupController']
 
@@ -86,6 +87,26 @@ class GroupController(BaseController):
               .format(ftime(self.group.competition.output_upload_begins)),
               'success')
         redirect(self.base_url)
+
+    @expose()
+    def all_inputs(self):
+        user = request.identity['user']
+        now = datetime.datetime.now()
+        comp = self.group.competition
+        if not user.admin and now < comp.output_upload_begins:
+            abort(403, "Input downloading is not available until the output"
+                       " upload stage begins.")
+        f = BytesIO()
+        archive = zipfile.ZipFile(f, mode='w', compresslevel=6)
+        inputs = (DBSession.query(Input)
+                           .join(Input.group)
+                           .filter(Group.competition_id == comp.id))
+        for iput in inputs:
+            archive.writestr(iput.data.filename, iput.data.file.read())
+        archive.close()
+        f.seek(0)
+        response.content_type = 'application/zip'
+        return f.read()
 
 
 class GroupsController(BaseController):
