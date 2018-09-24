@@ -51,8 +51,8 @@ class GroupController(BaseController):
             verif_mod = self.group.competition.input_verifier.module
 
             try:
-                verif_mod.verify_input(StringIO(contents))
-            except verif_mod.InputVerificationError as e:
+                verif_mod.verify(StringIO(contents))
+            except verif_mod.VerificationError as e:
                 flash('Your input has been rejected for the following reason: '
                       '{}. Please correct and try uploading again.'.format(e),
                       'danger')
