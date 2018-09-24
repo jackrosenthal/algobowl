@@ -61,9 +61,12 @@ class GroupController(BaseController):
             f = FileIntent(
                 BytesIO(contents.encode('utf-8')),
                 'input_group{}.txt'.format(self.group.id),
-                'text/plain')
-            iput = Input(data=f, group=self.group)
-            DBSession.add(iput)
+                'application/octet-stream')
+            if self.group.input is None:
+                iput = Input(data=f, group=self.group)
+                DBSession.add(iput)
+            else:
+                self.group.input.data = f
             DBSession.flush()
 
         if team_name is not None:

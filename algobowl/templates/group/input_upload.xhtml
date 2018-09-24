@@ -1,18 +1,22 @@
 <div class="input-upload-stage" py:if="competition.input_upload_open">
   <h1>Input Upload</h1>
-  <p>
-    Welcome to AlgoBOWL! Let's get started. You will have until
-    ${h.ftime(competition.input_upload_ends)} to submit your input
-    and decide upon a team name.
+  <p class="lead">
+    Welcome to AlgoBOWL! You will have until
+    <strong>${h.ftime(competition.input_upload_ends)}</strong> to submit
+    your input and decide upon a team name.
   </p>
   <form method="POST" action="${tg.request.url}/input_upload" enctype="multipart/form-data">
     <div class="form-group">
       <label for="input-upload">Input Upload</label>
       <input type="file" class="form-control-file" id="input-upload" name="input_upload" />
+      <small class="form-text text-muted" py:if="group.input is not None">
+        An input has already been uploaded. You may wish to
+        <a href="${group.input.data.url}">download your current input</a>.
+      </small>
     </div>
     <div class="form-group">
       <label for="team-name">Team Name</label>
-      <input type="text" class="form-control" id="team-name" name="team_name" />
+      <input type="text" class="form-control" id="team-name" name="team_name" value="${group.name}" />
       <small class="form-text text-muted">
         Please avoid names with offensive content, profanity, or are hard to pronounce.
         Your instructor reserves the right to change your team name.

@@ -70,6 +70,10 @@
                ${request.identity['user']}
             </a>
             <div class="dropdown-menu" aria-labelledby="user-menu-dropdown-link">
+              <a class="dropdown-item" href="${tg.url('/group')}">
+                <i class="fas fa-users fa-fw"></i>
+                My Group
+              </a>
               <a class="dropdown-item" py:if="request.identity['user'].admin"
                  href="${tg.url('/admin')}">
                 <i class="fas fa-user-secret fa-fw"></i>
