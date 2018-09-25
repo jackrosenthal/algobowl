@@ -109,9 +109,17 @@ class Competition(DeclarativeBase):
         sa.DateTime,
         sa.CheckConstraint('verification_ends > verification_begins'),
         nullable=True)
+    resolution_begins = sa.Column(
+        sa.DateTime,
+        sa.CheckConstraint('resolution_begins >= verification_ends'),
+        nullable=True)
+    resolution_ends = sa.Column(
+        sa.DateTime,
+        sa.CheckConstraint('resolution_ends > resolution_begins'),
+        nullable=True)
     open_verification_begins = sa.Column(
         sa.DateTime,
-        sa.CheckConstraint('open_verification_begins >= verification_ends'),
+        sa.CheckConstraint('open_verification_begins >= resolution_ends'),
         nullable=True)
     open_verification_ends = sa.Column(
         sa.DateTime,
@@ -147,6 +155,13 @@ class Competition(DeclarativeBase):
                      < self.verification_ends))
 
     @property
+    def resolution_open(self):
+        return (self.resolution_begins
+                and (self.resolution_begins
+                     <= datetime.datetime.now()
+                     < self.resolution_ends))
+
+    @property
     def open_verification_open(self):
         return (self.open_verification_begins
                 and (self.open_verification_begins
@@ -167,6 +182,7 @@ class Competition(DeclarativeBase):
                 < max(filter(lambda x: x, (
                     self.output_upload_ends,
                     self.verification_ends,
+                    self.resolution_ends,
                     self.open_verification_ends,
                     self.evaluation_ends))))
 
@@ -192,10 +208,6 @@ class User(DeclarativeBase):
         "Evaluation",
         back_populates="to_student",
         foreign_keys="Evaluation.to_student_id")
-
-    submitted_protests = relationship(
-        "VerificationProtest",
-        back_populates="submitter", lazy='dynamic')
 
     groups = relation(
         'Group', secondary='user_group_xref', back_populates='users')
@@ -292,7 +304,11 @@ class Output(DeclarativeBase):
         sa.Enum(VerificationStatus),
         nullable=False,
         default=VerificationStatus.waiting)
-    verification_reason = sa.Column(sa.Unicode(1000))
+    ground_truth = sa.Column(
+        sa.Enum(VerificationStatus),
+        nullable=False,
+        default=VerificationStatus.waiting)
+    use_ground_truth = sa.Column(sa.Boolean, nullable=False, default=False)
 
     input_id = sa.Column(
         sa.Integer,
@@ -306,38 +322,8 @@ class Output(DeclarativeBase):
         nullable=False)
     group = relationship("Group", back_populates="outputs")
 
-    protests = relationship("VerificationProtest",
-                            back_populates="output", lazy='dynamic')
-
     def __repr__(self):
         return "Output from [{!r}] for {!r}".format(self.group, self.input)
-
-
-class VerificationProtest(DeclarativeBase):
-    __tablename__ = 'verificationprotest'
-    db_icon = 'far fa-thumbs-down'
-
-    id = sa.Column(sa.Integer, primary_key=True)
-    correction = sa.Column(
-        sa.Enum(VerificationStatus),
-        nullable=False)
-    message = sa.Column(sa.Unicode(1000), nullable=False)
-
-    submitter_id = sa.Column(
-        sa.Integer,
-        sa.ForeignKey('user.id'),
-        nullable=False)
-    submitter = relationship("User", back_populates="submitted_protests")
-
-    output_id = sa.Column(
-        sa.Integer,
-        sa.ForeignKey('output.id'),
-        nullable=False)
-    output = relationship("Output", back_populates="protests")
-
-    def __repr__(self):
-        return "Protest {}, from [{!r}] on {!r}".format(
-            self.id, self.submitter, self.output)
 
 
 class Evaluation(DeclarativeBase):

@@ -1,4 +1,60 @@
-<div class="input-upload-stage" py:if="competition.verification_open">
-  <h1>Input Upload</h1>
-  Let's get started!
+<div class="verification-stage" py:if="competition.verification_open">
+  <?python from algobowl.model import VerificationStatus ?>
+  <h1>Verification</h1>
+  <p class="lead">
+    Download each output for your input and use your verification program
+    to determine if the solution is valid.
+  </p>
+  <py:if test="group.input is not None">
+    <p>
+      Note that a solution can be valid even if it is not optimal. Please
+      <a href="${competition.problem_statement.url}" target="_blank">
+        read the problem statement carefully</a> for a specification on the
+      validity of outputs.
+    </p>
+    <p>
+      For reference, <a href="${group.input.data.url}">here</a>
+      is the input that your group uploaded and you should verify against.
+    </p>
+    <noscript>
+      <div class="alert alert-warning">
+        <strong>Warning:</strong> This page may not work fully without JavaScript
+        enabled for this domain.
+      </div>
+    </noscript>
+    <table class="table table-striped mt-3">
+      <thead>
+        <tr>
+          <th>Output</th>
+          <th>Accept/Reject</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr py:for="output in group.input.outputs">
+          <td>
+            <a href="${output.data.url}">
+              <tt py:content="output.data.filename" />
+            </a>
+          </td>
+          <td id="verification-column-${output.id}">
+            <div py:if="output.verification is VerificationStatus.waiting" class="btn-group">
+              <button class="btn btn-success accept" data-output="${output.id}">
+                <i class="fas fa-check fa-fw"></i>
+              </button>
+              <button class="btn btn-danger reject" data-output="${output.id}">
+                <i class="fas fa-times fa-fw"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <script type="text/javascript" src="${tg.url('/assets/js/verification.js')}"></script>
+  </py:if><py:else>
+    <div class="alert alert-danger">
+      Your group did not upload an input by the deadline, and will be unable
+      to participate in the verification portion of this competition without
+      an input.
+    </div>
+  </py:else>
 </div>

@@ -7,7 +7,7 @@ from depot.io.utils import FileIntent
 
 from algobowl.lib.helpers import ftime
 from algobowl.lib.base import BaseController
-from algobowl.model import DBSession, Group, Input, Output
+from algobowl.model import DBSession, Group, Input, Output, VerificationStatus
 
 __all__ = ['GroupsController', 'GroupController']
 
@@ -89,7 +89,7 @@ class GroupController(BaseController):
         redirect(self.base_url)
 
     @expose('json')
-    def submit_output(self, to_group, output_file=None, resubmit=None):
+    def submit_output(self, to_group, output_file=None):
         to_group = DBSession.query(Group).get(to_group)
         if not to_group:
             abort(404, "No such group")
@@ -102,15 +102,12 @@ class GroupController(BaseController):
                              .filter(Output.group_id == self.group.id)
                              .filter(Output.input_id == to_group.input.id)
                              .one_or_none())
-        if resubmit is None:
-            if not comp.output_upload_open:
-                abort(403, "Output uploading has already ended")
-        else:
-            if not existing:
-                abort(403, "Reupload not valid")
-            key = tg.app_globals.fernet.decrypt(resubmit, 86400)
-            if key != b'o' + str(existing.id).encode('ascii'):
-                abort(403, "This key cannot be used to reupload")
+        if not (comp.output_upload_open
+                or (comp.resolution_open
+                    and existing is not None
+                    and existing.verification is VerificationStatus.rejected
+                    and not existing.use_ground_truth)):
+            abort(403, "Forbidden to upload this output at this time")
 
         try:
             contents = file_normalize(output_file.file.read())
@@ -137,6 +134,22 @@ class GroupController(BaseController):
             DBSession.delete(existing)
         output = Output(data=f, group=self.group, input=to_group.input,
                         score=score)
+
+        verif_mod = self.group.competition.output_verifier.module
+        try:
+            verif_mod.verify(StringIO(contents))
+        except verif_mod.VerificationError:
+            output.ground_truth = VerificationStatus.rejected
+        except Exception:
+            output.ground_truth = VerificationStatus.waiting
+        else:
+            output.ground_truth = VerificationStatus.accepted
+            if comp.resolution_open:
+                self.group.penalty += 1
+
+        if comp.resolution_open:
+            output.use_ground_truth = True
+
         DBSession.add(output)
         DBSession.flush()
 
