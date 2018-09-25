@@ -1,4 +1,4 @@
-<div class="input-upload-stage" py:if="competition.output_upload_open">
+<div class="output-upload-stage" py:if="competition.output_upload_open">
   <h1>Output Upload</h1>
   <p class="lead">
     Download the inputs from the other teams and run them on your program.
@@ -35,15 +35,15 @@
           <td>
             <form enctype="multipart/form-data" class="form-inline">
               <div class="form-group">
-                <input type="file" class="form-control-file" id="file-input-i${g.id}" />
+                <input type="file" class="form-control-file output-upload-control" id="file-input-${g.id}" />
               </div>
             </form>
           </td>
-          <td id="download-link-i${g.id}">
+          <td id="download-link-${g.id}">
             <py:if test="g.input.id in submitted_outputs.keys()">
               <a href="${submitted_outputs[g.input.id].data.url}"
                  class="btn btn-info">
-                <i class="fas fa-file-upload fa-fw"></i>
+                <i class="fas fa-file-download fa-fw"></i>
                 Download Submission
               </a>
             </py:if><py:else>
@@ -56,4 +56,5 @@
       </py:for>
     </tbody>
   </table>
+  <script type="text/javascript" src="${tg.url('/assets/js/output_upload.js')}"></script>
 </div>

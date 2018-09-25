@@ -1,3 +1,5 @@
+import datetime
+import tg
 from io import StringIO, BytesIO
 from tg import expose, redirect, url, request, abort, flash
 from tg.predicates import not_anonymous
@@ -5,7 +7,7 @@ from depot.io.utils import FileIntent
 
 from algobowl.lib.helpers import ftime
 from algobowl.lib.base import BaseController
-from algobowl.model import DBSession, Group, Input
+from algobowl.model import DBSession, Group, Input, Output
 
 __all__ = ['GroupsController', 'GroupController']
 
@@ -85,6 +87,60 @@ class GroupController(BaseController):
               .format(ftime(self.group.competition.output_upload_begins)),
               'success')
         redirect(self.base_url)
+
+    @expose('json')
+    def submit_output(self, to_group, output_file=None, resubmit=None):
+        to_group = DBSession.query(Group).get(to_group)
+        if not to_group:
+            abort(404, "No such group")
+        if to_group.competition_id != self.group.competition_id:
+            abort(403, "Cannot submit to a group in another competition")
+        if not hasattr(output_file, "file"):
+            abort(400, "Must include file in submission")
+        comp = self.group.competition
+        existing = (DBSession.query(Output)
+                             .filter(Output.group_id == self.group.id)
+                             .filter(Output.input_id == to_group.input.id)
+                             .one_or_none())
+        if resubmit is None:
+            if not comp.output_upload_open:
+                abort(403, "Output uploading has already ended")
+        else:
+            if not existing:
+                abort(403, "Reupload not valid")
+            key = tg.app_globals.fernet.decrypt(resubmit, 86400)
+            if key != b'o' + str(existing.id).encode('ascii'):
+                abort(403, "This key cannot be used to reupload")
+
+        try:
+            contents = file_normalize(output_file.file.read())
+        except UnicodeDecodeError:
+            return {'status': 'error',
+                    'msg': 'Output contains invalid characters.'}
+
+        if len(contents) > 1E6:
+            return {'status': 'error',
+                    'msg': 'Output exceeds maximum size.'}
+
+        try:
+            score, _, _ = contents.partition('\n')
+            score = int(score)
+        except ValueError:
+            return {'status': 'error',
+                    'msg': 'First line must only contain an integer.'}
+
+        f = FileIntent(
+            BytesIO(contents.encode('utf-8')),
+            'output_from_{}_to_{}.txt'.format(self.group.id, to_group.id),
+            'application/octet-stream')
+        if existing:
+            DBSession.delete(existing)
+        output = Output(data=f, group=self.group, input=to_group.input,
+                        score=score)
+        DBSession.add(output)
+        DBSession.flush()
+
+        return {'status': 'success', 'url': output.data.url}
 
 
 class GroupsController(BaseController):
