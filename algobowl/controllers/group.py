@@ -1,5 +1,6 @@
+import zipfile
 from io import StringIO, BytesIO
-from tg import expose, redirect, url, request, abort, flash
+from tg import expose, redirect, url, request, response, abort, flash
 from tg.predicates import not_anonymous
 from depot.io.utils import FileIntent
 
@@ -99,7 +100,7 @@ class GroupController(BaseController):
         existing = (DBSession.query(Output)
                              .filter(Output.group_id == self.group.id)
                              .filter(Output.input_id == to_group.input.id)
-                             .filter(Output.active is True)
+                             .filter(Output.active == True)
                              .one_or_none())
         if not (comp.output_upload_open
                 or (comp.resolution_open
@@ -138,7 +139,7 @@ class GroupController(BaseController):
 
         verif_mod = self.group.competition.output_verifier.module
         try:
-            verif_mod.verify(StringIO(contents))
+            verif_mod.verify(to_group.input.data.file, StringIO(contents))
         except verif_mod.VerificationError:
             output.ground_truth = VerificationStatus.rejected
         except Exception:
@@ -179,6 +180,42 @@ class GroupController(BaseController):
                              .join(Output.input)
                              .filter(Input.group_id == self.group.id))}
         return {'status': 'success', 'data': data}
+
+    @expose()
+    def verification_outputs(self):
+        if not self.group.competition.verification_open:
+            abort(403, "This file is only available during verification.")
+        f = BytesIO()
+        archive = zipfile.ZipFile(f, mode='w', compresslevel=6)
+        outputs = (DBSession.query(Output)
+                            .join(Output.input)
+                            .filter(Input.group_id == self.group.id))
+        for output in outputs:
+            archive.writestr(
+                'verification_outputs/{}'.format(output.data.filename),
+                output.data.file.read())
+        archive.close()
+        f.seek(0)
+        response.content_type = 'application/zip'
+        return f.read()
+
+    @expose('json')
+    def resolution_protest(self, output_id):
+        if not self.group.competition.resolution_open:
+            return {'status': 'error',
+                    'msg': 'Resolution stage is not open.'}
+        output = DBSession.query(Output).get(output_id)
+        if not output or output.group_id != self.group.id:
+            abort(404)
+        if not output.active:
+            return {'status': 'error',
+                    'msg': 'Output has been replaced; cannot protest.'}
+        if output.use_ground_truth:
+            return {'status': 'error',
+                    'msg': 'Output has already been protested.'}
+        assert output.original
+        output.use_ground_truth = True
+        return {'status': 'success'}
 
 
 class GroupsController(BaseController):

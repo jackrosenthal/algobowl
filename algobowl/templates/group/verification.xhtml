@@ -16,6 +16,11 @@
       For reference, <a href="${group.input.data.url}">here</a>
       is the input that your group uploaded and you should verify against.
     </p>
+    <a class="btn btn-primary"
+       href="${tg.url('/group/{}/verification_outputs.zip'.format(group.id))}">
+      <i class="fas fa-file-archive fa-fw fa-lg"></i>
+      Download Outputs as a ZIP Archive
+    </a>
     <noscript>
       <div class="alert alert-warning">
         <strong>Warning:</strong> This page may not work fully without JavaScript

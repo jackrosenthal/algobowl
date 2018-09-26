@@ -10,6 +10,7 @@ stage = 'Inactive'
 for st, open in (('Input Upload', competition.input_upload_open),
                  ('Output Upload', competition.output_upload_open),
                  ('Verification', competition.verification_open),
+                 ('Resolution', competition.resolution_open),
                  ('Evaluation', competition.evaluation_open)):
     pv += 20
     if open:
@@ -30,6 +31,7 @@ else:
       <py:include href="algobowl.templates.group.input_upload" />
       <py:include href="algobowl.templates.group.output_upload" />
       <py:include href="algobowl.templates.group.verification" />
+      <py:include href="algobowl.templates.group.resolution" />
       <py:include href="algobowl.templates.group.evaluation" />
     </div>
   </body>

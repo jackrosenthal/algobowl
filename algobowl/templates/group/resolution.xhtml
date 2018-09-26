@@ -1,0 +1,98 @@
+<div class="resolution-stage" py:if="competition.resolution_open">
+  <?python from algobowl.model import VerificationStatus ?>
+  <h1>Resolution</h1>
+  <p class="lead">
+    Resolve rejected outputs by uploading a new version or protesting.
+  </p>
+  <ul>
+    <li>
+      If you <strong>upload a new version</strong>, the new version will
+      be verified by the instructor. If it is valid, it will cause your
+      group <strong>one penalty point</strong>. If it is invalid, it will
+      remain permanently rejected, but no penalty points will occur.
+    </li>
+    <li>
+      If you <strong>protest the verification</strong>, you indicate that
+      the output that was originally uploaded is completely valid. The
+      instructor will verify your output, and the instructor's verification
+      will take rule. You will not have a chance to upload a new version
+      if it was rejected by the instructor. No penalty points will occur for
+      protesting during the resolution stage.
+    </li>
+  </ul>
+  <p>
+    You may also choose to upload a new version for accepted outputs at this
+    time. The reason you may wish to do this is if you know the verification
+    was a false-acceptance, it will reduce the risk of being rejected during
+    the open verification stage. One penalty point will occur for your upload
+    if it is accepted, and the verification will be done by the instructor.
+  </p>
+  <div class="alert alert-danger">
+    <strong>Stop!</strong> Do not click any buttons in the table below until
+    you have read the text above.
+  </div>
+  <noscript>
+    <div class="alert alert-warning">
+      <strong>Warning:</strong> This page may not work fully without JavaScript
+      enabled for this domain.
+    </div>
+  </noscript>
+  <table class="table table-striped mt-3">
+    <thead>
+      <tr>
+        <th>Input</th>
+        <th>Your Output</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr py:for="output in group.outputs">
+        <td>
+          <a href="${output.input.data.url}">
+            <tt py:content="output.input.data.filename" />
+          </a>
+        </td>
+        <td>
+          <a href="${output.data.url}">
+            <tt py:content="output.data.filename" />
+          </a>
+        </td>
+        <td>
+          <py:if test="output.active">
+            <py:if test="output.use_ground_truth">
+              ${str(output.ground_truth).title()} by instructor
+            </py:if><py:else>
+              ${str(output.verification).title()}
+            </py:else>
+          </py:if><py:else>
+            Replaced
+          </py:else>
+        </td>
+        <td>
+          <py:if test="output.active and output.original and not output.use_ground_truth">
+            <input type="file"
+                   class="hidden-uploader"
+                   data-togroup="${output.input.group_id}"
+                   style="position: fixed; top: -100em"
+                   id="file-upload-${output.id}" />
+            <button class="btn btn-info upload-new"
+                    id="upload-new-${output.id}"
+                    data-output="${output.id}">
+              <i class="fas fa-file-upload fa-fw"></i>
+              Upload New Output
+            </button>
+            <button class="btn btn-danger protest"
+                    id="protest-${output.id}"
+                    py:if="output.verification is not VerificationStatus.accepted"
+                    data-output="${output.id}">
+              <i class="far fa-thumbs-down fa-fw"></i>
+              Protest
+            </button>
+          </py:if>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <script type="text/javascript" src="${tg.url('/assets/js/resolution.js')}"></script>
+</div>
