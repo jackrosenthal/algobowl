@@ -8,12 +8,21 @@
         <h1 class="display-4">Welcome to AlgoBOWL</h1>
         <p class="lead">Students compete in groups to create the best heuristic to an NP-hard problem.</p>
         <hr />
-        <div class="compete-link text-center">
-          <h4 class="font-weight-light">Are you enrolled?</h4>
-          <a class="btn btn-primary btn-lg" href="${tg.url('/group')}" role="button">
-            <i class="fas fa-users fa-lg"></i>
-            Enter the Competition
-          </a>
+        <div class="compete-link row">
+          <div class="col-sm text-center">
+            <h4 class="font-weight-light">Are you enrolled?</h4>
+            <a class="btn btn-primary btn-lg" href="${tg.url('/group')}" role="button">
+              <i class="fas fa-users fa-fw fa-lg"></i>
+              Enter the Competition
+            </a>
+          </div>
+          <div class="col-sm text-center">
+            <h4 class="font-weight-light">Came to watch?</h4>
+            <a class="btn btn-primary btn-lg" href="${tg.url('/competition')}" role="button">
+              <i class="fas fa-trophy fa-fw fa-lg"></i>
+              View the Leaderboards
+            </a>
+          </div>
         </div>
       </div>
       <h1>How it Works</h1>
@@ -66,28 +75,17 @@
           </div>
         </div>
       </div>
-      <p class="mt-sm-3">
-        If one group rejects another group's output, the rejected group will
-        have 24-hours to either upload a new output, or protest the
-        rejection. If the new output is accepted by the professor, they will
-        get to keep it, but it will cost a penalty point.
-      </p>
-
-      <p>
-        After this 24-hour period, the following stages open:
-      </p>
-      <div class="row">
+      <div class="row mt-3">
         <div class="col-md">
           <div class="card">
             <div class="card-body">
               <h5 class="card-title">
-                Stage 4: Open Verification
+                Stage 4: Resolution
               </h5>
               <p class="card-text">
-                <i class="fas fa-check-double fa-fw fa-4x fa-pull-left"></i>
-                All outputs for all inputs become available. Some teams may wish
-                to run their verifier on the outputs to ensure there were no
-                false-positive verifications.
+                <i class="fas fa-sad-tear fa-fw fa-4x fa-pull-left"></i>
+                Groups with rejections may upload new outputs for
+                a penalty, or protest rejections.
               </p>
             </div>
           </div>
@@ -96,12 +94,26 @@
           <div class="card">
             <div class="card-body">
               <h5 class="card-title">
-                Stage 5: Evaluation
+                Stage 5: Open Verification
+              </h5>
+              <p class="card-text">
+                <i class="fas fa-check-double fa-fw fa-4x fa-pull-left"></i>
+                All outputs for all inputs become available, and teams may
+                protest any verification.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md">
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">
+                Stage 6: Evaluation
               </h5>
               <p class="card-text">
                 <i class="fas fa-sliders-h fa-fw fa-4x fa-pull-left"></i>
-                Groups submit evaluations of their teammates effort
-                contributions to be considered in their grade.
+                Everyone evaluates their teammates effort to be considered
+                in their grade.
               </p>
             </div>
           </div>
