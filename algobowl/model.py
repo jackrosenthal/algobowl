@@ -228,7 +228,6 @@ class Group(DeclarativeBase):
 
     id = sa.Column(sa.Integer, primary_key=True)
     name = sa.Column(sa.Unicode(100), nullable=True)
-    penalty = sa.Column(sa.Integer, nullable=False, default=0)
 
     competition_id = sa.Column(
         sa.Integer,
@@ -241,6 +240,9 @@ class Group(DeclarativeBase):
 
     users = relation('User', secondary='user_group_xref',
                      back_populates='groups', lazy='dynamic')
+
+    protests = relationship("Protest",
+                            back_populates="submitter", lazy='dynamic')
 
     evaluations = relationship(
         "Evaluation",
@@ -308,6 +310,9 @@ class Output(DeclarativeBase):
         sa.Enum(VerificationStatus),
         nullable=False,
         default=VerificationStatus.waiting)
+
+    active = sa.Column(sa.Boolean, nullable=False, default=True)
+    original = sa.Column(sa.Boolean, nullable=False, default=True)
     use_ground_truth = sa.Column(sa.Boolean, nullable=False, default=False)
 
     input_id = sa.Column(
@@ -322,8 +327,42 @@ class Output(DeclarativeBase):
         nullable=False)
     group = relationship("Group", back_populates="outputs")
 
+    protests = relationship("Protest",
+                            back_populates="output", lazy='dynamic')
+
     def __repr__(self):
         return "Output from [{!r}] for {!r}".format(self.group, self.input)
+
+
+class Protest(DeclarativeBase):
+    """
+    A protest submitted during output verification. The same term
+    (protest) is overloaded for the resolution stage and *does not*
+    create one of these. In the resolution stage, the protest feature
+    simply reveals the ground truth and disables reupload.
+    """
+    __tablename__ = 'protest'
+    db_icon = 'far fa-thumbs-down'
+
+    id = sa.Column(sa.Integer, primary_key=True)
+    message = sa.Column(sa.Unicode(1000), nullable=False)
+    accepted = sa.Column(sa.Boolean, nullable=False)
+
+    submitter_id = sa.Column(
+        sa.Integer,
+        sa.ForeignKey('group.id'),
+        nullable=False)
+    submitter = relationship("Group", back_populates="protests")
+
+    output_id = sa.Column(
+        sa.Integer,
+        sa.ForeignKey('output.id'),
+        nullable=False)
+    output = relationship("Output", back_populates="protests")
+
+    def __repr__(self):
+        return "Protest {}, from [{!r}] on {!r}".format(
+            self.id, self.submitter, self.output)
 
 
 class Evaluation(DeclarativeBase):

@@ -101,11 +101,11 @@ class GroupController(BaseController):
         existing = (DBSession.query(Output)
                              .filter(Output.group_id == self.group.id)
                              .filter(Output.input_id == to_group.input.id)
+                             .filter(Output.active is True)
                              .one_or_none())
         if not (comp.output_upload_open
                 or (comp.resolution_open
                     and existing is not None
-                    and existing.verification is VerificationStatus.rejected
                     and not existing.use_ground_truth)):
             abort(403, "Forbidden to upload this output at this time")
 
@@ -131,9 +131,12 @@ class GroupController(BaseController):
             'output_from_{}_to_{}.txt'.format(self.group.id, to_group.id),
             'application/octet-stream')
         if existing:
-            DBSession.delete(existing)
+            if comp.resolution_open:
+                existing.active = False
+            else:
+                DBSession.delete(existing)
         output = Output(data=f, group=self.group, input=to_group.input,
-                        score=score)
+                        score=score, original=comp.output_upload_open)
 
         verif_mod = self.group.competition.output_verifier.module
         try:
@@ -144,8 +147,6 @@ class GroupController(BaseController):
             output.ground_truth = VerificationStatus.waiting
         else:
             output.ground_truth = VerificationStatus.accepted
-            if comp.resolution_open:
-                self.group.penalty += 1
 
         if comp.resolution_open:
             output.use_ground_truth = True
