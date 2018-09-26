@@ -1,5 +1,3 @@
-import datetime
-import tg
 from io import StringIO, BytesIO
 from tg import expose, redirect, url, request, abort, flash
 from tg.predicates import not_anonymous
@@ -155,6 +153,32 @@ class GroupController(BaseController):
         DBSession.flush()
 
         return {'status': 'success', 'url': output.data.url}
+
+    @expose('json')
+    def submit_verification(self, output_id, status):
+        output = DBSession.query(Output).get(output_id)
+        if not output or output.input.group_id != self.group.id:
+            abort(404)
+        try:
+            status = VerificationStatus[status]
+        except KeyError:
+            abort(404)
+        if not self.group.competition.verification_open:
+            return {'status': 'error', 'msg': 'Verification closed'}
+        assert output.original is True
+        assert output.active is True
+        assert output.use_ground_truth is False
+        output.verification = status
+        return self.verification_data()
+
+    @expose('json')
+    def verification_data(self):
+        data = {k: str(v)
+                for k, v in (DBSession
+                             .query(Output.id, Output.verification)
+                             .join(Output.input)
+                             .filter(Input.group_id == self.group.id))}
+        return {'status': 'success', 'data': data}
 
 
 class GroupsController(BaseController):

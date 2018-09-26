@@ -37,11 +37,19 @@
             </a>
           </td>
           <td id="verification-column-${output.id}">
-            <div py:if="output.verification is VerificationStatus.waiting" class="btn-group">
-              <button class="btn btn-success accept" data-output="${output.id}">
+            <div class="btn-group">
+              <button class="btn btn-success submit-verif"
+                      id="accepted-button-${output.id}"
+                      py:attrs="{'disabled': 'disabled'} if output.verification is VerificationStatus.accepted else {}"
+                      data-status="accepted"
+                      data-output="${output.id}">
                 <i class="fas fa-check fa-fw"></i>
               </button>
-              <button class="btn btn-danger reject" data-output="${output.id}">
+              <button class="btn btn-danger submit-verif"
+                      id="rejected-button-${output.id}"
+                      py:attrs="{'disabled': 'disabled'} if output.verification is VerificationStatus.rejected else {}"
+                      data-status="rejected"
+                      data-output="${output.id}">
                 <i class="fas fa-times fa-fw"></i>
               </button>
             </div>

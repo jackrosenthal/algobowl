@@ -32,6 +32,9 @@ class VerificationStatus(enum.Enum):
     accepted = 1
     rejected = 2
 
+    def __str__(self):
+        return self.name
+
 
 class UploadedPythonModule(UploadedFile):
     module_cache = WeakValueDictionary()
