@@ -1,16 +1,126 @@
 import zipfile
 import datetime
 from io import BytesIO
+from collections import namedtuple, defaultdict
 from tg import expose, abort, request, response
+from sqlalchemy.sql.expression import case
 from algobowl.lib.base import BaseController
-from algobowl.model import DBSession, Competition, Input, Group
+from algobowl.model import (DBSession, Competition, Input, Output, Group,
+                            VerificationStatus)
 
 __all__ = ['CompetitionsController', 'CompetitionController']
+
+
+ScoreTuple = namedtuple('ScoreTuple', ['score', 'verification', 'rank'])
+
+
+class GroupEntry:
+    def __init__(self):
+        self.reject_count = 0
+        self.sum_of_ranks = 0
+        self.penalties = 0
+        self.place = 1
+        self.input_ranks = {}
+
+    @property
+    def score(self):
+        return self.sum_of_ranks + self.penalties
+
+    def __lt__(self, other):
+        return ((self.reject_count, self.score)
+                < (other.reject_count, other.score))
+
+    def to_dict(self):
+        return {'reject_count': self.reject_count,
+                'sum_of_ranks': self.sum_of_ranks,
+                'penalties': self.penalties,
+                'score': self.score,
+                'place': self.place,
+                'input_ranks':
+                    {k.id: (v[0], str(v[1]), v[2]) for k, v in self.input_ranks.items()}}
 
 
 class CompetitionController(BaseController):
     def __init__(self, competition):
         self.competition = competition
+
+    @expose('algobowl.templates.competition.rankings')
+    @expose('json')
+    def index(self, ground_truth=False):
+        user = request.identity and request.identity['user']
+        now = datetime.datetime.now()
+        admin = user and user.admin
+        comp = self.competition
+        show_scores = admin or now >= comp.open_verification_begins
+
+        if not admin and now < comp.output_upload_begins:
+            abort(403, "Rankings are not available yet")
+
+        if ground_truth and not admin:
+            abort(403, "You do not have permission for this option")
+
+        if ground_truth:
+            verification_column = Output.ground_truth
+        else:
+            verification_column = case(
+                [(Output.use_ground_truth, Output.ground_truth)],
+                else_=Output.verification)
+
+        groups = defaultdict(GroupEntry)
+        ir_query = (
+            DBSession.query(Input, Group,
+                            Output.score, verification_column)
+                     .join(Input.outputs)
+                     .join(Output.group)
+                     .filter(Group.competition_id == comp.id)
+                     .filter(Output.active == True)
+                     .order_by(Input.group_id,
+                               verification_column
+                                    == VerificationStatus.rejected,
+                               Output.score))
+
+        inputs = []
+        last_iput = None
+        for iput, ogroup, score, verif in ir_query:
+            if iput is not last_iput:
+                inputs.append(iput)
+                potential_rank = 1
+                last_rank = 0
+                last_score = None
+            shown_score = score
+            if not show_scores:
+                shown_score = None
+            if verif is VerificationStatus.rejected:
+                rank = None
+                shown_score = None
+            elif score == last_score:
+                rank = last_rank
+            else:
+                rank = potential_rank
+            groups[ogroup].input_ranks[iput] = ScoreTuple(
+                shown_score, verif, rank)
+            if verif is VerificationStatus.rejected:
+                groups[ogroup].reject_count += 1
+            else:
+                groups[ogroup].sum_of_ranks += rank
+            potential_rank += 1
+            last_iput = iput
+            last_rank = rank
+            last_score = score
+
+        # compute places for groups
+        for this_ent in groups.values():
+            for other_ent in groups.values():
+                if (this_ent.reject_count > other_ent.reject_count
+                        or this_ent.score > other_ent.score):
+                    this_ent.place += 1
+
+        if request.response_type == 'application/json':
+            return {'status': 'success',
+                    'groups': {k.id: v.to_dict() for k, v in groups.items()}}
+        else:
+            return {'groups': groups, 'competition': comp, 'inputs': inputs}
+
 
     @expose()
     def all_inputs(self):

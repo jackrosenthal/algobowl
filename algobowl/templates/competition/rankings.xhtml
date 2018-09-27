@@ -1,0 +1,52 @@
+<html py:extends="master.xhtml" py:strip="True">
+  <py:block name="title">
+    Competitions List
+  </py:block>
+  <body py:block="body" py:strip="True">
+    <?python from algobowl.model import VerificationStatus ?>
+    <div class="container">
+      <h1>Rankings: ${competition.name}</h1>
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Group</th>
+            <th py:for="iput in inputs">
+              <a href="${iput.data.url}"
+                 py:content="iput.group_id"></a>
+            </th>
+            <th>Sum of Ranks</th>
+            <th>Penalty</th>
+            <th>Place</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr py:for="group, ent in sorted(groups.items(), key=lambda t: t[1])">
+            <td py:content="group.name"></td>
+            <td py:for="iput in inputs">
+              <py:if test="iput in ent.input_ranks.keys()">
+                <py:with vars="st=ent.input_ranks[iput]">
+                  <py:if test="st.verification is VerificationStatus.rejected">
+                    R
+                  </py:if><py:else>
+                    ${st.rank}
+                    <py:if test="st.verification is VerificationStatus.waiting">
+                      (W)
+                    </py:if>
+                    ${' ({:.0f})'.format(st.score) if st.score is not None else ''}
+                  </py:else>
+                </py:with>
+              </py:if><py:else>
+                N
+              </py:else>
+            </td>
+            <td py:content="ent.sum_of_ranks"></td>
+            <td py:content="ent.penalties"></td>
+            <td>
+              ${ent.place} (${ent.score})
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </body>
+</html>
