@@ -121,7 +121,8 @@ class CompetitionController(BaseController):
             return {'status': 'success',
                     'groups': {k.id: v.to_dict() for k, v in groups.items()}}
         else:
-            return {'groups': groups, 'competition': comp, 'inputs': inputs}
+            return {'groups': groups, 'competition': comp, 'inputs': inputs,
+                    'ground_truth': ground_truth}
 
     @expose()
     def all_inputs(self):

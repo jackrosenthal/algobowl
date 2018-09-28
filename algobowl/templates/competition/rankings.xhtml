@@ -5,7 +5,27 @@
   <body py:block="body" py:strip="True">
     <?python from algobowl.model import VerificationStatus ?>
     <div class="container">
-      <h1>Rankings: ${competition.name}</h1>
+      <h1 class="mb-3">
+        Rankings: ${competition.name}
+        <py:if test="ground_truth">
+          (Ground Truth)
+        </py:if>
+      </h1>
+      <div py:if="request.identity and request.identity['user'].admin"
+           class="admin-rankings-controls mb-3">
+        <a href="?ground_truth=t"
+           class="btn btn-info"
+           py:if="not ground_truth">
+          <i class="fas fa-user-secret fa-fw"></i>
+          View Ground Truth
+        </a>
+        <a href="?"
+           class="btn btn-info"
+           py:if="ground_truth">
+          <i class="fas fa-user-check fa-fw"></i>
+          View Student Verifications
+        </a>
+      </div>
       <table class="table table-striped">
         <thead>
           <tr>
@@ -21,7 +41,7 @@
         </thead>
         <tbody>
           <tr py:for="group, ent in sorted(groups.items(), key=lambda t: t[1])">
-            <td py:content="group.name"></td>
+            <td py:content="group.name" class="truncate-small"></td>
             <td py:for="iput in inputs">
               <py:if test="iput in ent.input_ranks.keys()">
                 <py:with vars="st=ent.input_ranks[iput]">
