@@ -1,4 +1,5 @@
 import zipfile
+import re
 from io import StringIO, BytesIO
 from tg import expose, redirect, url, request, response, abort, flash
 from tg.predicates import not_anonymous
@@ -10,11 +11,16 @@ from algobowl.model import DBSession, Group, Input, Output, VerificationStatus
 
 __all__ = ['GroupsController', 'GroupController']
 
+newline_p = re.compile(br'\s*\n')
+spacesep_p = re.compile(br'[ \t\v\f]+')
+
 
 def file_normalize(contents: bytes) -> str:
-    contents = contents.replace(b'\r\n', b'\n').replace(b'\r', b'\n')
-    if not contents.endswith(b'\n'):
+    if not (contents.endswith(b'\n') or contents.endswith(b'\r')):
         contents += b'\n'
+    contents = newline_p.sub(b'\n', contents)
+    contents = contents.replace(b'\r', b'\n').replace(b'\0', b'')
+    contents = spacesep_p.sub(b' ', contents)
     return contents.decode('utf-8')
 
 
