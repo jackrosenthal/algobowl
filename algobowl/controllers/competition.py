@@ -166,8 +166,10 @@ class CompetitionsController(BaseController):
         active = (DBSession.query(Competition)
                            .filter(Competition.input_upload_begins <= now)
                            .filter(Competition.evaluation_ends > now)
-                           .order_by(Competition.evaluation_ends))
+                           .order_by(Competition.evaluation_ends)
+                           .all())
         historical = (DBSession.query(Competition)
                                .filter(Competition.evaluation_ends < now)
-                               .order_by(Competition.evaluation_ends))
+                               .order_by(Competition.evaluation_ends)
+                               .all())
         return {'active': active, 'historical': historical}

@@ -10,16 +10,16 @@
              class="list-group-item"
              href="${tg.url('/competition/{}'.format(c.id))}">
              <h4>${c.name}</h4>
-             <p>${c.input_upload_begins} — ${c.evaluation_ends}</p>
+             <span>${h.ftime(c.input_upload_begins, c.evaluation_ends)}</span>
           </a>
         </div>
       </py:def>
       <py:if test="active">
-        <h1>Active Competitions</h1>
+        <h1 class="mb-2">Active Competitions</h1>
         ${comp_list(active)}
       </py:if>
       <py:if test="historical">
-        <h1>Historical Competitions</h1>
+        <h1 class="mt-3 mb-2">Historical Competitions</h1>
         ${comp_list(historical)}
       </py:if>
     </div>
