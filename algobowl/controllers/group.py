@@ -192,7 +192,7 @@ class GroupController(BaseController):
         if not self.group.competition.verification_open:
             abort(403, "This file is only available during verification.")
         f = BytesIO()
-        archive = zipfile.ZipFile(f, mode='w', compresslevel=6)
+        archive = zipfile.ZipFile(f, mode='w')
         outputs = (DBSession.query(Output)
                             .join(Output.input)
                             .filter(Input.group_id == self.group.id))

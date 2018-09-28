@@ -133,7 +133,7 @@ class CompetitionController(BaseController):
             abort(403, "Input downloading is not available until the output"
                        " upload stage begins.")
         f = BytesIO()
-        archive = zipfile.ZipFile(f, mode='w', compresslevel=6)
+        archive = zipfile.ZipFile(f, mode='w')
         inputs = (DBSession.query(Input)
                            .join(Input.group)
                            .filter(Group.competition_id == comp.id))
