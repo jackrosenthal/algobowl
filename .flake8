@@ -1,0 +1,6 @@
+[flake8]
+ignore = W503,E712
+exclude = .git,__pycache__,build,dist
+extension =
+    MC1 = flake8-pep3101
+    MC2 = pep8-naming

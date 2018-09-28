@@ -2,7 +2,7 @@ import zipfile
 import datetime
 from io import BytesIO
 from collections import namedtuple, defaultdict
-from tg import expose, abort, request, response
+from tg import expose, abort, request, response, flash, redirect
 from sqlalchemy.sql.expression import case
 from algobowl.lib.base import BaseController
 from algobowl.model import (DBSession, Competition, Input, Output, Group,
@@ -37,7 +37,8 @@ class GroupEntry:
                 'score': self.score,
                 'place': self.place,
                 'input_ranks':
-                    {k.id: (v[0], str(v[1]), v[2]) for k, v in self.input_ranks.items()}}
+                    {k.id: (v[0], str(v[1]), v[2])
+                     for k, v in self.input_ranks.items()}}
 
 
 class CompetitionController(BaseController):
@@ -54,7 +55,8 @@ class CompetitionController(BaseController):
         show_scores = admin or now >= comp.open_verification_begins
 
         if not admin and now < comp.output_upload_begins:
-            abort(403, "Rankings are not available yet")
+            flash("Rankings are not available yet", "info")
+            redirect("/competition")
 
         if ground_truth and not admin:
             abort(403, "You do not have permission for this option")
@@ -76,7 +78,7 @@ class CompetitionController(BaseController):
                      .filter(Output.active == True)
                      .order_by(Input.group_id,
                                verification_column
-                                    == VerificationStatus.rejected,
+                               == VerificationStatus.rejected,
                                Output.score))
 
         inputs = []
@@ -120,7 +122,6 @@ class CompetitionController(BaseController):
                     'groups': {k.id: v.to_dict() for k, v in groups.items()}}
         else:
             return {'groups': groups, 'competition': comp, 'inputs': inputs}
-
 
     @expose()
     def all_inputs(self):
