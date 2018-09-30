@@ -4,6 +4,18 @@
   </py:block>
   <body py:block="body" py:strip="True">
     <?python from algobowl.model import VerificationStatus ?>
+
+    <?python
+def cell_color(iput, ent):
+    if iput not in ent.input_ranks.keys():
+        return "bg-warning"
+    return {
+        VerificationStatus.accepted: "bg-success text-light",
+        VerificationStatus.rejected: "bg-danger text-light",
+        VerificationStatus.waiting: "",
+    }[ent.input_ranks[iput].verification]
+    ?>
+
     <div class="container">
       <h1 class="mb-3">
         Rankings: ${competition.name}
@@ -34,7 +46,7 @@
               <a href="${iput.data.url}"
                  py:content="iput.group_id"></a>
             </th>
-            <th>Sum of Ranks</th>
+            <th>Σ Ranks</th>
             <th>Penalty</th>
             <th>Place</th>
           </tr>
@@ -42,17 +54,16 @@
         <tbody>
           <tr py:for="group, ent in sorted(groups.items(), key=lambda t: t[1])">
             <td py:content="group.name" class="truncate-small"></td>
-            <td py:for="iput in inputs">
+            <td py:for="iput in inputs" class="${cell_color(iput, ent)}">
               <py:if test="iput in ent.input_ranks.keys()">
                 <py:with vars="st=ent.input_ranks[iput]">
                   <py:if test="st.verification is VerificationStatus.rejected">
                     R
                   </py:if><py:else>
                     ${st.rank}
-                    <py:if test="st.verification is VerificationStatus.waiting">
-                      (W)
-                    </py:if>
-                    ${' ({:.0f})'.format(st.score) if st.score is not None else ''}
+                    <small py:if="st.score is not None" class="input-score">
+                      (${'{:.0f}'.format(st.score)})
+                    </small>
                   </py:else>
                 </py:with>
               </py:if><py:else>
@@ -62,7 +73,13 @@
             <td py:content="ent.sum_of_ranks"></td>
             <td py:content="ent.penalties"></td>
             <td>
-              ${ent.place} (${ent.reject_count}/${ent.score})
+              ${ent.place}
+              <small class="score-rejects-total" py:if="ent.reject_count">
+                (${ent.score}+${ent.reject_count}R)
+              </small>
+              <small class="score-rejects-total" py:if="not ent.reject_count">
+                (${ent.score})
+              </small>
             </td>
           </tr>
         </tbody>
