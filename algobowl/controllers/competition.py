@@ -27,8 +27,15 @@ class GroupEntry:
         return self.sum_of_ranks + self.penalties
 
     def __lt__(self, other):
-        return ((self.reject_count, self.score)
-                < (other.reject_count, other.score))
+        if self.reject_count < other.reject_count:
+            return True
+        if self.reject_count > other.reject_count:
+            return False
+        return self.score < other.score
+
+    def __eq__(self, other):
+        return (self.reject_count == other.reject_count
+                and self.score == other.score)
 
     def to_dict(self):
         return {'reject_count': self.reject_count,
@@ -70,8 +77,8 @@ class CompetitionController(BaseController):
 
         groups = defaultdict(GroupEntry)
         ir_query = (
-            DBSession.query(Input, Group,
-                            Output.score, verification_column)
+            DBSession.query(Input, Group, Output.score, Output.original,
+                            verification_column)
                      .join(Input.outputs)
                      .join(Output.group)
                      .filter(Group.competition_id == comp.id)
@@ -83,7 +90,7 @@ class CompetitionController(BaseController):
 
         inputs = []
         last_iput = None
-        for iput, ogroup, score, verif in ir_query:
+        for iput, ogroup, score, original, verif in ir_query:
             if iput is not last_iput:
                 inputs.append(iput)
                 potential_rank = 1
@@ -105,16 +112,26 @@ class CompetitionController(BaseController):
                 groups[ogroup].reject_count += 1
             else:
                 groups[ogroup].sum_of_ranks += rank
+
+            # add accepted resubmissions to penalty
+            if verif is VerificationStatus.accepted and not original:
+                groups[ogroup].penalties += 1
+
             potential_rank += 1
             last_iput = iput
             last_rank = rank
             last_score = score
 
+        # no submission? this adds to reject count
+        for group in groups.values():
+            for iput in inputs:
+                if iput not in group.input_ranks.keys():
+                    group.reject_count += 1
+
         # compute places for groups
         for this_ent in groups.values():
             for other_ent in groups.values():
-                if (this_ent.reject_count > other_ent.reject_count
-                        or this_ent.score > other_ent.score):
+                if other_ent < this_ent:
                     this_ent.place += 1
 
         if request.response_type == 'application/json':
