@@ -20,6 +20,10 @@ show_rankings = competition.output_upload_begins <= now
             <li><strong>Open Verification:</strong> ${h.ftime(competition.open_verification_begins, competition.open_verification_ends)}</li>
             <li><strong>Evaluation:</strong> ${h.ftime(competition.evaluation_begins, competition.evaluation_ends)}</li>
           </ul>
+          <p class="card-text" py:if="competition.open_verification_open">
+            <strong>Open Verification</strong> is now available. View the
+            rankings table to participate.
+          </p>
         </div>
         <div class="card-footer">
           <a href="${competition.problem_statement.url}"

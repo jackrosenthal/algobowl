@@ -11,7 +11,8 @@ from algobowl.model import (DBSession, Competition, Input, Output, Group,
 __all__ = ['CompetitionsController', 'CompetitionController']
 
 
-ScoreTuple = namedtuple('ScoreTuple', ['score', 'verification', 'rank'])
+ScoreTuple = namedtuple('ScoreTuple',
+                        ['score', 'verification', 'rank', 'output'])
 
 
 class GroupEntry:
@@ -75,10 +76,19 @@ class CompetitionController(BaseController):
                 [(Output.use_ground_truth, Output.ground_truth)],
                 else_=Output.verification)
 
+        # Set to the group IDs at which, if open verification is open AND
+        # the user has a group who can participate, submitting a
+        # protest takes place at
+        if user and comp.open_verification_open:
+            ov_groups = [g.id
+                         for g in user.groups
+                         if g.competition_id == comp.id]
+        else:
+            ov_groups = []
+
         groups = defaultdict(GroupEntry)
         ir_query = (
-            DBSession.query(Input, Group, Output.score, Output.original,
-                            verification_column)
+            DBSession.query(Input, Group, Output, verification_column)
                      .join(Input.outputs)
                      .join(Output.group)
                      .filter(Group.competition_id == comp.id)
@@ -90,37 +100,39 @@ class CompetitionController(BaseController):
 
         inputs = []
         last_iput = None
-        for iput, ogroup, score, original, verif in ir_query:
+        for iput, ogroup, output, verif in ir_query:
             if iput is not last_iput:
                 inputs.append(iput)
                 potential_rank = 1
                 last_rank = 0
                 last_score = None
-            shown_score = score
+            shown_score = output.score
+            shown_output = output
             if not show_scores:
                 shown_score = None
+                shown_output = None
             if verif is VerificationStatus.rejected:
                 rank = None
                 shown_score = None
-            elif score == last_score:
+            elif output.score == last_score:
                 rank = last_rank
             else:
                 rank = potential_rank
             groups[ogroup].input_ranks[iput] = ScoreTuple(
-                shown_score, verif, rank)
+                shown_score, verif, rank, shown_output)
             if verif is VerificationStatus.rejected:
                 groups[ogroup].reject_count += 1
             else:
                 groups[ogroup].sum_of_ranks += rank
 
             # add accepted resubmissions to penalty
-            if verif is VerificationStatus.accepted and not original:
+            if verif is VerificationStatus.accepted and not output.original:
                 groups[ogroup].penalties += 1
 
             potential_rank += 1
             last_iput = iput
             last_rank = rank
-            last_score = score
+            last_score = output.score
 
         # no submission? this adds to reject count
         for group in groups.values():
@@ -142,8 +154,7 @@ class CompetitionController(BaseController):
                     'competition': comp,
                     'inputs': inputs,
                     'ground_truth': ground_truth,
-                    'show_downloads': show_scores,
-                    'open_verification': comp.open_verification_open}
+                    'ov_groups': ov_groups}
 
     @expose()
     def all_inputs(self):

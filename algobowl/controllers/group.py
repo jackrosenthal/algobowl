@@ -223,6 +223,15 @@ class GroupController(BaseController):
         output.use_ground_truth = True
         return {'status': 'success'}
 
+    @expose('algobowl.templates.group.ov_protest')
+    def ov_protest(self, from_group_id=None, to_group_id=None):
+        if not self.group.competition.open_verification_open:
+            abort(403, "Open verification stage is closed")
+        if from_group_id and to_group_id:
+            raise NotImplementedError("post ov_protest")
+        else:
+            return {'groups': self.group.competition.groups}
+
 
 class GroupsController(BaseController):
     allow_only = not_anonymous()

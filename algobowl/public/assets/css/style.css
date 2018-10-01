@@ -77,3 +77,8 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+a.table-download-link {
+  color: white;
+  text-decoration: dashed underline;
+}

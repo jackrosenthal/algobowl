@@ -3,9 +3,9 @@
     Competitions List
   </py:block>
   <body py:block="body" py:strip="True">
-    <?python from algobowl.model import VerificationStatus ?>
-
     <?python
+from algobowl.model import VerificationStatus
+
 def cell_color(iput, ent):
     if iput not in ent.input_ranks.keys():
         return "bg-warning"
@@ -38,6 +38,29 @@ def cell_color(iput, ent):
           View Student Verifications
         </a>
       </div>
+      <div py:if="ov_groups" class="card mt-3 mb-3">
+        <div class="card-body">
+          <h4 class="card-title">
+            Open Verification is Active
+          </h4>
+          <p class="card-text">
+            Click on any output to download and run against your verifier.
+            If you believe there to be a verification error, use the link
+            below to submit a protest. Incorrect protests will count as one
+            penalty against your group.
+          </p>
+          <a py:for="gid in ov_groups"
+             href="${tg.url('/group/{}/ov_protest'.format(gid))}"
+             class="btn btn-primary mr-2">
+            <i class="far fa-thumbs-down fa-fw"></i>
+            Submit Protest
+            <py:if test="len(ov_groups) > 2">
+              (Group ${gid})
+            </py:if>
+          </a>
+        </div>
+      </div>
+
       <table class="table table-striped">
         <thead>
           <tr>
@@ -57,14 +80,22 @@ def cell_color(iput, ent):
             <td py:for="iput in inputs" class="${cell_color(iput, ent)}">
               <py:if test="iput in ent.input_ranks.keys()">
                 <py:with vars="st=ent.input_ranks[iput]">
-                  <py:if test="st.verification is VerificationStatus.rejected">
-                    R
-                  </py:if><py:else>
+                  <py:def function="cell_text(st)">
+                    <py:if test="st.verification.name == 'rejected'">
+                      R
+                    </py:if><py:else>
                     ${st.rank}
                     <small py:if="st.score is not None" class="input-score">
                       (${'{:.0f}'.format(st.score)})
                     </small>
-                  </py:else>
+                    </py:else>
+                  </py:def>
+                  <a py:if="st.output"
+                     href="${st.output.data.url}"
+                     class="table-download-link"
+                     py:content="cell_text(st)" />
+                  <span py:if="not st.output"
+                        py:content="cell_text(st)" />
                 </py:with>
               </py:if><py:else>
                 N
