@@ -239,7 +239,8 @@ class Group(DeclarativeBase):
     competition = relationship("Competition", back_populates="groups")
 
     input = relationship("Input", uselist=False, back_populates="group")
-    outputs = relationship("Output", back_populates="group", lazy='dynamic')
+    outputs = relationship("Output", back_populates="group", lazy="dynamic",
+                           order_by="Output.group_id")
 
     users = relation('User', secondary='user_group_xref',
                      back_populates='groups', lazy='dynamic')
