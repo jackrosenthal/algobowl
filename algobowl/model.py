@@ -136,7 +136,8 @@ class Competition(DeclarativeBase):
         nullable=True)
 
     groups = relationship(
-        "Group", back_populates="competition", lazy='dynamic')
+        "Group", back_populates="competition", lazy='dynamic',
+        order_by="Group.id")
 
     @property
     def input_upload_open(self):
