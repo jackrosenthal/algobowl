@@ -12,7 +12,7 @@ def cell_color(iput, ent):
     return {
         VerificationStatus.accepted: "bg-success text-light",
         VerificationStatus.rejected: "bg-danger text-light",
-        VerificationStatus.waiting: "",
+        VerificationStatus.waiting: "bg-secondary text-light",
     }[ent.input_ranks[iput].verification]
     ?>
 
