@@ -290,7 +290,8 @@ class Input(DeclarativeBase):
         nullable=False)
     group = relationship("Group", back_populates="input")
 
-    outputs = relationship("Output", back_populates="input", lazy='dynamic')
+    outputs = relationship("Output", back_populates="input",
+                           lazy="dynamic", order_by="Output.group_id")
 
     def __repr__(self):
         return "Input from [{!r}]".format(self.group)
