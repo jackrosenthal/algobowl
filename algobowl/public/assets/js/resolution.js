@@ -1,7 +1,7 @@
 (function ($) {
   $('.upload-new').click(function (ev) {
     ev.preventDefault();
-    var output_id = $(ev.target).data('output');
+    var output_id = $(this).data('output');
 
     $('#file-upload-' + output_id).trigger('click');
   });
@@ -17,10 +17,10 @@
 
   $('.hidden-uploader').on('change', function (ev) {
     ev.preventDefault();
-    var to_group = $(ev.target).data('togroup');
+    var to_group = $(this).data('togroup');
 
     var formdata = new FormData();
-    formdata.append('output_file', ev.target.files[0]);
+    formdata.append('output_file', this.files[0]);
 
 
     $.ajax({
@@ -40,7 +40,7 @@
 
   $('.protest').click(function (ev) {
     ev.preventDefault();
-    var output_id = $(ev.target).data('output');
+    var output_id = $(this).data('output');
     console.log(output_id);
 
     $.get(

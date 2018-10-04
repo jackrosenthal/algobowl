@@ -1,11 +1,11 @@
 (function ($) {
   $('.output-upload-control').on('change', function (ev) {
-    var to_group = ev.target.id.split('-').pop();
+    var to_group = this.id.split('-').pop();
     var download_link = $('#download-link-' + to_group);
     download_link.html('<span class="text-muted">Uploading...</span>');
 
     var formdata = new FormData();
-    formdata.append('output_file', ev.target.files[0]);
+    formdata.append('output_file', this.files[0]);
 
     var statusfunc = function (data) {
       download_link.html(function (status) {
