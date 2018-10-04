@@ -163,6 +163,12 @@ class GroupController(BaseController):
 
     @expose('json')
     def submit_verification(self, output_id, status):
+        try:
+            output_id = int(output_id)
+        except ValueError:
+            return {'status': 'error',
+                    'msg': 'There was an error. Please try clearing your '
+                           'browser cache and repeating this action.'}
         output = DBSession.query(Output).get(output_id)
         if not output or output.input.group_id != self.group.id:
             abort(404)

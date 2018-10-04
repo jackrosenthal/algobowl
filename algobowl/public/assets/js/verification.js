@@ -27,8 +27,8 @@
 
   $('.submit-verif').click(function (ev) {
     ev.preventDefault();
-    var output_id = $(ev.target).data('output');
-    var verif_status = $(ev.target).data('status');
+    var output_id = $(this).data('output');
+    var verif_status = $(this).data('status');
 
     $.get(
       (window.location.href
