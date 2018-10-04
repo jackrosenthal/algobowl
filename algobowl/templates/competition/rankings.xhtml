@@ -14,9 +14,22 @@ def cell_color(iput, ent):
         VerificationStatus.rejected: "bg-danger text-light",
         VerificationStatus.waiting: "bg-secondary text-light",
     }[ent.input_ranks[iput].verification]
+
+def tooltip_attrs(iput, ent):
+    if iput not in ent.input_ranks.keys():
+        return {'data-toggle': 'tooltip', 'title': 'Nothing submitted'}
+    st = ent.input_ranks[iput]
+
+    if st.verification is VerificationStatus.rejected:
+        return {'data-toggle': 'tooltip', 'title': 'Rejected'}
+
+    if st.score is not None:
+        return {'data-toggle': 'tooltip', 'title': '{:.0f}'.format(st.score)}
+
+    return {}
     ?>
 
-    <div class="container">
+    <div class="container-fluid">
       <h1 class="mb-3">
         Rankings: ${competition.name}
         <py:if test="ground_truth">
@@ -77,7 +90,9 @@ def cell_color(iput, ent):
         <tbody>
           <tr py:for="group, ent in sorted(groups.items(), key=lambda t: t[1])">
             <td py:content="group.name" class="truncate-small"></td>
-            <td py:for="iput in inputs" class="${cell_color(iput, ent)}">
+            <td py:for="iput in inputs"
+                class="${cell_color(iput, ent)}"
+                py:attrs="tooltip_attrs(iput, ent)">
               <py:if test="iput in ent.input_ranks.keys()">
                 <py:with vars="st=ent.input_ranks[iput]">
                   <py:def function="cell_text(st)">
@@ -85,9 +100,6 @@ def cell_color(iput, ent):
                       R
                     </py:if><py:else>
                     ${st.rank}
-                    <small py:if="st.score is not None" class="input-score">
-                      (${'{:.0f}'.format(st.score)})
-                    </small>
                     </py:else>
                   </py:def>
                   <a py:if="st.output"
@@ -116,5 +128,10 @@ def cell_color(iput, ent):
         </tbody>
       </table>
     </div>
+    <script>
+      $(function () {
+        $('[data-toggle="tooltip"]').tooltip()
+      })
+    </script>
   </body>
 </html>
