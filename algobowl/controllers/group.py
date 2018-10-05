@@ -7,7 +7,8 @@ from depot.io.utils import FileIntent
 
 from algobowl.lib.helpers import ftime
 from algobowl.lib.base import BaseController
-from algobowl.model import DBSession, Group, Input, Output, VerificationStatus
+from algobowl.model import (DBSession, Group, Input, Output, Evaluation,
+                            VerificationStatus)
 
 __all__ = ['GroupsController', 'GroupController']
 
@@ -33,10 +34,21 @@ class GroupController(BaseController):
 
     @expose('algobowl.templates.group.index')
     def index(self):
+        user = request.identity['user']
         submitted_outputs = {o.input.id: o for o in self.group.outputs}
-        return {'competition': self.group.competition,
-                'group': self.group,
-                'submitted_outputs': submitted_outputs}
+        d = {'competition': self.group.competition,
+             'group': self.group,
+             'submitted_outputs': submitted_outputs}
+        if self.group.competition.evaluation_open:
+            evals = dict(DBSession
+                         .query(Evaluation.to_student_id, Evaluation.score)
+                         .filter(Evaluation.group_id == self.group.id)
+                         .filter(Evaluation.from_student_id == user.id))
+            for member in self.group.users:
+                if member.id not in evals.keys():
+                    evals[member.id] = 1.0
+            d['evals'] = evals
+        return d
 
     @expose()
     def input_upload(self, input_upload=None, team_name=None):
@@ -237,6 +249,34 @@ class GroupController(BaseController):
             raise NotImplementedError("post ov_protest")
         else:
             return {'groups': self.group.competition.groups}
+
+    @expose()
+    def submit_evaluations(self):
+        me = request.identity['user']
+        students_allowed = set(user.id for user in self.group.users)
+        for user_id, score in request.POST.items():
+            user_id = int(user_id)
+            if user_id not in students_allowed:
+                abort(403, "You cannot submit an evaluation to this user")
+            score = float(score)
+            if score < 0:
+                abort(403, "Negative contributions are not allowed")
+            e = (DBSession.query(Evaluation)
+                          .filter(Evaluation.from_student_id == me.id)
+                          .filter(Evaluation.to_student_id == user_id)
+                          .filter(Evaluation.group_id == self.group.id)
+                          .one_or_none())
+            if not e:
+                e = Evaluation(
+                        from_student_id=me.id,
+                        to_student_id=user_id,
+                        group=self.group,
+                        score=score)
+            else:
+                e.score = score
+            DBSession.add(e)
+        flash('Your evaluations have been saved. Thank you.', 'success')
+        redirect('/group/{}'.format(self.group.id))
 
 
 class GroupsController(BaseController):

@@ -1,4 +1,51 @@
 <div class="input-upload-stage" py:if="competition.evaluation_open">
+<?python
+from itertools import cycle
+pb_color = cycle(
+  ["bg-primary text-light", "bg-info text-light", "bg-success text-light"])
+?>
   <h1>Evaluation</h1>
-  Let's get started!
+  <p class="lead">
+    Evaluate your group members based on their relative contributions to
+    the project.
+  </p>
+  <p>
+    Drag the sliders so that each slider represents the relative amount
+    of work put in by each student. For example, if all sliders are in
+    the same spot, then all students put in equal effort.
+  </p>
+  <form method="POST" action="${tg.request.url}/submit_evaluations">
+    <div class="form-group" py:for="student in group.users">
+      <label for="eval-${student.id}">${student}</label>
+      <input type="range"
+             class="form-control-range eval-range-slider"
+             id="eval-${student.id}"
+             name="${student.id}"
+             min="0"
+             max="2"
+             step="any"
+             value="${evals[student.id]}" />
+    </div>
+    <div class="card my-3">
+      <div class="card-body">
+        <h5 class="card-title">Preview</h5>
+        <div class="progress" py:with="total=sum(evals.values())">
+          <py:for each="student in group.users">
+            <div class="progress-bar text-center ${next(pb_color)}"
+                 py:with="percent=(evals[student.id] / total) * 100"
+                 style="width: ${percent}%"
+                 id="pb-${student.id}">
+              <span>
+                ${student} (<span id="percent-${student.id}">${int(percent)}</span>%)
+              </span>
+            </div>
+          </py:for>
+        </div>
+      </div>
+    </div>
+    <button type="submit" class="btn btn-primary">
+      Submit Evaluations
+    </button>
+  </form>
+  <script type="text/javascript" src="${tg.url('/assets/js/evaluation.js')}"></script>
 </div>
