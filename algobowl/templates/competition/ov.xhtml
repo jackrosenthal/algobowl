@@ -33,7 +33,7 @@
         <tr>
           <th>Status</th>
           <td py:if="not output.use_ground_truth">
-            ${str(output.verification).title()} by Group ${output.group.id}
+            ${str(output.verification).title()} by Group ${output.input.group.id}
           </td>
           <td py:if="output.use_ground_truth">
             ${str(output.ground_truth).title()} by Instructor
