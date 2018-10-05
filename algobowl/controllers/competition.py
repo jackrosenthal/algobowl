@@ -6,7 +6,7 @@ from tg import expose, abort, request, response, flash, redirect
 from sqlalchemy.sql.expression import case
 from algobowl.lib.base import BaseController
 from algobowl.model import (DBSession, Competition, Input, Output, Group,
-                            VerificationStatus)
+                            VerificationStatus, Protest)
 
 __all__ = ['CompetitionsController', 'CompetitionController']
 
@@ -76,15 +76,7 @@ class CompetitionController(BaseController):
                 [(Output.use_ground_truth, Output.ground_truth)],
                 else_=Output.verification)
 
-        # Set to the group IDs at which, if open verification is open AND
-        # the user has a group who can participate, submitting a
-        # protest takes place at
-        if user and comp.open_verification_open:
-            ov_groups = [g.id
-                         for g in user.groups
-                         if g.competition_id == comp.id]
-        else:
-            ov_groups = []
+        open_verification = user and comp.open_verification_open
 
         groups = defaultdict(GroupEntry)
         ir_query = (
@@ -140,6 +132,17 @@ class CompetitionController(BaseController):
                 if iput not in group.input_ranks.keys():
                     group.reject_count += 1
 
+        # add open verification protest rejections to penalty
+        rprotests = (DBSession.query(Protest)
+                              .filter(Protest.accepted == False)
+                              .join(Protest.submitter)
+                              .filter(Group.competition_id == comp.id))
+        for protest in rprotests:
+            # technically, a group which failed to submit anything
+            # COULD protest... but this case is unlikely ;)
+            if protest.submitter in groups.keys():
+                groups[protest.submitter].penalties += 1
+
         # compute places for groups
         for this_ent in groups.values():
             for other_ent in groups.values():
@@ -154,7 +157,43 @@ class CompetitionController(BaseController):
                     'competition': comp,
                     'inputs': inputs,
                     'ground_truth': ground_truth,
-                    'ov_groups': ov_groups}
+                    'open_verification': open_verification}
+
+    @expose('algobowl.templates.competition.ov')
+    def ov(self, output_id):
+        output = DBSession.query(Output).get(int(output_id))
+        if output.group.competition_id != self.competition.id:
+            abort(404)
+        if not output.active:
+            abort(404, "This output is no longer active.")
+        user = request.identity and request.identity['user']
+        if user:
+            group = (DBSession.query(Group)
+                              .filter(Group.competition_id
+                                      == self.competition.id)
+                              .filter(Group.users.any(id=user.id))
+                              .first())
+        else:
+            group = None
+        message = request.POST.get('message')
+        if group and message:
+            if output.use_ground_truth:
+                abort(403, "The instructor has already reviewed this output.")
+
+            output.use_ground_truth = True
+            protest = Protest(
+                message=message,
+                accepted=output.verification != output.ground_truth,
+                submitter=group,
+                output=output)
+
+            DBSession.add(output)
+            DBSession.add(protest)
+
+            flash('Your protest has been submitted.', 'success')
+
+        return {'output': output, 'group': group,
+                'competition': self.competition}
 
     @expose()
     def all_inputs(self):

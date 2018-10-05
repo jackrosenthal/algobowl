@@ -1,0 +1,84 @@
+<html py:extends="master.xhtml" py:strip="True">
+  <py:block name="title">
+    Output Information - from ${output.group.id}
+                         for input from group ${output.input.group.id}
+  </py:block>
+  <body py:block="body" py:strip="True">
+    <div class="container">
+      <h1 class="mb-3">Output Information</h1>
+      <p>
+        <a href="${tg.url('/competition/{}'.format(competition.id))}">Return to Leaderboard</a>
+      </p>
+      <table class="table table-striped">
+        <tr>
+          <th>Input File</th>
+          <td>
+            <a href="${output.input.data.url}">
+              ${output.input.data.filename}
+            </a>
+          </td>
+        </tr>
+        <tr>
+          <th>Output File</th>
+          <td>
+            <a href="${output.data.url}">
+              ${output.data.filename}
+            </a>
+          </td>
+        </tr>
+        <tr>
+          <th>Score</th>
+          <td>${'{:.0f}'.format(output.score)}</td>
+        </tr>
+        <tr>
+          <th>Status</th>
+          <td py:if="not output.use_ground_truth">
+            ${str(output.verification).title()} by Group ${output.group.id}
+          </td>
+          <td py:if="output.use_ground_truth">
+            ${str(output.ground_truth).title()} by Instructor
+          </td>
+        </tr>
+      </table>
+
+      <py:if test="group">
+        <py:if test="not output.use_ground_truth"
+               py:with="opposite='rejected' if str(output.verification) == 'accepted' else 'accepted'">
+          <h2 class="mt-3">Submit a Protest</h2>
+
+          <p>
+            This output was <strong>${output.verification}</strong>. If you
+            believe that the output should be <strong>${opposite}</strong>, then
+            you may submit a protest.
+          </p>
+
+          <ul>
+            <li>
+              If your protest is <strong>correct</strong>, the verification will
+              change to the instructor's verification <strong>without causing you
+              any penalty</strong>.
+            </li>
+            <li>
+              If your protest is <strong>incorrect</strong>, it will cause your
+              group <strong>one penalty point</strong>.
+            </li>
+          </ul>
+
+          <form method="POST">
+            <div class="form-group">
+              <label for="message">This output should be ${opposite} because...</label>
+              <textarea class="form-control" name="message" id="message" rows="3" maxlength="999"></textarea>
+              <small class="form-text text-muted">Briefly, describe the reason you are submitting the protest.</small>
+            </div>
+            <button type="submit" class="btn btn-primary">Submit Protest</button>
+          </form>
+        </py:if><py:else>
+          <p>
+            The instructor has already reviewed this output, so protests cannot
+            be submitted.
+          </p>
+        </py:else>
+      </py:if>
+    </div>
+  </body>
+</html>
