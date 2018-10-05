@@ -259,10 +259,10 @@ class GroupController(BaseController):
                           .one_or_none())
             if not e:
                 e = Evaluation(
-                        from_student_id=me.id,
-                        to_student_id=user_id,
-                        group=self.group,
-                        score=score)
+                    from_student_id=me.id,
+                    to_student_id=user_id,
+                    group=self.group,
+                    score=score)
             else:
                 e.score = score
             DBSession.add(e)
