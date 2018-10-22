@@ -165,7 +165,7 @@ class GroupController(BaseController):
         else:
             output.ground_truth = VerificationStatus.accepted
 
-        if comp.resolution_open:
+        if comp.resolution_open or not comp.verification_begins:
             output.use_ground_truth = True
 
         DBSession.add(output)

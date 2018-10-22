@@ -234,13 +234,10 @@ class CompetitionsController(BaseController):
     @expose('algobowl.templates.competition.list')
     def index(self):
         now = datetime.datetime.now()
-        active = (DBSession.query(Competition)
-                           .filter(Competition.input_upload_begins <= now)
-                           .filter(Competition.evaluation_ends > now)
-                           .order_by(Competition.evaluation_ends)
-                           .all())
-        historical = (DBSession.query(Competition)
-                               .filter(Competition.evaluation_ends < now)
-                               .order_by(Competition.evaluation_ends)
-                               .all())
+        comps = (DBSession.query(Competition)
+                          .filter(Competition.input_upload_begins <= now)
+                          .order_by(Competition.input_upload_ends))
+        active, historical = [], []
+        for c in comps:
+            (active if c.active else historical).append(c)
         return {'active': active, 'historical': historical}
