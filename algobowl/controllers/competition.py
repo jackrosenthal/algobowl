@@ -60,7 +60,8 @@ class CompetitionController(BaseController):
         now = datetime.datetime.now()
         admin = user and user.admin
         comp = self.competition
-        show_scores = admin or now >= comp.open_verification_begins
+        show_scores = admin or (comp.open_verification_begins
+                                and now >= comp.open_verification_begins)
 
         if not admin and now < comp.output_upload_begins:
             flash("Rankings are not available yet", "info")
