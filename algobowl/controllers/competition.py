@@ -65,9 +65,9 @@ class GroupEntry:
             return (self.sum_of_ranks
                     + self.penalties
                     + self.reject_count * mean(
-                                            s.score
-                                            for s in self.input_ranks.values()
-                                            if s.score is not None))
+                        s.rank
+                        for s in self.input_ranks.values()
+                        if s.rank is not None))
         except StatisticsError:
             return self.reject_count ** 2
 
@@ -216,7 +216,7 @@ class CompetitionController(BaseController):
                 GradingInputTuple([], set()),
                 GradingContributionTuple(),
                 defaultdict(dict))
-          for k, v in rankings['groups'].items()}
+            for k, v in rankings['groups'].items()}
 
         compinfo = CompInfoTuple(len(rankings['inputs']), float("inf"), 0)
 
@@ -252,7 +252,8 @@ class CompetitionController(BaseController):
             gt.contributions.ranking = (
                 max(16 - (gt.rankings.adj_score / compinfo.best_score), 0))
             gt.contributions.verification = (
-                gt.verification.correct / sum(gt.verification) * 5)
+                gt.verification.correct / sum(gt.verification) * 5
+            ) if any(gt.verification) else 0
             gt.contributions.participation = (
                 (compinfo.inputs - gt.rankings.reject_count)
                 / compinfo.inputs
