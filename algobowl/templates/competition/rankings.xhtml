@@ -50,6 +50,11 @@ def tooltip_attrs(iput, ent):
           <i class="fas fa-user-check fa-fw"></i>
           View Student Verifications
         </a>
+        <a href="${tg.request.url.partition('?')[0] + '/grade'}"
+           class="btn btn-info">
+          <i class="fas fa-marker fa-fw"></i>
+          Grading Table
+        </a>
       </div>
       <div py:if="open_verification" class="card mt-3 mb-3">
         <div class="card-body">

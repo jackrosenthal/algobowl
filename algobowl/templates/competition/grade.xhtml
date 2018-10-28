@@ -1,0 +1,77 @@
+<html py:extends="master.xhtml" py:strip="True">
+  <py:block name="title">
+    Grading Information
+  </py:block>
+  <body py:block="body" py:strip="True">
+    <div class="container">
+      <h1 class="mb-3">
+        Grading Table: ${competition.name}
+      </h1>
+    </div>
+    <div class="container-fluid table-responsive">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Group</th>
+            <th>Name</th>
+            <th>Verification</th>
+            <th>Input Difficulty</th>
+            <th>Participation</th>
+            <th>Rankings</th>
+            <th>Group Grade</th>
+          </tr>
+        </thead>
+        <tbody>
+          <py:for each="g, gt in sorted(groups.items(), key=lambda i: i[0].id)"
+                  py:with="grade=sum(float(x) for x in gt.contributions)">
+            <tr>
+              <td py:content="g.id"></td>
+              <td py:content="g.name" class="truncate-small"></td>
+              <td>
+                ${gt.contributions.verification}%
+                (${gt.verification.correct}C,
+                 ${gt.verification.false_positives}FP,
+                 ${gt.verification.false_negatives}FN)
+              </td>
+              <td>
+                ${gt.contributions.input_difficulty}%
+                (${len(gt.input.scores_s)})
+              </td>
+              <td>
+                ${gt.contributions.participation}%
+                (${gt.rankings.reject_count}R)
+              </td>
+              <td>
+                ${gt.contributions.ranking}%
+                (${gt.rankings.adj_score})
+              </td>
+              <td>
+                ${grade}
+              </td>
+            </tr>
+            <tr py:for="u in g.users" class="bg-secondary text-light"
+                py:with="mult=sum(gt.evaluations[u].values())">
+              <td colspan="2">
+                ${u}
+              </td>
+              <td colspan="4">
+                Evaluation Multiplier: ${mult}
+                <small>
+                  (${', '.join('{}: {}%'.format(k, v * 100) for k, v in gt.evaluations[u].items())})
+                </small>
+              </td>
+              <td>
+                Grade: <strong>${grade * mult}%</strong>
+              </td>
+            </tr>
+          </py:for>
+        </tbody>
+      </table>
+    </div>
+    <script>
+      $(function () {
+        $('[data-toggle="tooltip"]').tooltip()
+      })
+    </script>
+  </body>
+</html>

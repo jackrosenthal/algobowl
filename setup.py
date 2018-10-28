@@ -21,7 +21,8 @@ setup(
         "sqlalchemy",
         "alembic",
         "repoze.who",
-        "WebHelpers2"],
+        "WebHelpers2",
+        "recordclass"],
     python_requires='>=3.4,<4',
     include_package_data=True,
     package_data={'algobowl': [

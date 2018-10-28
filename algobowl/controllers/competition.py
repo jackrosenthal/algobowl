@@ -1,18 +1,43 @@
 import zipfile
 import datetime
 from io import BytesIO
+from statistics import mean, StatisticsError
 from collections import namedtuple, defaultdict
-from tg import expose, abort, request, response, flash, redirect
+from recordclass import recordclass
+from tg import expose, abort, request, response, flash, redirect, require
+from tg.predicates import has_permission
 from sqlalchemy.sql.expression import case
 from algobowl.lib.base import BaseController
 from algobowl.model import (DBSession, Competition, Input, Output, Group,
-                            VerificationStatus, Protest)
+                            VerificationStatus, Protest, Evaluation)
 
 __all__ = ['CompetitionsController', 'CompetitionController']
 
 
 ScoreTuple = namedtuple('ScoreTuple',
                         ['score', 'verification', 'rank', 'output'])
+
+GradingTuple = recordclass('GradingTuple',
+                           ['rankings', 'verification', 'input',
+                            'contributions', 'evaluations'])
+
+GradingContributionTuple = recordclass(
+    'GradingContributionTuple',
+    ['participation', 'verification', 'input_difficulty', 'ranking'],
+    defaults=[0, 0, 0, 0])
+
+GradingInputTuple = recordclass(
+    'GradingInputTuple',
+    ['scores_l', 'scores_s'])
+
+GradingVerificationTuple = recordclass(
+    'GradingVerificationTuple',
+    ['correct', 'false_positives', 'false_negatives'],
+    defaults=[0, 0, 0])
+
+CompInfoTuple = recordclass(
+    'CompInfoTuple',
+    ['inputs', 'best_score', 'worst_score'])
 
 
 class GroupEntry:
@@ -26,6 +51,25 @@ class GroupEntry:
     @property
     def score(self):
         return self.sum_of_ranks + self.penalties
+
+    @property
+    def adj_score(self):
+        """
+        Score used for grading: each rejection is assumed
+        to count as one mean score of the group.
+        """
+        if not self.reject_count:
+            return self.score
+
+        try:
+            return (self.sum_of_ranks
+                    + self.penalties
+                    + self.reject_count * mean(
+                                            s.score
+                                            for s in self.input_ranks.values()
+                                            if s.score is not None))
+        except StatisticsError:
+            return self.reject_count ** 2
 
     def __lt__(self, other):
         if self.reject_count < other.reject_count:
@@ -159,6 +203,79 @@ class CompetitionController(BaseController):
                     'inputs': inputs,
                     'ground_truth': ground_truth,
                     'open_verification': open_verification}
+
+    @expose('algobowl.templates.competition.grade')
+    @require(has_permission('admin'))
+    def grade(self):
+        rankings = self.index(ground_truth=True)
+
+        groups = {
+            k: GradingTuple(
+                v,
+                GradingVerificationTuple(),
+                GradingInputTuple([], set()),
+                GradingContributionTuple(),
+                defaultdict(dict))
+          for k, v in rankings['groups'].items()}
+
+        compinfo = CompInfoTuple(len(rankings['inputs']), float("inf"), 0)
+
+        for group, gt in groups.items():
+            # compute verification correctness
+            q = (DBSession.query(Output)
+                          .filter(Output.original == True)
+                          .join(Output.input)
+                          .filter(Input.group_id == group.id))
+            for oput in q:
+                if oput.verification == oput.ground_truth:
+                    gt.verification.correct += 1
+                elif oput.verification == VerificationStatus.accepted:
+                    gt.verification.false_positives += 1
+                else:
+                    gt.verification.false_negatives += 1
+
+            # compute input unique ranks
+            for iput, st in gt.rankings.input_ranks.items():
+                if st.rank is None:
+                    groups[iput.group].input.scores_s.add('R{}'.format(id(st)))
+                else:
+                    groups[iput.group].input.scores_s.add(st.score)
+                groups[iput.group].input.scores_l.append(st.score)
+
+            adj_score = gt.rankings.adj_score
+            if adj_score < compinfo.best_score:
+                compinfo.best_score = adj_score
+            if adj_score > compinfo.worst_score:
+                compinfo.worst_score = adj_score
+
+        for group, gt in groups.items():
+            gt.contributions.ranking = (
+                max(16 - (gt.rankings.adj_score / compinfo.best_score), 0))
+            gt.contributions.verification = (
+                gt.verification.correct / sum(gt.verification) * 5)
+            gt.contributions.participation = (
+                (compinfo.inputs - gt.rankings.reject_count)
+                / compinfo.inputs
+                * 70)
+            gt.contributions.input_difficulty = (
+                len(gt.input.scores_s) / len(gt.input.scores_l) * 10)
+
+        for group, gt in groups.items():
+            for from_member in group.users:
+                q = (DBSession
+                     .query(Evaluation, Evaluation.score)
+                     .filter(Evaluation.group_id == group.id)
+                     .filter(Evaluation.from_student_id == from_member.id)
+                     .all())
+                evals = {e.to_student: s for e, s in q}
+                for to_member in group.users:
+                    if to_member not in evals.keys():
+                        evals[to_member] = 1.0
+                for to_member, score in evals.items():
+                    gt.evaluations[to_member][from_member] = (
+                        score / sum(evals.values()))
+
+        return {'groups': groups, 'competition': self.competition}
 
     @expose('algobowl.templates.competition.ov')
     def ov(self, output_id):
