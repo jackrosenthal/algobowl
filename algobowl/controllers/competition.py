@@ -259,7 +259,8 @@ class CompetitionController(BaseController):
                 / compinfo.inputs
                 * 70)
             gt.contributions.input_difficulty = (
-                len(gt.input.scores_s) / len(gt.input.scores_l) * 10)
+                len(gt.input.scores_s) / len(gt.input.scores_l) * 10
+            ) if gt.input.scores_l else 0
 
         for group, gt in groups.items():
             for from_member in group.users:
