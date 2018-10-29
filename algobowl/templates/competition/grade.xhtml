@@ -3,6 +3,9 @@
     Grading Information
   </py:block>
   <body py:block="body" py:strip="True">
+    <py:def function="format_percent(num)">
+      ${'{:.2f}'.format(num)}%
+    </py:def>
     <div class="container">
       <h1 class="mb-3">
         Grading Table: ${competition.name}
@@ -28,21 +31,21 @@
               <td py:content="g.id"></td>
               <td py:content="g.name" class="truncate-small"></td>
               <td>
-                ${gt.contributions.verification}%
+                ${format_percent(gt.contributions.verification)}
                 (${gt.verification.correct}C,
                  ${gt.verification.false_positives}FP,
                  ${gt.verification.false_negatives}FN)
               </td>
               <td>
-                ${gt.contributions.input_difficulty}%
+                ${format_percent(gt.contributions.input_difficulty)}
                 (${len(gt.input.scores_s)})
               </td>
               <td>
-                ${gt.contributions.participation}%
+                ${format_percent(gt.contributions.participation)}
                 (${gt.rankings.reject_count}R)
               </td>
               <td>
-                ${gt.contributions.ranking}%
+                ${format_percent(gt.contributions.ranking)}
                 (${gt.rankings.adj_score})
               </td>
               <td>
@@ -55,13 +58,13 @@
                 ${u}
               </td>
               <td colspan="4">
-                Evaluation Multiplier: ${mult}
+                Evaluation Multiplier: ${'{:.4f}'.format(mult)}
                 <small>
-                  (${', '.join('{}: {}%'.format(k, v * 100) for k, v in gt.evaluations[u].items())})
+                  (${', '.join('{}: {:.2f}%'.format(k, v * 100) for k, v in gt.evaluations[u].items())})
                 </small>
               </td>
               <td>
-                Grade: <strong>${grade * mult}%</strong>
+                Grade: <strong>${format_percent(min(grade * mult, 100))}</strong>
               </td>
             </tr>
           </py:for>
