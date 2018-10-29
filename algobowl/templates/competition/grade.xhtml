@@ -52,7 +52,10 @@
                 ${grade}
               </td>
             </tr>
-            <tr py:for="u in g.users" class="bg-secondary text-light"
+            <tr py:for="u in g.users"
+                class="${'bg-warning text-dark'
+                         if max(gt.evaluations[u].values()) > 0.45
+                         else 'bg-secondary text-light'}"
                 py:with="mult=sum(gt.evaluations[u].values())">
               <td colspan="2">
                 ${u}
