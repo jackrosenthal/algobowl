@@ -37,7 +37,7 @@ GradingVerificationTuple = recordclass(
 
 CompInfoTuple = recordclass(
     'CompInfoTuple',
-    ['inputs', 'best_score', 'worst_score'])
+    ['inputs', 'best_score', 'worst_score', 'best_input_difference'])
 
 
 class GroupEntry:
@@ -218,7 +218,7 @@ class CompetitionController(BaseController):
                 defaultdict(dict))
             for k, v in rankings['groups'].items()}
 
-        compinfo = CompInfoTuple(len(rankings['inputs']), float("inf"), 0)
+        compinfo = CompInfoTuple(len(rankings['inputs']), float("inf"), 0, 0)
 
         for group, gt in groups.items():
             # compute verification correctness
@@ -248,6 +248,9 @@ class CompetitionController(BaseController):
             if adj_score > compinfo.worst_score:
                 compinfo.worst_score = adj_score
 
+        compinfo.best_input_difference = max(
+            len(g.input.scores_s) for g in groups.values())
+
         for group, gt in groups.items():
             gt.contributions.ranking = (
                 max(16 - (gt.rankings.adj_score / compinfo.best_score), 0))
@@ -259,7 +262,7 @@ class CompetitionController(BaseController):
                 / compinfo.inputs
                 * 70)
             gt.contributions.input_difficulty = (
-                7 + len(gt.input.scores_s) / len(gt.input.scores_l) * 3
+                7 + len(gt.input.scores_s) / compinfo.best_input_difference * 3
             ) if gt.input.scores_l else 0
 
         for group, gt in groups.items():
