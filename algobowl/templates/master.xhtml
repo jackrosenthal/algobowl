@@ -5,7 +5,7 @@
   <meta charset="${response.charset}" />
 
   <title>
-    AlgoBOWL: <py:block name="title">Competition</py:block>
+    ${tg.config['branding.name']}: <py:block name="title">Competition</py:block>
   </title>
 
   <link rel="stylesheet" type="text/css" media="screen" href="${tg.url('/assets/css/bootstrap.min.css')}" />
@@ -21,9 +21,9 @@
   <link rel="apple-touch-icon-precomposed" sizes="152x152"  href="${tg.url('/assets/img/apple-touch-icon-152x152.png')}" />
   <link rel="icon" type="image/png" href="${tg.url('/assets/img/favicon-32x32.png')}" sizes="32x32" />
   <link rel="icon" type="image/png" href="${tg.url('/assets/img/favicon-16x16.png')}" sizes="16x16" />
-  <meta name="application-name" content="AlgoBOWL" />
+  <meta name="application-name" content="${tg.config['branding.name']}" />
   <meta name="msapplication-TileColor" content="#FFFFFF" />
-  <meta name="msapplication-TileImage" content="${tg.url('/assets/img/mstile-144x144.pg')}" />
+  <meta name="msapplication-TileImage" content="${tg.url('/assets/img/mstile-144x144.png')}" />
   <link rel="shortcut icon" href="${tg.url('/assets/img/favicon.ico')}" />
   <!-- End Favicons -->
 
@@ -38,9 +38,8 @@
   <!-- Navbar -->
   <nav class="navbar fixed-top navbar-dark bg-primary navbar-expand-md">
     <div class="container">
-      <a class="navbar-brand" href="${tg.url('/')}">
-        AlgoBOWL
-      </a>
+      <a class="navbar-brand" href="${tg.url('/')}"
+         py:content="tg.config['branding.name']" />
 
       <button class="navbar-toggler"
               type="button"
@@ -113,11 +112,15 @@
     <div class="container footer-vertical-centering">
       <div class="text-center">
         <p>
-          AlgoBOWL is
+          <py:if test="tg.config['branding.name'] == 'AlgoBOWL'">
+            AlgoBOWL is
+          </py:if><py:else>
+            ${tg.config['branding.name']} is built upon AlgoBOWL,
+          </py:else>
           <a href="https://github.com/jackrosenthal/algobowl" target="_blank">
             open source software</a> designed by
           <a href="http://inside.mines.edu/~jrosenth" target="_blank">
-            Jack Rosenthal</a> released under an
+            Jack Rosenthal</a> and released under an
           <a href="https://en.wikipedia.org/wiki/MIT_License" target="_blank">
             MIT License</a>.
         </p>

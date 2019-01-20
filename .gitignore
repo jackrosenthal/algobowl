@@ -10,6 +10,8 @@ eggs/
 wheels/
 sdist/
 pip-log.txt
+.\#*
+\#*\#
 
 development.ini
 production.ini
