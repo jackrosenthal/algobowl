@@ -35,6 +35,11 @@ class RootController(BaseController):
         return dict(page='index')
 
     @expose()
+    def algobowl(self):
+        """Redirect for old route to homepage"""
+        redirect(url('/'))
+
+    @expose()
     def login(self):
         if not tg.request.identity:
             who_api = get_api(tg.request.environ)
