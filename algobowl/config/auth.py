@@ -52,10 +52,9 @@ def user_from_mpapi_attributes(attrs):
 
 @implementer(IIdentifier, IChallenger, IAuthenticator)
 class MPAPIAuthenticator:
-    def __init__(self, mpapi_url: str, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.s = requests.Session()
-        self.mpapi_url = mpapi_url.rstrip('/')
 
     def identify(self, environ):
         request = Request(environ)
@@ -105,6 +104,10 @@ class MPAPIAuthenticator:
             DBSession.flush()
             transaction.commit()
             return username
+
+    @property
+    def mpapi_url(self) -> str:
+        return tg.config['auth.mpapi.url'].rstrip('/')
 
     @property
     def mpapi_sso(self) -> str:

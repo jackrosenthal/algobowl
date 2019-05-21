@@ -57,12 +57,13 @@ base_config.sa_auth.cookie_secret = "aa8deb7d-a235-4f8d-807a-6497a8bb26af"
 base_config.sa_auth.authmetadata = AuthMetadata(base_config.sa_auth)
 base_config['identity.allow_missing_user'] = False
 
-mpapi_authenticator = MPAPIAuthenticator('https://mastergo.mines.edu/mpapi')
+mpapi_authenticator = MPAPIAuthenticator()
 
 base_config.sa_auth.authenticators = [
     ('token', APITokenAuthenticator()),
     ('mpapi', mpapi_authenticator)]
 
+base_config['auth.mpapi.url'] = 'https://mastergo.mines.edu/mpapi'
 base_config.sa_auth.form_plugin = mpapi_authenticator
 base_config['depot.storage_path'] = '/tmp/depot'
 
