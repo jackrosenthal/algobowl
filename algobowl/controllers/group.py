@@ -52,7 +52,8 @@ class GroupController(BaseController):
 
     @expose()
     def input_upload(self, input_upload=None, team_name=None):
-        if not self.group.competition.input_upload_open:
+        user = request.identity['user']
+        if not admin or not self.group.competition.input_upload_open:
             abort(403, "Sorry, input upload stage is closed.")
 
         if hasattr(input_upload, "file"):
@@ -107,11 +108,12 @@ class GroupController(BaseController):
 
     @expose('json')
     def submit_output(self, to_group, output_file=None):
+        user = request.identity['user']
         to_group = DBSession.query(Group).get(to_group)
         if not to_group:
             abort(404, "No such group")
         if to_group.competition_id != self.group.competition_id:
-            abort(403, "Cannot submit to a group in another competition")
+            abort(400, "Cannot submit to a group in another competition")
         if not hasattr(output_file, "file"):
             abort(400, "Must include file in submission")
         comp = self.group.competition
@@ -120,7 +122,8 @@ class GroupController(BaseController):
                              .filter(Output.input_id == to_group.input.id)
                              .filter(Output.active == True)
                              .one_or_none())
-        if not (comp.output_upload_open
+        if not (user.admin
+                or comp.output_upload_open
                 or (comp.resolution_open
                     and existing is not None
                     and not existing.use_ground_truth)):
@@ -175,6 +178,7 @@ class GroupController(BaseController):
 
     @expose('json')
     def submit_verification(self, output_id, status):
+        user = request.identity['user']
         try:
             output_id = int(output_id)
         except ValueError:
@@ -188,7 +192,7 @@ class GroupController(BaseController):
             status = VerificationStatus[status]
         except KeyError:
             abort(404)
-        if not self.group.competition.verification_open:
+        if not admin or not self.group.competition.verification_open:
             return {'status': 'error', 'msg': 'Verification closed'}
         assert output.original is True
         assert output.active is True
@@ -207,7 +211,8 @@ class GroupController(BaseController):
 
     @expose()
     def verification_outputs(self):
-        if not self.group.competition.verification_open:
+        user = request.identity['user']
+        if not admin or not self.group.competition.verification_open:
             abort(403, "This file is only available during verification.")
         f = BytesIO()
         archive = zipfile.ZipFile(f, mode='w')
@@ -283,7 +288,7 @@ class GroupsController(BaseController):
         group = DBSession.query(Group).get(group_id)
         if not group:
             abort(404, "No such group.")
-        if user not in group.users:
+        if user not in group.users and not user.admin:
             abort(403, "You are not a part of this group.")
         return GroupController(group), args
 
