@@ -8,9 +8,14 @@
   <py:if test="group.input is not None">
     <p>
       Note that a solution can be valid even if it is not optimal. Please
-      <a href="${competition.problem_statement.url}" target="_blank">
-        read the problem statement carefully</a> for a specification on the
-      validity of outputs.
+      <py:if test="competition.problem_statement">
+        <a href="${competition.problem_statement.url}" target="_blank">
+          read the problem statement carefully
+        </a>
+      </py:if><py:else>
+        read the problem statement carefully
+      </py:else>
+      for a specification on the validity of outputs.
     </p>
     <p>
       For reference, <a href="${group.input.data.url}">here</a>
