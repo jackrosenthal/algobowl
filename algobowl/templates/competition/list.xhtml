@@ -6,12 +6,27 @@
     <div class="container">
       <py:def function="comp_list(comps)">
         <div class="list-group">
-          <a py:for="c in comps"
-             class="list-group-item"
-             href="${tg.url('/competition/{}'.format(c.id))}">
-             <h4>${c.name}</h4>
-             <span>${h.ftime(c.input_upload_begins, c.evaluation_ends)}</span>
-          </a>
+          <py:for each="c in comps">
+            <a py:if="c.published or (request.identity
+                                      and request.identity['user'].admin)"
+               class="list-group-item"
+               href="${tg.url('/competition/{}'.format(c.id))}">
+              <h4>
+                ${c.name}
+                <span py:if="not c.published"
+                      class="badge badge-warning"
+                      data-toggle="tooltip"
+                      data-placement="right"
+                      title="This competition is not visible to
+                             students yet. To make it visible, change
+                             the input upload begins date to a time in
+                             the past.">
+                  <i class="fas fa-user-secret"></i> Unpublished
+                </span>
+              </h4>
+              <span>${h.ftime(c.input_upload_begins, c.end)}</span>
+            </a>
+          </py:for>
         </div>
       </py:def>
       <py:if test="active">

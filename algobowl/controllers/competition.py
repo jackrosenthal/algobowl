@@ -358,9 +358,8 @@ class CompetitionsController(BaseController):
     def index(self):
         now = datetime.datetime.now()
         comps = (DBSession.query(Competition)
-                          .filter(Competition.input_upload_begins <= now)
                           .order_by(Competition.input_upload_ends))
         active, historical = [], []
         for c in comps:
-            (active if c.active else historical).append(c)
+            (active if c.end >= now else historical).append(c)
         return {'active': active, 'historical': historical}

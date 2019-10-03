@@ -180,15 +180,23 @@ class Competition(DeclarativeBase):
                      < self.evaluation_ends))
 
     @property
+    def end(self):
+        return max(filter(lambda x: x,
+                          (self.output_upload_ends,
+                           self.verification_ends,
+                           self.resolution_ends,
+                           self.open_verification_ends,
+                           self.evaluation_ends)))
+
+    @property
+    def published(self):
+        return self.input_upload_begins <= datetime.datetime.now()
+
+    @property
     def active(self):
         return (self.input_upload_begins
                 <= datetime.datetime.now()
-                < max(filter(lambda x: x, (
-                    self.output_upload_ends,
-                    self.verification_ends,
-                    self.resolution_ends,
-                    self.open_verification_ends,
-                    self.evaluation_ends))))
+                < self.end)
 
     def __repr__(self):
         return self.name
