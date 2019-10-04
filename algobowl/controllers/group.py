@@ -53,7 +53,7 @@ class GroupController(BaseController):
     @expose()
     def input_upload(self, input_upload=None, team_name=None):
         user = request.identity['user']
-        if not user.admin or not self.group.competition.input_upload_open:
+        if not user.admin and not self.group.competition.input_upload_open:
             abort(403, "Sorry, input upload stage is closed.")
 
         if hasattr(input_upload, "file"):
@@ -192,7 +192,7 @@ class GroupController(BaseController):
             status = VerificationStatus[status]
         except KeyError:
             abort(404)
-        if not user.admin or not self.group.competition.verification_open:
+        if not user.admin and not self.group.competition.verification_open:
             return {'status': 'error', 'msg': 'Verification closed'}
         assert output.original is True
         assert output.active is True
@@ -212,7 +212,7 @@ class GroupController(BaseController):
     @expose()
     def verification_outputs(self):
         user = request.identity['user']
-        if not user.admin or not self.group.competition.verification_open:
+        if not user.admin and not self.group.competition.verification_open:
             abort(403, "This file is only available during verification.")
         f = BytesIO()
         archive = zipfile.ZipFile(f, mode='w')
