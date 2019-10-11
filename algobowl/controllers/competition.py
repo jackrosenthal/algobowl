@@ -304,7 +304,7 @@ class CompetitionController(BaseController):
                         print("Verifier module failed on {}: {}".format(
                             output, e))
                     else:
-                        output.ground_truth = VerifcationStatus.accepted
+                        output.ground_truth = VerificationStatus.accepted
                     if old_status != output.ground_truth:
                         print("{} changed ground truth from {} to {}".format(
                             output, old_status, output.ground_truth))
