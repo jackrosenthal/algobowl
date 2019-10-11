@@ -210,16 +210,30 @@ class CompetitionController(BaseController):
     def grade(self):
         rankings = self.index(ground_truth=True)
 
-        groups = {
-            k: GradingTuple(
-                v,
+        def new_gt(rankings_entry):
+            return GradingTuple(
+                rankings_entry,
                 GradingVerificationTuple(),
                 GradingInputTuple([], set()),
                 GradingContributionTuple(),
                 defaultdict(dict))
+
+        groups = {
+            k: new_gt(v)
             for k, v in rankings['groups'].items()}
 
         compinfo = CompInfoTuple(len(rankings['inputs']), float("inf"), 0, 0)
+
+        # in the case a group submitted an input but has no outputs
+        # uploaded yet, they won't be in groups as they are off the
+        # rankings table. in this case, we need to make a
+        # GradingTuples for them now.
+        for group in self.competition.groups:
+            if group not in groups.keys():
+                rankings_entry = GroupEntry()
+                # If they submitted nothing, then everything is a "reject"
+                rankings_entry.reject_count = compinfo.inputs
+                groups[group] = new_gt(rankings_entry)
 
         for group, gt in groups.items():
             # compute verification correctness
