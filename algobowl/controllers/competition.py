@@ -8,6 +8,7 @@ from tg import expose, abort, request, response, flash, redirect, require
 from tg.predicates import has_permission
 from sqlalchemy.sql.expression import case
 from algobowl.lib.base import BaseController
+from algobowl.lib.logoutput import logoutput
 from algobowl.model import (DBSession, Competition, Input, Output, Group,
                             VerificationStatus, Protest, Evaluation)
 
@@ -281,6 +282,35 @@ class CompetitionController(BaseController):
                         score / sum(evals.values()))
 
         return {'groups': groups, 'competition': self.competition}
+
+    @logoutput
+    @require(has_permission('admin'))
+    def reverify(self):
+        verif_mod = self.competition.output_verifier.module
+
+        changes = 0
+        for group in self.competition.groups:
+            if group.input:
+                for output in group.input.outputs:
+                    old_status = output.ground_truth
+                    try:
+                        verif_mod.verify(group.input.data.file,
+                                         output.data.file)
+                    except verif_mod.VerificationError as e:
+                        output.ground_truth = VerificationStatus.rejected
+                        print("{} rejected because: {}".format(output, e))
+                    except Exception as e:
+                        output.ground_truth = VerificationStatus.waiting
+                        print("Verifier module failed on {}: {}".format(
+                            output, e))
+                    else:
+                        output.ground_truth = VerifcationStatus.accepted
+                    if old_status != output.ground_truth:
+                        print("{} changed ground truth from {} to {}".format(
+                            output, old_status, output.ground_truth))
+                        changes += 1
+        DBSession.flush()
+        print("{} ground truths changed".format(changes))
 
     @expose('algobowl.templates.competition.ov')
     def ov(self, output_id):
