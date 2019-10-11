@@ -1,0 +1,11 @@
+<html py:extends="master.xhtml" py:strip="True">
+  <py:block name="title">
+    Log Output
+  </py:block>
+  <body py:block="body" py:strip="True">
+    <div class="container">
+      <h1 class="mb-3">Log Output</h1>
+      <pre py:content="content" />
+    </div>
+  </body>
+</html>
