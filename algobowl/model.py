@@ -66,8 +66,6 @@ class UploadedPythonModule(UploadedFile):
 
 class VerifierModule(UploadedPythonModule):
     def ensure_module(self, module):
-        if not hasattr(module, 'VerificationError'):
-            raise TypeError('Verifier must define VerificationError')
         if not hasattr(module, 'verify'):
             raise TypeError('Verifier must define veriy')
         if not hasattr(module.verify, '__call__'):

@@ -71,7 +71,7 @@ class GroupController(BaseController):
 
             try:
                 verif_mod.verify(StringIO(contents))
-            except verif_mod.VerificationError as e:
+            except AssertionError as e:
                 flash('Your input has been rejected for the following reason: '
                       '{}. Please correct and try uploading again.'.format(e),
                       'danger')
@@ -161,7 +161,7 @@ class GroupController(BaseController):
         verif_mod = self.group.competition.output_verifier.module
         try:
             verif_mod.verify(to_group.input.data.file, StringIO(contents))
-        except verif_mod.VerificationError:
+        except AssertionError:
             output.ground_truth = VerificationStatus.rejected
         except Exception:
             output.ground_truth = VerificationStatus.waiting

@@ -310,7 +310,7 @@ class CompetitionController(BaseController):
                     try:
                         verif_mod.verify(group.input.data.file,
                                          output.data.file)
-                    except verif_mod.VerificationError as e:
+                    except AssertionError as e:
                         output.ground_truth = VerificationStatus.rejected
                         print("{} rejected because: {}".format(output, e))
                     except Exception as e:
