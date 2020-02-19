@@ -36,6 +36,14 @@ class VerificationStatus(enum.Enum):
         return self.name
 
 
+class ProblemType(enum.Enum):
+    minimization = 0
+    maximization = 1
+
+    def __str__(self):
+        return self.name
+
+
 class UploadedPythonModule(UploadedFile):
     module_cache = WeakValueDictionary()
 
@@ -87,6 +95,10 @@ class Competition(DeclarativeBase):
     output_verifier = sa.Column(
         UploadedFileField(upload_type=VerifierModule),
         nullable=False)
+    problem_type = sa.Column(
+        sa.Enum(ProblemType),
+        nullable=False,
+        default=ProblemType.minimization)
 
     problem_statement = sa.Column(UploadedFileField, nullable=True)
     allow_custom_team_names = sa.Column(sa.Boolean, default=True)

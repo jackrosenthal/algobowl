@@ -10,7 +10,8 @@ from sqlalchemy.sql.expression import case
 from algobowl.lib.base import BaseController
 from algobowl.lib.logoutput import logoutput
 from algobowl.model import (DBSession, Competition, Input, Output, Group,
-                            VerificationStatus, Protest, Evaluation)
+                            VerificationStatus, Protest, Evaluation,
+                            ProblemType)
 
 __all__ = ['CompetitionsController', 'CompetitionController']
 
@@ -124,6 +125,11 @@ class CompetitionController(BaseController):
 
         open_verification = user and comp.open_verification_open
 
+        score_sort = {
+            ProblemType.minimization: Output.score.asc(),
+            ProblemType.maximization: Output.score.desc(),
+        }[comp.problem_type]
+
         groups = defaultdict(GroupEntry)
         ir_query = (
             DBSession.query(Input, Group, Output, verification_column)
@@ -134,7 +140,7 @@ class CompetitionController(BaseController):
                      .order_by(Input.group_id,
                                verification_column
                                == VerificationStatus.rejected,
-                               Output.score))
+                               score_sort))
 
         inputs = []
         last_iput = None
