@@ -4,16 +4,16 @@ import sqlalchemy as sa
 from weakref import WeakValueDictionary
 from types import ModuleType
 from sqlalchemy.orm import relationship, relation
-from zope.sqlalchemy import ZopeTransactionExtension
+from zope.sqlalchemy import register
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from depot.io.utils import file_from_content
 from depot.fields.upload import UploadedFile
 from depot.fields.sqlalchemy import UploadedFileField
 
-maker = sessionmaker(autoflush=True, autocommit=False,
-                     extension=ZopeTransactionExtension())
+maker = sessionmaker(autoflush=True, autocommit=False)
 DBSession = scoped_session(maker)
+register(DBSession)
 DeclarativeBase = declarative_base()
 DeclarativeBase.query = DBSession.query_property()
 metadata = DeclarativeBase.metadata

@@ -1,8 +1,8 @@
 import sys
 from setuptools import setup
 
-if sys.version_info < (3, 4):
-    print('AlgoBOWL requires at least Python 3.4', file=sys.stderr)
+if sys.version_info < (3, 5):
+    print('AlgoBOWL requires at least Python 3.5', file=sys.stderr)
     sys.exit(1)
 
 setup(
@@ -15,15 +15,19 @@ setup(
     packages=['algobowl'],
     install_requires=[
         "TurboGears2 >= 2.3.12",
+        "tgext.admin",
+        "decorator",
+        "tw2.forms",
         "Beaker >= 1.8.0",
         "Kajiki >= 0.6.3",
-        "zope.sqlalchemy >= 0.4",
+        "filedepot >= 0.6.0",
+        "zope.sqlalchemy >= 1.2",
         "sqlalchemy",
         "alembic",
         "repoze.who",
         "WebHelpers2",
         "recordclass"],
-    python_requires='>=3.4,<4',
+    python_requires='>=3.5,<4',
     include_package_data=True,
     package_data={'algobowl': [
         'templates/*/*',
