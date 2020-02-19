@@ -17,7 +17,8 @@ down_revision = 'a0614de9cee5'
 def upgrade():
     op.add_column('competition',
                   sa.Column('problem_type',
-                            sa.Enum('minimization', 'maximization'),
+                            sa.Enum('minimization', 'maximization',
+                                    name='ProblemType'),
                             nullable=True,
                             server_default='minimization'))
 
