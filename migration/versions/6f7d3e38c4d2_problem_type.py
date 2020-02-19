@@ -13,12 +13,14 @@ from alembic import op
 revision = '6f7d3e38c4d2'
 down_revision = 'a0614de9cee5'
 
+problem_type_enum = sa.Enum('minimization', 'maximization', name='ProblemType')
+
 
 def upgrade():
+    problem_type_enum.create(op.get_bind())
     op.add_column('competition',
                   sa.Column('problem_type',
-                            sa.Enum('minimization', 'maximization',
-                                    name='ProblemType'),
+                            problem_type_enum,
                             nullable=True,
                             server_default='minimization'))
 
