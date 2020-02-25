@@ -26,11 +26,16 @@ class ErrorController(BaseController):
         except Exception:
             message = None
 
+        if hasattr(resp, "status_int"):
+            code = resp.status_int
+        else:
+            code = 404
+
         if not message:
             message = ("<p>We're sorry but we weren't able to process "
                        " this request.</p>")
 
         values = dict(prefix=request.environ.get('SCRIPT_NAME', ''),
-                      code=request.params.get('code', resp.status_int),
+                      code=request.params.get('code', code),
                       message=request.params.get('message', message))
         return values
