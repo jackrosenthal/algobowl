@@ -68,9 +68,16 @@ class GroupController(BaseController):
             if len(contents) > 1E6:
                 abort(400, "Your input exceeds the maxiumum size.")
             verif_mod = self.group.competition.input_verifier.module
+            if not getattr(verif_mod, 'VerificationError'):
+                verif_mod.VerificationError = AssertionError
 
             try:
                 verif_mod.verify(StringIO(contents))
+            except verif_mod.VerificationError as e:
+                flash('Your input has been rejected for the following reason: '
+                      '{}. Please correct and try uploading again.'.format(e),
+                      'danger')
+                redirect(self.base_url)
             except AssertionError as e:
                 flash('Your input has been rejected for the following reason: '
                       '{}. Please correct and try uploading again.'.format(e),
@@ -159,8 +166,12 @@ class GroupController(BaseController):
                         score=score, original=comp.output_upload_open)
 
         verif_mod = self.group.competition.output_verifier.module
+        if not getattr(verif_mod, 'VerificationError'):
+            verif_mod.VerificationError = AssertionError
         try:
             verif_mod.verify(to_group.input.data.file, StringIO(contents))
+        except verif_mod.VerificationError as e:
+            output.ground_truth = VerificationStatus.rejected
         except AssertionError:
             output.ground_truth = VerificationStatus.rejected
         except Exception:

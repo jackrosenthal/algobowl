@@ -301,6 +301,8 @@ class CompetitionController(BaseController):
     @require(has_permission('admin'))
     def reverify(self):
         verif_mod = self.competition.output_verifier.module
+        if not getattr(verif_mod, 'VerificationError'):
+            verif_mod.VerificationError = AssertionError
 
         changes = 0
         for group in self.competition.groups:
@@ -310,6 +312,9 @@ class CompetitionController(BaseController):
                     try:
                         verif_mod.verify(group.input.data.file,
                                          output.data.file)
+                    except verif_mod.VerificationError as e:
+                        output.ground_truth = VerificationStatus.rejected
+                        print("{} rejected because: {}".format(output, e))
                     except AssertionError as e:
                         output.ground_truth = VerificationStatus.rejected
                         print("{} rejected because: {}".format(output, e))
