@@ -43,7 +43,7 @@ def ftime(dt, duration=None, show_day=False):
             # Format date with duration
             start = (dt.strftime(date_fmt + dt_duration_sep + time_fmt)
                      + duration_time_sep)
-            if duration - dt < timedelta(hours=24):
+            if dt.date() == duration.date():
                 return start + duration.strftime(time_fmt)
             return start + duration.strftime(date_fmt + dt_sep + time_fmt)
         else:
