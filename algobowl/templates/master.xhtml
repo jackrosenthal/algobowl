@@ -5,7 +5,7 @@
   <meta charset="${response.charset}" />
 
   <title>
-    ${tg.config['branding.name']}: <py:block name="title">Competition</py:block>
+    ${tg.config['site.branding.name']}: <py:block name="title">Competition</py:block>
   </title>
 
   <link rel="stylesheet" type="text/css" media="screen" href="${tg.url('/assets/css/bootstrap.min.css')}" />
@@ -21,7 +21,7 @@
   <link rel="apple-touch-icon-precomposed" sizes="152x152"  href="${tg.url('/assets/img/apple-touch-icon-152x152.png')}" />
   <link rel="icon" type="image/png" href="${tg.url('/assets/img/favicon-32x32.png')}" sizes="32x32" />
   <link rel="icon" type="image/png" href="${tg.url('/assets/img/favicon-16x16.png')}" sizes="16x16" />
-  <meta name="application-name" content="${tg.config['branding.name']}" />
+  <meta name="application-name" content="${tg.config['site.branding.name']}" />
   <meta name="msapplication-TileColor" content="#FFFFFF" />
   <meta name="msapplication-TileImage" content="${tg.url('/assets/img/mstile-144x144.png')}" />
   <link rel="shortcut icon" href="${tg.url('/assets/img/favicon.ico')}" />
@@ -40,7 +40,7 @@
   <nav class="navbar fixed-top navbar-dark bg-primary navbar-expand-md">
     <div class="container">
       <a class="navbar-brand" href="${tg.url('/')}"
-         py:content="tg.config['branding.name']" />
+         py:content="tg.config['site.branding.name']" />
 
       <button class="navbar-toggler"
               type="button"

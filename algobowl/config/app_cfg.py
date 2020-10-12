@@ -40,7 +40,7 @@ base_config.renderers.append('kajiki')
 base_config['templating.kajiki.strip_text'] = False
 base_config.default_renderer = 'kajiki'
 
-base_config['branding.name'] = 'AlgoBOWL'
+base_config['site.branding.name'] = 'AlgoBOWL'
 
 # Configure Sessions, store data as JSON to avoid pickle security issues
 base_config['session.enabled'] = True

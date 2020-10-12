@@ -62,7 +62,7 @@ session.validate_key = aa8deb7d-a235-4f8d-807a-6497a8bb26af
 fernet.key = "zE6FxujQYFMojxYXt9VIkM4kYTLgEE7ObzLYMsRerxc="
 
 # Site branding options
-branding.name = AlgoBOWL
+site.branding.name = AlgoBOWL
 
 # If you'd like to fine-tune the individual locations of the cache data dirs
 # un-comment the desired settings here:
