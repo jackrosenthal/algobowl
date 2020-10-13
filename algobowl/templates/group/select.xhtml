@@ -22,7 +22,12 @@
         <h1>No Groups</h1>
         <p>
           You are not a member of any active groups. Please contact
-          your course instructor if you believe this to be a mistake.
+          <py:if test="asbool(tg.config['site.edu'])">
+            your course instructor
+          </py:if><py:else>
+            the site administrator
+          </py:else>
+          if you believe this to be a mistake.
         </p>
       </py:else>
     </div>
