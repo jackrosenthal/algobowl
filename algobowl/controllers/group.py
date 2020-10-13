@@ -296,7 +296,7 @@ class GroupsController(BaseController):
     @expose('json')
     def index(self):
         user = request.identity['user']
-        groups = user.groups
+        groups = [g for g in user.groups if g.competition.active]
 
         if len(groups) == 1 and request.response_type != 'application/json':
             redirect(url('/group/{}'.format(groups[0].id)))
