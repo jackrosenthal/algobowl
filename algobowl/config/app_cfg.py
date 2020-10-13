@@ -10,6 +10,7 @@ from algobowl import model
 from algobowl.config.auth import (AuthMetadata, APITokenAuthenticator,
                                   MPAPIAuthenticator)
 from tg.configuration import AppConfig, milestones
+from tg.support.converters import asbool
 from tgext.admin.config import AdminConfig
 from tgext.admin.layouts import BootstrapAdminLayout
 from tgext.admin.widgets import BootstrapAdminTableFiller
@@ -41,6 +42,7 @@ base_config['templating.kajiki.strip_text'] = False
 base_config.default_renderer = 'kajiki'
 
 base_config['site.branding.name'] = 'AlgoBOWL'
+base_config['site.edu'] = True
 
 # Configure Sessions, store data as JSON to avoid pickle security issues
 base_config['session.enabled'] = True
@@ -66,6 +68,15 @@ base_config.sa_auth.authenticators = [
 base_config['auth.mpapi.url'] = 'https://mastergo.mines.edu/mpapi'
 base_config.sa_auth.form_plugin = mpapi_authenticator
 base_config['depot.storage_path'] = '/tmp/depot'
+
+
+def variable_provider():
+    return {
+        'asbool': asbool
+    }
+
+
+base_config.variable_provider = variable_provider
 
 
 def config_ready():

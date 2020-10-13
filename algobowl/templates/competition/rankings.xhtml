@@ -51,7 +51,8 @@ def tooltip_attrs(iput, ent):
           View Student Verifications
         </a>
         <a href="${tg.request.url.partition('?')[0] + '/grade'}"
-           class="btn btn-info">
+           class="btn btn-info"
+           py:if="asbool(tg.config['site.edu'])">
           <i class="fas fa-marker fa-fw"></i>
           Grading Table
         </a>
