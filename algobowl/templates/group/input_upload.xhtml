@@ -18,8 +18,14 @@
       <label for="team-name">Team Name</label>
       <input type="text" class="form-control" id="team-name" name="team_name" value="${group.name}" />
       <small class="form-text text-muted">
-        Please avoid names with offensive content, profanity, or are hard to pronounce.
-        Your instructor reserves the right to change your team name.
+        Please avoid names with offensive content, profanity, or are
+        hard to pronounce.
+        <py:if test="asbool(tg.config['site.edu'])">
+          Your instructor
+        </py:if><py:else>
+          The site administrator
+        </py:else>
+        reserves the right to change your team name.
       </small>
     </div>
     <button type="submit" class="btn btn-primary">Submit</button>
