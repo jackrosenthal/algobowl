@@ -26,7 +26,10 @@ setup(
         "alembic",
         "repoze.who",
         "WebHelpers2",
-        "recordclass"],
+        "recordclass",
+        "cryptography",
+        "requests",
+    ],
     python_requires='>=3.5,<4',
     include_package_data=True,
     package_data={'algobowl': [
