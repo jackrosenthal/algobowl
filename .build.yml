@@ -24,13 +24,12 @@ tasks:
   - setup-app: |
       cd algobowl
       gearbox setup-app -c development.ini.sample
-  - start-server: |
+  - curl-test-server: |
       cd algobowl
       gearbox serve -c development.ini.sample --pid-file ~/gb.pid --daemon
-  - test-homepage: |
+      sleep 1
       curl -f http://127.0.0.1:8080/
-  - stop-server: |
-      cd algobowl
+      curl -f http://127.0.0.1:8080/competition
       gearbox serve -c development.ini.sample --pid-file ~/gb.pid --stop-daemon
   - install-flake8-extensions: |
       pip install --user flake8-pep3101 pep8-naming
