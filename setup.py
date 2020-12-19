@@ -1,18 +1,18 @@
+import setuptools
 import sys
-from setuptools import setup
 
 if sys.version_info < (3, 5):
     print('AlgoBOWL requires at least Python 3.5', file=sys.stderr)
     sys.exit(1)
 
-setup(
+setuptools.setup(
     name='algobowl',
     version='0.1',
     description='',
     author='',
     author_email='',
     url='',
-    packages=['algobowl'],
+    packages=setuptools.find_packages(),
     install_requires=[
         "TurboGears2 >= 2.3.12",
         "tgext.admin",
