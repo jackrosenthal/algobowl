@@ -4,6 +4,7 @@ packages:
   - flake8
   - python
   - python-pip
+  - python-wheel
   - sqlite
 sources:
   - https://git.sr.ht/~jmr/algobowl
