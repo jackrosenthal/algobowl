@@ -1,0 +1,41 @@
+image: archlinux
+packages:
+  - curl
+  - flake8
+  - python
+  - python-pip
+  - sqlite
+sources:
+  - https://git.sr.ht/~jmr/algobowl
+secrets:
+  # github mirror key
+  - 63775cc6-6340-439b-8ef1-6ccac34768dd
+environment:
+  GIT_SSH_COMMAND: >-
+    ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no
+tasks:
+  - install-package: |
+      cd algobowl
+      pip install --user .
+  - install-devtools: |
+      pip install --user tg.devtools
+      echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.buildenv
+  - setup-app: |
+      cd algobowl
+      gearbox setup-app -c development.ini.sample
+  - start-server: |
+      cd algobowl
+      gearbox serve -c development.ini.sample --pid-file ~/gb.pid --daemon
+  - test-homepage: |
+      curl -f http://127.0.0.1:8080/
+  - stop-server: |
+      cd algobowl
+      gearbox serve -c development.ini.sample --pid-file ~/gb.pid --stop-daemon
+  - install-flake8-extensions: |
+      pip install --user flake8-pep3101 pep8-naming
+  - lint: |
+      cd algobowl
+      flake8
+  - sync-to-github: |
+      cd algobowl
+      git push git@github.com:jackrosenthal/algobowl HEAD:master
