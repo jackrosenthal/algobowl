@@ -26,4 +26,5 @@ def upgrade():
 
 
 def downgrade():
-    op.drop_column('competition', 'problem_type')
+    with op.batch_alter_table('competition') as batch_op:
+        batch_op.drop_column('problem_type')
