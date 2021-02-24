@@ -21,6 +21,9 @@ tasks:
   - install-package: |
       cd algobowl
       pip install --user .
+  - show-gearbox-commands: |
+      cd algobowl
+      gearbox help
   - setup-app: |
       cd algobowl
       gearbox setup-app -c development.ini.sample
