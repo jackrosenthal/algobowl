@@ -34,7 +34,8 @@ tasks:
       curl -f http://127.0.0.1:8080/competition
       gearbox serve -c development.ini.sample --stop-daemon
   - run-migration-test: |
-      ./algobowl/migration_test.sh
+      cd algobowl
+      ./migration_test.sh
   - install-flake8-extensions: |
       pip install --user flake8-pep3101 pep8-naming
   - lint: |
