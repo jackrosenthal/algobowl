@@ -8,8 +8,8 @@
   <py:if test="group.input is not None">
     <p>
       Note that a solution can be valid even if it is not optimal. Please
-      <py:if test="competition.problem_statement">
-        <a href="${competition.problem_statement.url}" target="_blank">
+      <py:if test="competition.problem.problem_statement">
+        <a href="${competition.problem.problem_statement.url}" target="_blank">
           read the problem statement carefully
         </a>
       </py:if><py:else>

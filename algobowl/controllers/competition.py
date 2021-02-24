@@ -128,7 +128,7 @@ class CompetitionController(BaseController):
         score_sort = {
             ProblemType.minimization: Output.score.asc(),
             ProblemType.maximization: Output.score.desc(),
-        }[comp.problem_type]
+        }[comp.problem.problem_type]
 
         groups = defaultdict(GroupEntry)
         ir_query = (
@@ -306,7 +306,7 @@ class CompetitionController(BaseController):
     @logoutput
     @require(has_permission('admin'))
     def reverify(self):
-        verif_mod = self.competition.output_verifier.module
+        verif_mod = self.competition.problem.output_verifier.module
 
         changes = 0
         for group in self.competition.groups:

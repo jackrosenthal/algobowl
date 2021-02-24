@@ -82,9 +82,9 @@ class VerifierModule(UploadedPythonModule):
             raise TypeError('verify must be callable')
 
 
-class Competition(DeclarativeBase):
-    __tablename__ = 'competition'
-    db_icon = 'fas fa-clipboard-list'
+class Problem(DeclarativeBase):
+    __tablename__ = 'problem'
+    db_icon = 'fas fa-file-alt'
 
     id = sa.Column(sa.Integer, primary_key=True)
     name = sa.Column(sa.String, nullable=False)
@@ -101,6 +101,25 @@ class Competition(DeclarativeBase):
         default=ProblemType.minimization)
 
     problem_statement = sa.Column(UploadedFileField, nullable=True)
+
+    competitions = relationship(
+        'Competition', back_populates='problem', lazy='dynamic',
+        order_by='Competition.id')
+
+
+class Competition(DeclarativeBase):
+    __tablename__ = 'competition'
+    db_icon = 'fas fa-clipboard-list'
+
+    id = sa.Column(sa.Integer, primary_key=True)
+    name = sa.Column(sa.String, nullable=False)
+
+    problem_id = sa.Column(
+        sa.Integer,
+        sa.ForeignKey('problem.id'),
+        nullable=False)
+    problem = relationship('Problem', back_populates='competitions')
+
     allow_custom_team_names = sa.Column(sa.Boolean, default=True)
 
     input_upload_begins = sa.Column(sa.DateTime, nullable=False)

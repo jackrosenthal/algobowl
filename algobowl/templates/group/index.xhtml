@@ -34,8 +34,8 @@ show_rankings = competition.output_upload_begins <= now
           </p>
         </div>
         <div class="card-footer">
-          <a py:if="competition.problem_statement"
-             href="${competition.problem_statement.url}"
+          <a py:if="competition.problem.problem_statement"
+             href="${competition.problem.problem_statement.url}"
              class="btn btn-info">
             <i class="fas fa-file-pdf fa-fw"></i>
             Problem Statement

@@ -67,7 +67,7 @@ class GroupController(BaseController):
 
             if len(contents) > 1E6:
                 abort(400, "Your input exceeds the maxiumum size.")
-            verif_mod = self.group.competition.input_verifier.module
+            verif_mod = self.group.competition.problem.input_verifier.module
 
             try:
                 verif_mod.verify(StringIO(contents))
@@ -158,7 +158,7 @@ class GroupController(BaseController):
         output = Output(data=f, group=self.group, input=to_group.input,
                         score=score, original=comp.output_upload_open)
 
-        verif_mod = self.group.competition.output_verifier.module
+        verif_mod = self.group.competition.problem.output_verifier.module
         try:
             verif_mod.verify(to_group.input.data.file, StringIO(contents))
         except verif_mod.VerificationError:
