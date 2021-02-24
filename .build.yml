@@ -20,7 +20,7 @@ tasks:
       echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.buildenv
   - install-package: |
       cd algobowl
-      pip install --user .
+      pip install --user -e .
   - show-gearbox-commands: |
       cd algobowl
       gearbox help
