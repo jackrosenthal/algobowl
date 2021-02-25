@@ -229,6 +229,12 @@ class Competition(DeclarativeBase):
                 <= datetime.datetime.now()
                 < self.end)
 
+    @property
+    def archived(self):
+        # 3 months after end
+        archive_date = self.end + datetime.timedelta(days=90)
+        return datetime.datetime.now() >= archive_date
+
     def __repr__(self):
         return self.name
 

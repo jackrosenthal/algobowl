@@ -109,6 +109,8 @@ class CompetitionController(BaseController):
         show_scores = admin or (comp.open_verification_begins
                                 and now >= comp.open_verification_begins)
 
+        show_input_downloads = admin or not comp.archived
+
         if not admin and now < comp.output_upload_begins:
             flash("Rankings are not available yet", "info")
             redirect("/competition")
@@ -208,6 +210,7 @@ class CompetitionController(BaseController):
             return {'groups': groups,
                     'competition': comp,
                     'inputs': inputs,
+                    'show_input_downloads': show_input_downloads,
                     'ground_truth': ground_truth,
                     'open_verification': open_verification}
 
@@ -348,6 +351,9 @@ class CompetitionController(BaseController):
                               .first())
         else:
             group = None
+
+        show_input_downloads = ((user and user.admin)
+                                or not output.group.competition.archived)
         message = request.POST.get('message')
         if group and message:
             if output.use_ground_truth:
@@ -366,6 +372,7 @@ class CompetitionController(BaseController):
             flash('Your protest has been submitted.', 'success')
 
         return {'output': output, 'group': group,
+                'show_input_downloads': show_input_downloads,
                 'competition': self.competition}
 
     @expose()
@@ -376,6 +383,10 @@ class CompetitionController(BaseController):
         if not (user and user.admin) and now < comp.output_upload_begins:
             abort(403, "Input downloading is not available until the output"
                        " upload stage begins.")
+        if not (user and user.admin) and comp.archived:
+            abort(403,
+                  "Input downloading is unavailable for old competitions. "
+                  "Contact the site administrator if you need access.")
         f = BytesIO()
         archive = zipfile.ZipFile(f, mode='w')
         inputs = (DBSession.query(Input)

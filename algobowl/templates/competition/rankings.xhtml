@@ -82,8 +82,12 @@ def tooltip_attrs(iput, ent):
           <tr>
             <th>Group</th>
             <th py:for="iput in inputs">
-              <a href="${iput.data.url}"
-                 py:content="iput.group_id"></a>
+              <py:if test="show_input_downloads">
+                <a href="${iput.data.url}"
+                   py:content="iput.group_id"></a>
+              </py:if><py:else>
+                ${iput.group_id}
+              </py:else>
             </th>
             <th>Σ Ranks</th>
             <th>Penalty</th>
