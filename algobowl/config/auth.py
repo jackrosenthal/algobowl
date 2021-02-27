@@ -42,14 +42,6 @@ class APITokenAuthenticator(BasicAuthPlugin):
         return None
 
 
-def user_from_mpapi_attributes(attrs):
-    return User(
-        id=attrs['uidNumber'],
-        username=attrs['uid'],
-        full_name=attrs['first'] + ' ' + attrs['sn'],
-        email=attrs['mail'])
-
-
 @implementer(IIdentifier, IChallenger, IAuthenticator)
 class MPAPIAuthenticator:
     def __init__(self, *args, **kwargs):
@@ -94,16 +86,25 @@ class MPAPIAuthenticator:
         if data['result'] != 'success':
             raise ValueError('MPAPI Failure')
         username = data['uid']
+        attributes = data['attributes']
+        uid = attributes['uidNumber']
+        full_name = '{} {}'.format(attributes['first'], attributes['sn'])
+        email = attributes['mail']
 
-        identity['user'] = User.from_username(username)
-        if identity['user']:
-            return username
+        user = DBSession.query(User).filter(User.id == uid).one_or_none()
+        if user:
+            # Update attributes in case of username/full name change
+            user.username = username
+            user.full_name = full_name
+            user.email = email
         else:
-            user = user_from_mpapi_attributes(data['attributes'])
+            user = User(id=uid, username=username, full_name=full_name,
+                        email=email)
             DBSession.add(user)
-            DBSession.flush()
-            transaction.commit()
-            return username
+
+        DBSession.flush()
+        transaction.commit()
+        return username
 
     @property
     def mpapi_url(self) -> str:
