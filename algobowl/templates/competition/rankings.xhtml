@@ -50,13 +50,13 @@ def tooltip_attrs(iput, ent):
           <i class="fas fa-user-check fa-fw"></i>
           View Student Verifications
         </a>
-        <a href="${tg.request.url.partition('?')[0] + '/grade'}"
+        <a href="${tg.request.path + '/grade'}"
            class="btn btn-info"
            py:if="asbool(tg.config['site.edu'])">
           <i class="fas fa-marker fa-fw"></i>
           Grading Table
         </a>
-        <a href="${tg.request.url.partition('?')[0] + '/reverify'}"
+        <a href="${tg.request.path + '/reverify'}"
            class="btn btn-info">
           <i class="fas fa-sync-alt fa-fw"></i>
           Recompute Ground Truths
@@ -110,7 +110,7 @@ def tooltip_attrs(iput, ent):
                     </py:else>
                   </py:def>
                   <a py:if="st.output"
-                     href="${request.url}/ov/${st.output.id}"
+                     href="${request.path}/ov/${st.output.id}"
                      class="table-download-link"
                      py:content="cell_text(st)" />
                   <span py:if="not st.output"
