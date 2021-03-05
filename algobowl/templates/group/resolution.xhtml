@@ -93,31 +93,30 @@
         </td>
       </tr>
       <!-- unsubmitted outputs -->
-      <tr py:for="g in competition.groups">
-        <py:if test="g.input and g.input.id not in submitted_outputs">
-          <td>
-            <a href="${g.input.data.url}">
-              <tt py:content="g.input.data.filename" />
-            </a>
-          </td>
-          <td></td>
-          <td>
-            <em>Nothing submitted</em>
-          </td>
-          <td>
-            <input type="file"
-                   class="hidden-uploader"
-                   data-togroup="${g.id}"
-                   style="position: fixed; top: -100em"
-                   id="file-upload-not-submitted-${g.id}" />
-            <button class="btn btn-info upload-new"
-                    id="upload-not-submitted-${g.id}"
-                    data-output="not-submitted-${g.id}">
-              <i class="fas fa-file-upload fa-fw"></i>
-              Upload Output
-            </button>
-          </td>
-        </py:if>
+      <tr py:for="g in competition.groups"
+          py:if="g.input and g.input.id not in submitted_outputs">
+        <td>
+          <a href="${g.input.data.url}">
+            <tt py:content="g.input.data.filename" />
+          </a>
+        </td>
+        <td></td>
+        <td>
+          <em>Nothing submitted</em>
+        </td>
+        <td>
+          <input type="file"
+                 class="hidden-uploader"
+                 data-togroup="${g.id}"
+                 style="position: fixed; top: -100em"
+                 id="file-upload-not-submitted-${g.id}" />
+          <button class="btn btn-info upload-new"
+                  id="upload-not-submitted-${g.id}"
+                  data-output="not-submitted-${g.id}">
+            <i class="fas fa-file-upload fa-fw"></i>
+            Upload Output
+          </button>
+        </td>
       </tr>
     </tbody>
   </table>
