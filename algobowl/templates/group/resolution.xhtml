@@ -94,7 +94,7 @@
       </tr>
       <!-- unsubmitted outputs -->
       <tr py:for="g in competition.groups">
-        <py:if test="g.input.id not in submitted_outputs">
+        <py:if test="g.input and g.input.id not in submitted_outputs">
           <td>
             <a href="${g.input.data.url}">
               <tt py:content="g.input.data.filename" />
