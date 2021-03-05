@@ -166,7 +166,7 @@ class CompetitionController(BaseController):
                 rank = potential_rank
 
             vdiffer = False
-            if (ground_truth and output.original
+            if (ground_truth and not output.use_ground_truth
                     and output.verification != output.ground_truth):
                 vdiffer = True
 
