@@ -1,3 +1,4 @@
+// -*- mode: js; js-indent-level: 2; -*-
 (function ($) {
   $('.upload-new').click(function (ev) {
     ev.preventDefault();
@@ -15,16 +16,23 @@
     }
   };
 
+  var confirm_file = null;
+  var confirm_to_group = null;
+
   $('.hidden-uploader').on('change', function (ev) {
     ev.preventDefault();
-    var to_group = $(this).data('togroup');
+    confirm_to_group = $(this).data('togroup');
+    confirm_file = this.files[0];
 
+    $('#upload-warning-modal').modal();
+  });
+
+  $('#upload-anyway').on('click', function (ev) {
     var formdata = new FormData();
-    formdata.append('output_file', this.files[0]);
-
+    formdata.append('output_file', confirm_file);
 
     $.ajax({
-      url: window.location.href + '/submit_output/' + to_group,
+      url: window.location.href + '/submit_output/' + confirm_to_group,
       method: 'POST',
       data: formdata,
       success: statusfunc,

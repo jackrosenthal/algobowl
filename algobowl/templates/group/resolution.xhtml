@@ -121,5 +121,41 @@
       </tr>
     </tbody>
   </table>
+  <div class="modal fade" id="upload-warning-modal" tabindex="-1"
+       role="dialog" aria-labelledby="upload-warning-modal-title"
+       aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="upload-warning-modal-title">
+            Warning: last upload for this input
+          </h5>
+        </div>
+        <div class="modal-body">
+          <p>
+            This is your last output upload you may do on this input.
+            The instructor will do the verification.
+          </p>
+          <ul>
+            <li>
+              If the instructor <b>accepts</b> your output, you will
+              get a penalty on your rankings.
+            </li>
+            <li>
+              If the instructor <b>rejects</b> your output, there will
+              be <b>no further chances to correct your output</b>.  It
+              will be permanently rejected.
+            </li>
+          </ul>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary"
+                  data-dismiss="modal">Cancel upload</button>
+          <button type="button" class="btn btn-danger"
+                  id="upload-anyway">Upload away!</button>
+        </div>
+      </div>
+    </div>
+  </div>
   <script type="text/javascript" src="${tg.url('/assets/js/resolution.js')}"></script>
 </div>
