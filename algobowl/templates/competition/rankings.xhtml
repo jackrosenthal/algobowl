@@ -9,6 +9,8 @@ from algobowl.model import VerificationStatus
 def cell_color(iput, ent):
     if iput not in ent.input_ranks.keys():
         return "bg-warning"
+    if ent.input_ranks[iput].vdiffer:
+        return "bg-info vdiffer"
     return {
         VerificationStatus.accepted: "bg-success text-light",
         VerificationStatus.rejected: "bg-danger text-light",
@@ -19,6 +21,10 @@ def tooltip_attrs(iput, ent):
     if iput not in ent.input_ranks.keys():
         return {'data-toggle': 'tooltip', 'title': 'Nothing submitted'}
     st = ent.input_ranks[iput]
+
+    if st.vdiffer:
+        return {'data-toggle': 'tooltip',
+                'title': 'Ground truth differs from student verification'}
 
     if st.verification is VerificationStatus.rejected:
         return {'data-toggle': 'tooltip', 'title': 'Rejected'}

@@ -17,7 +17,7 @@ __all__ = ['CompetitionsController', 'CompetitionController']
 
 
 ScoreTuple = namedtuple('ScoreTuple',
-                        ['score', 'verification', 'rank', 'output'])
+                        ['score', 'verification', 'rank', 'output', 'vdiffer'])
 
 GradingTuple = recordclass('GradingTuple',
                            ['rankings', 'verification', 'input',
@@ -164,8 +164,14 @@ class CompetitionController(BaseController):
                 rank = last_rank
             else:
                 rank = potential_rank
+
+            vdiffer = False
+            if (ground_truth and output.original
+                    and output.verification != output.ground_truth):
+                vdiffer = True
+
             groups[ogroup].input_ranks[iput] = ScoreTuple(
-                shown_score, verif, rank, shown_output)
+                shown_score, verif, rank, shown_output, vdiffer)
             if verif is VerificationStatus.rejected:
                 groups[ogroup].reject_count += 1
             else:
