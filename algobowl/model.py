@@ -282,7 +282,8 @@ class Group(DeclarativeBase):
         sa.Integer,
         sa.ForeignKey('competition.id'),
         nullable=False)
-    competition = relationship("Competition", back_populates="groups")
+    competition = relationship("Competition", back_populates="groups",
+                               lazy="dynamic")
 
     input = relationship("Input", uselist=False, back_populates="group")
     outputs = relationship("Output", back_populates="group", lazy="dynamic",
