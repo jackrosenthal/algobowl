@@ -146,6 +146,8 @@ class CompetitionController(BaseController):
 
         inputs = []
         last_iput = None
+        accurate_count = 0
+        total_count = 0
         for iput, ogroup, output, verif in ir_query:
             if iput is not last_iput:
                 inputs.append(iput)
@@ -166,9 +168,12 @@ class CompetitionController(BaseController):
                 rank = potential_rank
 
             vdiffer = False
-            if (ground_truth and not output.use_ground_truth
-                    and output.verification != output.ground_truth):
-                vdiffer = True
+            if ground_truth:
+                if (output.use_ground_truth
+                        or output.verification == output.ground_truth):
+                    accurate_count += 1
+                else:
+                    vdiffer = True
 
             groups[ogroup].input_ranks[iput] = ScoreTuple(
                 shown_score, verif, rank, shown_output, vdiffer)
@@ -181,6 +186,7 @@ class CompetitionController(BaseController):
             if verif is VerificationStatus.accepted and not output.original:
                 groups[ogroup].penalties += 1
 
+            total_count += 1
             potential_rank += 1
             last_iput = iput
             last_rank = rank
@@ -218,6 +224,8 @@ class CompetitionController(BaseController):
                     'inputs': inputs,
                     'show_input_downloads': show_input_downloads,
                     'ground_truth': ground_truth,
+                    'verification_accuracy': (0 if not total_count else
+                                              (accurate_count / total_count)),
                     'open_verification': open_verification}
 
     @expose('algobowl.templates.competition.grade')

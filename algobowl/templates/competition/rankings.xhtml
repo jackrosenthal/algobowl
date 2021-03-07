@@ -42,6 +42,10 @@ def tooltip_attrs(iput, ent):
           (Ground Truth)
         </py:if>
       </h1>
+      <div class="mb-2" py:if="ground_truth">
+        <strong>Verification Accuracy:</strong>
+        ${'{:.2f}'.format(verification_accuracy * 100)}%
+      </div>
       <div py:if="request.identity and request.identity['user'].admin"
            class="admin-rankings-controls mb-3">
         <a href="?ground_truth=t"
