@@ -1,3 +1,4 @@
+import datetime
 import zipfile
 import re
 from io import StringIO, BytesIO
@@ -191,7 +192,8 @@ class GroupController(BaseController):
         else:
             output.ground_truth = VerificationStatus.accepted
 
-        if comp.resolution_open or not comp.verification_begins:
+        if (not comp.verification_begins
+                or datetime.datetime.now() >= comp.verification_begins):
             output.use_ground_truth = True
 
         DBSession.add(output)
