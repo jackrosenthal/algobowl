@@ -18,6 +18,11 @@
 
   var confirm_file = null;
   var confirm_to_group = null;
+  var base_url = window.location.href;
+
+  if (base_url.includes('/stage/')) {
+    base_url += '/../..';
+  }
 
   $('.hidden-uploader').on('change', function (ev) {
     ev.preventDefault();
@@ -32,7 +37,7 @@
     formdata.append('output_file', confirm_file);
 
     $.ajax({
-      url: window.location.href + '/submit_output/' + confirm_to_group,
+      url: base_url + '/submit_output/' + confirm_to_group,
       method: 'POST',
       data: formdata,
       success: statusfunc,
@@ -52,7 +57,7 @@
     console.log(output_id);
 
     $.get(
-      window.location.href + '/resolution_protest/' + output_id,
+      base_url + '/resolution_protest/' + output_id,
       {},
       statusfunc,
       'json');
