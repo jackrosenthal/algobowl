@@ -34,12 +34,35 @@ class GroupController(BaseController):
 
     @expose('algobowl.templates.group.index')
     def index(self):
+        stage = None
+        if self.group.competition.input_upload_open:
+            stage = 'input_upload'
+        if self.group.competition.output_upload_open:
+            stage = 'output_upload'
+        if self.group.competition.verification_open:
+            stage = 'verification'
+        if self.group.competition.resolution_open:
+            stage = 'resolution'
+        if self.group.competition.evaluation_open:
+            stage = 'evaluation'
+
+        return self.stagepage(stage)
+
+    @expose('algobowl.templates.group.index')
+    def stage(self, stage):
+        user = request.identity['user']
+        if not user.admin:
+            abort(403, "Manual stage selection is for admin users only.")
+        return self.stagepage(stage)
+
+    def stagepage(self, stage):
         user = request.identity['user']
         submitted_outputs = {o.input.id: o for o in self.group.outputs}
         d = {'competition': self.group.competition,
              'group': self.group,
-             'submitted_outputs': submitted_outputs}
-        if self.group.competition.evaluation_open:
+             'submitted_outputs': submitted_outputs,
+             'stage': stage}
+        if stage == 'evaluation':
             evals = dict(DBSession
                          .query(Evaluation.to_student_id, Evaluation.score)
                          .filter(Evaluation.group_id == self.group.id)

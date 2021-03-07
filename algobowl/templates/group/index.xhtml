@@ -32,6 +32,18 @@ show_rankings = competition.output_upload_begins <= now
             <strong>Open Verification</strong> is now available. View the
             rankings table to participate.
           </p>
+          <div class="card-text"
+             py:if="request.identity and request.identity['user'].admin">
+            <strong>Switch Stage (admin only):</strong>
+            <ul class="nav nav-pills">
+              <li py:for="sw_stage in ('input_upload', 'output_upload', 'verification', 'resolution', 'evaluation')"
+                  class="nav-item">
+                <a href="${tg.url('/group/{}/stage/{}'.format(group.id, sw_stage))}"
+                   class="nav-link ${'active' if sw_stage == stage else ''}"
+                   py:content="sw_stage.replace('_', ' ').title()" />
+              </li>
+            </ul>
+          </div>
         </div>
         <div class="card-footer">
           <a py:if="competition.problem.problem_statement"
