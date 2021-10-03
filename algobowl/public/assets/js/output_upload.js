@@ -21,8 +21,12 @@
         }
       }(data['status']))};
 
+    var url = window.location.href;
+    url = url.replace('/stage/output_upload', '');
+    url += '/submit_output/' + to_group;
+
     $.ajax({
-      url: window.location.href + '/submit_output/' + to_group,
+      url: url,
       method: 'POST',
       data: formdata,
       success: statusfunc,
