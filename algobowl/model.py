@@ -277,6 +277,7 @@ class Group(DeclarativeBase):
 
     id = sa.Column(sa.Integer, primary_key=True)
     name = sa.Column(sa.Unicode(100), nullable=True)
+    incognito = sa.Column(sa.Boolean, default=False)
 
     competition_id = sa.Column(
         sa.Integer,

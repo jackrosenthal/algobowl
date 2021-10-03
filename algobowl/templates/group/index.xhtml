@@ -11,7 +11,12 @@ show_rankings = competition.output_upload_begins <= now
     <div class="container">
       <div class="card competition-info mb-3">
         <div class="card-body">
-          <h2 class="card-title" py:content="competition.name"></h2>
+          <h2 class="card-title">
+            ${competition.name}
+            <py:if test="group.incognito">
+              (Participating in Incognito)
+            </py:if>
+          </h2>
           <ul>
             <li><strong>Input Upload:</strong> ${h.ftime(competition.input_upload_begins, competition.input_upload_ends)}</li>
             <li><strong>Output Upload:</strong> ${h.ftime(competition.output_upload_begins, competition.output_upload_ends)}</li>

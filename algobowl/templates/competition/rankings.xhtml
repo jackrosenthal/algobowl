@@ -46,30 +46,44 @@ def tooltip_attrs(iput, ent):
         <strong>Verification Accuracy:</strong>
         ${'{:.2f}'.format(verification_accuracy * 100)}%
       </div>
-      <div py:if="request.identity and request.identity['user'].admin"
+      <div py:if="admin or show_incognito_option"
            class="admin-rankings-controls mb-3">
-        <a href="?ground_truth=t"
+        <py:if test="admin">
+          <a href="?ground_truth=t${'&amp;incognito=t' if incognito else ''}"
+             class="btn btn-info"
+             py:if="not ground_truth">
+            <i class="fas fa-user-secret fa-fw"></i>
+            View Ground Truth
+          </a>
+          <a href="?${'incognito=t' if incognito else ''}"
+             class="btn btn-info"
+             py:if="ground_truth">
+            <i class="fas fa-user-check fa-fw"></i>
+            View Student Verifications
+          </a>
+          <a href="${tg.request.path + '/grade'}"
+             class="btn btn-info"
+             py:if="asbool(tg.config['site.edu'])">
+            <i class="fas fa-marker fa-fw"></i>
+            Grading Table
+          </a>
+          <a href="${tg.request.path + '/reverify'}"
+             class="btn btn-info">
+            <i class="fas fa-sync-alt fa-fw"></i>
+            Recompute Ground Truths
+          </a>
+        </py:if>
+        <a href="?incognito=t${'&amp;ground_truth=t' if ground_truth else ''}"
            class="btn btn-info"
-           py:if="not ground_truth">
+           py:if="incognito_teams and not incognito">
           <i class="fas fa-user-secret fa-fw"></i>
-          View Ground Truth
+          Show Incognito Teams
         </a>
-        <a href="?"
+        <a href="?${'ground_truth=t' if ground_truth else ''}"
            class="btn btn-info"
-           py:if="ground_truth">
-          <i class="fas fa-user-check fa-fw"></i>
-          View Student Verifications
-        </a>
-        <a href="${tg.request.path + '/grade'}"
-           class="btn btn-info"
-           py:if="asbool(tg.config['site.edu'])">
-          <i class="fas fa-marker fa-fw"></i>
-          Grading Table
-        </a>
-        <a href="${tg.request.path + '/reverify'}"
-           class="btn btn-info">
-          <i class="fas fa-sync-alt fa-fw"></i>
-          Recompute Ground Truths
+           py:if="incognito_teams and incognito">
+          <i class="fas fa-undo-alt fa-fw"></i>
+          Hide Incognito Teams
         </a>
       </div>
       <div py:if="open_verification" class="card mt-3 mb-3">
@@ -106,7 +120,10 @@ def tooltip_attrs(iput, ent):
         </thead>
         <tbody>
           <tr py:for="group, ent in sorted(groups.items(), key=lambda t: t[1])">
-            <td py:content="group.name" class="truncate-small"></td>
+            <td class="truncate-small">
+              <i py:if="group.incognito" class="fas fa-user-secret" />
+              ${group.name}
+            </td>
             <td py:for="iput in inputs"
                 class="${cell_color(iput, ent)}"
                 py:attrs="tooltip_attrs(iput, ent)">

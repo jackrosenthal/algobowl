@@ -14,8 +14,13 @@
           <a py:for="group in groups"
              class="list-group-item"
              href="${tg.url('/group/{}'.format(group.id))}">
-             <h4>${group.competition.name}: ${group.name}</h4>
-             <span>${', '.join(map(repr, group.users))}</span>
+            <h4>
+              ${group.competition.name}: ${group.name}
+              <py:if test="group.incognito">
+                (<i class="fas fa-user-admin" /> Incognito Team)
+              </py:if>
+            </h4>
+            <span>${', '.join(map(repr, group.users))}</span>
           </a>
         </div>
       </py:if><py:else>

@@ -10,7 +10,7 @@ from sqlalchemy.sql.expression import case
 from algobowl.lib.base import BaseController
 from algobowl.lib.logoutput import logoutput
 from algobowl.model import (DBSession, Competition, Input, Output, Group,
-                            VerificationStatus, Protest, Evaluation,
+                            User, VerificationStatus, Protest, Evaluation,
                             ProblemType)
 
 __all__ = ['CompetitionsController', 'CompetitionController']
@@ -101,15 +101,35 @@ class CompetitionController(BaseController):
 
     @expose('algobowl.templates.competition.rankings')
     @expose('json')
-    def index(self, ground_truth=False):
+    def index(self, ground_truth=False, incognito=False):
         user = request.identity and request.identity['user']
         now = datetime.datetime.now()
         admin = user and user.admin
         comp = self.competition
         show_scores = admin or (comp.open_verification_begins
                                 and now >= comp.open_verification_begins)
+        if user:
+            my_groups = (DBSession
+                         .query(Group)
+                         .filter(Group.competition_id == comp.id)
+                         .join(Group.users)
+                         .filter(User == user)
+                         .all())
+        else:
+            my_groups = []
 
         show_input_downloads = admin or not comp.archived
+        show_incognito_option = admin or any(g.incognito for g in my_groups)
+
+        if show_incognito_option:
+            incognito_teams = (DBSession
+                               .query(Group)
+                               .filter(Group.competition_id == comp.id)
+                               .filter(Group.incognito == True)
+                               .all())
+        else:
+            incognito = False
+            incognito_teams = []
 
         if not admin and now < comp.output_upload_begins:
             flash("Rankings are not available yet", "info")
@@ -143,6 +163,8 @@ class CompetitionController(BaseController):
                                verification_column
                                == VerificationStatus.rejected,
                                score_sort))
+        if not incognito:
+            ir_query = ir_query.filter(Group.incognito == False)
 
         inputs = []
         last_iput = None
@@ -222,6 +244,10 @@ class CompetitionController(BaseController):
             return {'groups': groups,
                     'competition': comp,
                     'inputs': inputs,
+                    'admin': admin,
+                    'incognito': incognito,
+                    'show_incognito_option': show_incognito_option,
+                    'incognito_teams': incognito_teams,
                     'show_input_downloads': show_input_downloads,
                     'ground_truth': ground_truth,
                     'verification_accuracy': (0 if not total_count else
