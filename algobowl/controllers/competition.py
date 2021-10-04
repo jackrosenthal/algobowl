@@ -10,7 +10,7 @@ from sqlalchemy.sql.expression import case
 from algobowl.lib.base import BaseController
 from algobowl.lib.logoutput import logoutput
 from algobowl.model import (DBSession, Competition, Input, Output, Group,
-                            User, VerificationStatus, Protest, Evaluation,
+                            VerificationStatus, Protest, Evaluation,
                             ProblemType)
 
 __all__ = ['CompetitionsController', 'CompetitionController']
@@ -112,9 +112,9 @@ class CompetitionController(BaseController):
             my_groups = (DBSession
                          .query(Group)
                          .filter(Group.competition_id == comp.id)
-                         .join(Group.users)
-                         .filter(User == user)
                          .all())
+            # non-sql filter, bleh
+            my_groups = [g for g in my_groups if user in g.users]
         else:
             my_groups = []
 
@@ -242,6 +242,7 @@ class CompetitionController(BaseController):
                     'groups': {k.id: v.to_dict() for k, v in groups.items()}}
         else:
             return {'groups': groups,
+                    'my_groups': my_groups,
                     'competition': comp,
                     'inputs': inputs,
                     'admin': admin,
