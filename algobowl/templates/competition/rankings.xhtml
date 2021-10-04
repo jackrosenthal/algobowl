@@ -105,9 +105,11 @@ def tooltip_attrs(iput, ent):
         <thead>
           <tr>
             <th>Group</th>
-            <th py:for="iput in inputs">
+            <th py:for="iput in inputs"
+                class="${'bg-primary text-white' if iput.group in my_groups else ''}">
               <py:if test="show_input_downloads">
                 <a href="${iput.data.url}"
+                   class="${'text-white' if iput.group in my_groups else ''}"
                    py:content="iput.group_id"></a>
               </py:if><py:else>
                 ${iput.group_id}
@@ -119,13 +121,14 @@ def tooltip_attrs(iput, ent):
           </tr>
         </thead>
         <tbody>
-          <tr py:for="group, ent in sorted(groups.items(), key=lambda t: t[1])">
+          <tr py:for="group, ent in sorted(groups.items(), key=lambda t: t[1])"
+              class="${'font-weight-bold' if group in my_groups else ''}">
             <td class="truncate-small">
               <i py:if="group.incognito" class="fas fa-user-secret" />
               ${group.name}
             </td>
             <td py:for="iput in inputs"
-                class="${cell_color(iput, ent)}"
+                class="${cell_color(iput, ent)} ${'font-weight-bold' if iput.group in my_groups else ''}"
                 py:attrs="tooltip_attrs(iput, ent)">
               <py:if test="iput in ent.input_ranks.keys()">
                 <py:with vars="st=ent.input_ranks[iput]">
