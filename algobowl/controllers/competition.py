@@ -164,7 +164,7 @@ class CompetitionController(BaseController):
                                == VerificationStatus.rejected,
                                score_sort))
         if not incognito:
-            ir_query = ir_query.filter(Group.incognito == False)
+            ir_query = ir_query.filter(Group.incognito != True)
 
         inputs = []
         last_iput = None
