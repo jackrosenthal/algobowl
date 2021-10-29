@@ -35,6 +35,7 @@ tasks:
       sleep 2
       curl -f http://127.0.0.1:8080/
       curl -f http://127.0.0.1:8080/competition
+      curl -f http://127.0.0.1:8080/competition/archive
       gearbox serve -c development.ini.sample --stop-daemon
   - run-migration-test: |
       cd algobowl

@@ -41,6 +41,10 @@ CompInfoTuple = recordclass(
     'CompInfoTuple',
     ['inputs', 'best_score', 'worst_score', 'best_input_difference'])
 
+CompetitionYearTuple = recordclass(
+    'CompetitionYearTuple',
+    ['year', 'competitions'])
+
 
 class GroupEntry:
     def __init__(self):
@@ -456,12 +460,31 @@ class CompetitionsController(BaseController):
 
         return CompetitionController(competition), args
 
+    @expose('algobowl.templates.competition.archive')
+    def archive(self):
+        now = datetime.datetime.now()
+        comps = []
+        for comp in (DBSession
+                     .query(Competition)
+                     .filter(Competition.open_verification_ends <= now)
+                     .order_by(Competition.input_upload_ends.desc())):
+            if not comps or comps[-1].year != comp.input_upload_ends.year:
+                comps.append(
+                    CompetitionYearTuple(comp.input_upload_ends.year, [comp]))
+            else:
+                comps[-1].competitions.append(comp)
+
+        return {'competitions': comps}
+
     @expose('algobowl.templates.competition.list')
     def index(self):
         now = datetime.datetime.now()
-        comps = (DBSession.query(Competition)
-                          .order_by(Competition.input_upload_ends))
-        active, historical = [], []
-        for c in comps:
-            (active if c.end >= now else historical).append(c)
-        return {'active': active, 'historical': historical}
+        comps = (DBSession
+                 .query(Competition)
+                 .filter(Competition.input_upload_begins <= now)
+                 .filter(Competition.open_verification_ends > now)
+                 .order_by(Competition.input_upload_ends)
+                 .all())
+        if len(comps) == 1:
+            redirect('/competition/{}'.format(comps[0].id))
+        return {'competitions': comps}

@@ -1,28 +1,23 @@
 <html py:extends="master.xhtml" py:strip="True">
   <py:block name="title">
-    Competitions List
+    Competitions Archive
   </py:block>
   <body py:block="body" py:strip="True">
     <div class="container">
-      <h1 class="mb-3">Active Competitions</h1>
-      <py:if test="competitions">
+      <py:for each="yeargroup in competitions">
+        <h2 class="display-4 mb-2">${yeargroup.year}</h2>
         <div class="list-group">
-          <py:for each="c in competitions">
+          <py:for each="c in yeargroup.competitions">
             <a class="list-group-item"
                href="${tg.url('/competition/{}'.format(c.id))}">
               <h4>
                 ${c.name}
               </h4>
-              <span>${h.ftime(c.input_upload_begins, c.end)}</span>
+              <span>Ended ${h.ftime(c.end)}</span>
             </a>
           </py:for>
         </div>
-      </py:if><py:else>
-        <p>
-          There are no active competitions.  You may wish to check out the
-          <a href="${tg.url('/competition/archive')}">archive</a>.
-        </p>
-      </py:else>
+      </py:for>
     </div>
   </body>
 </html>

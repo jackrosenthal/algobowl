@@ -7,6 +7,7 @@ devdata.db
 build/
 dist/
 eggs/
+venv/
 wheels/
 sdist/
 pip-log.txt
