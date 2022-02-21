@@ -39,6 +39,14 @@ class RootController(BaseController):
         """Redirect for old route to homepage"""
         redirect(url('/'))
 
+    @expose('algobowl.templates.privacy')
+    def privacy(self):
+        return dict(page='privacy')
+
+    @expose('algobowl.templates.tos')
+    def tos(self):
+        return dict(page='tos')
+
     @expose()
     def login(self):
         if not tg.request.identity:
