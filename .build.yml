@@ -45,6 +45,3 @@ tasks:
   - lint: |
       cd algobowl
       flake8
-  - sync-to-github: |
-      cd algobowl
-      git push git@github.com:jackrosenthal/algobowl HEAD:master
