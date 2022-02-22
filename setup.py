@@ -17,6 +17,8 @@ setuptools.setup(
         "TurboGears2 >= 2.3.12",
         "tgext.admin",
         "decorator",
+        "google-api-python-client",
+        "google-auth-oauthlib",
         "tw2.forms",
         "Beaker >= 1.8.0",
         "Kajiki >= 0.6.3",
@@ -30,7 +32,7 @@ setuptools.setup(
         "cryptography",
         "requests",
     ],
-    python_requires='>=3.5,<4',
+    python_requires='>=3.6,<4',
     include_package_data=True,
     package_data={'algobowl': [
         'templates/*/*',

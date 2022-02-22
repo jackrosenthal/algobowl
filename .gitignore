@@ -17,3 +17,4 @@ pip-log.txt
 development.ini
 production.ini
 gearbox.pid
+client_secrets.json

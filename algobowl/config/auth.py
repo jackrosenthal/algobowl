@@ -1,49 +1,42 @@
+import os
 import tg
 import requests
 import transaction
+import google_auth_oauthlib.flow as gflow
+import googleapiclient.discovery as gdiscovery
+import repoze.who.plugins.auth_tkt as auth_tkt
+
 from urllib.parse import urlencode
 from webob import Request
 from cryptography.fernet import InvalidToken
 from tg.exceptions import HTTPFound
 from zope.interface import implementer
-from repoze.who.plugins.basicauth import BasicAuthPlugin
 from repoze.who.interfaces import IIdentifier, IAuthenticator, IChallenger
 from tg.configuration.auth import TGAuthMetadata
 from algobowl.model import User, DBSession
 
 
-@implementer(IAuthenticator)
-class APITokenAuthenticator(BasicAuthPlugin):
-    def __init__(self, *args, realm='basic', **kwargs):
-        super().__init__(*args, realm=realm, **kwargs)
+class BaseAuth:
+    def __init__(self):
+        self._cookie_plugin = None
 
-    def authenticate(self, environ, identity):
-        """
-        Return username if the provided identity is a valid API
-        token, ``None`` otherwise.
-        """
-        try:
-            login = identity['login']
-            password = identity['password']
-        except KeyError:
-            return None
+    @property
+    def cookie_plugin(self):
+        if not self._cookie_plugin:
+            self._cookie_plugin = auth_tkt.AuthTktCookiePlugin(
+                secret=tg.config["session.secret"],
+            )
+        return self._cookie_plugin
 
-        if login != 'token':
-            return None
+    def remember(self, environ, identity):
+        return self.cookie_plugin.remember(environ, identity)
 
-        try:
-            username = tg.app_globals.fernet.decrypt(password.encode('ascii'))
-        except InvalidToken:
-            return None
-
-        identity['user'] = User.from_username(username)
-        if identity['user']:
-            return username
-        return None
+    def forget(self, environ, identity):
+        return self.cookie_plugin.forget(environ_identity)
 
 
 @implementer(IIdentifier, IChallenger, IAuthenticator)
-class MPAPIAuthenticator:
+class MPAPIAuthenticator(BaseAuth):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.s = requests.Session()
@@ -57,18 +50,9 @@ class MPAPIAuthenticator:
 
         return {'login': ticket, 'identifier': 'mpapi'}
 
-    def _get_rememberer(self, environ):
-        rememberer = environ['repoze.who.plugins']['cookie']
-        return rememberer
-
-    def remember(self, environ, identity):
-        rememberer = self._get_rememberer(environ)
-        return rememberer.remember(environ, identity)
-
     def forget(self, environ, identity):
-        rememberer = self._get_rememberer(environ)
-        headers = rememberer.forget(environ, identity)
-        headers.append(('Location', self.mpapi_slo))
+        headers = super().forget(environ, identity)
+        headers.append(("Location", self.mpapi_slo))
         return headers
 
     def authenticate(self, environ, identity):
@@ -126,6 +110,9 @@ class MPAPIAuthenticator:
         """
         Provide ``IChallenger`` interface.
         """
+        challenger = environ.get('repoze.who.challenge')
+        if challenger and challenger != 'mpapi':
+            return None
         request = Request(environ)
         return_url = tg.url(
             request.application_url + '/post_login',
@@ -137,6 +124,76 @@ class MPAPIAuthenticator:
                     urlencode({'return': return_url}))),
             *forget_headers,
             *((h, v) for h, v in app_headers if h.lower() == 'set-cookie')]
+        return HTTPFound(headers=headers)
+
+
+@implementer(IIdentifier, IChallenger, IAuthenticator)
+class GoogleAuth(BaseAuth):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._flow = None
+
+    @property
+    def flow(self):
+        if not self._flow:
+            client_secrets_file = tg.config["glogin.client_secrets_file"]
+            self._flow = gflow.Flow.from_client_secrets_file(
+                client_secrets_file,
+                scopes=[
+                    "openid",
+                    "https://www.googleapis.com/auth/userinfo.email",
+                    "https://www.googleapis.com/auth/userinfo.profile",
+                ],
+            )
+        return self._flow
+
+    def identify(self, environ):
+        request = Request(environ)
+        try:
+            code = request.GET["code"]
+        except KeyError:
+            return None
+
+        return {"code": code, "identifier": "glogin"}
+
+    def authenticate(self, environ, identity):
+        try:
+            code = identity["code"]
+        except KeyError:
+            return None
+
+        if identity["identifier"] != "glogin":
+            return None
+
+        self.flow.fetch_token(code=code)
+        with gdiscovery.build(
+                "oauth2", "v2", credentials=self.flow.credentials
+        ) as service:
+            userinfo = service.userinfo().get().execute()
+
+        email = userinfo["email"]
+        user = DBSession.query(User).filter(User.email == email).one_or_none()
+        if not user:
+            # TODO: Handle unregistered users?
+            return None
+
+        return user.username
+
+    def challenge(self, environ, status, app_headers, forget_headers):
+        """
+        Provide ``IChallenger`` interface.
+        """
+        challenger = environ.get('repoze.who.challenge')
+        if challenger != 'glogin':
+            return None
+        request = Request(environ)
+        self.flow.redirect_uri = f"{request.application_url}/post_login"
+        auth_url, state = self.flow.authorization_url()
+        headers = [
+            ('Location', auth_url),
+            *forget_headers,
+            *((h, v) for h, v in app_headers if h.lower() == 'set-cookie'),
+        ]
         return HTTPFound(headers=headers)
 
 

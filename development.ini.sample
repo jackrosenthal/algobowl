@@ -61,6 +61,9 @@ session.type = cookie
 session.validate_key = aa8deb7d-a235-4f8d-807a-6497a8bb26af
 fernet.key = "zE6FxujQYFMojxYXt9VIkM4kYTLgEE7ObzLYMsRerxc="
 
+# Path to the client_secrets.json
+glogin.client_secrets_file = %(here)s/client_secrets.json
+
 # Site branding options
 site.branding.name = AlgoBOWL
 

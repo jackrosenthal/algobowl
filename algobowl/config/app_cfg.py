@@ -7,8 +7,7 @@ Configuration in this file is overridden by the paste config.
 import tg
 import algobowl
 from algobowl import model
-from algobowl.config.auth import (AuthMetadata, APITokenAuthenticator,
-                                  MPAPIAuthenticator)
+from algobowl.config.auth import AuthMetadata, MPAPIAuthenticator, GoogleAuth
 from tg.configuration import AppConfig, milestones
 from tg.support.converters import asbool
 from tgext.admin.config import AdminConfig
@@ -59,14 +58,16 @@ base_config.sa_auth.cookie_secret = "aa8deb7d-a235-4f8d-807a-6497a8bb26af"
 base_config.sa_auth.authmetadata = AuthMetadata(base_config.sa_auth)
 base_config['identity.allow_missing_user'] = False
 
-mpapi_authenticator = MPAPIAuthenticator()
+authenticators = [
+    ("mpapi", MPAPIAuthenticator()),
+    ("glogin", GoogleAuth()),
+]
 
-base_config.sa_auth.authenticators = [
-    ('token', APITokenAuthenticator()),
-    ('mpapi', mpapi_authenticator)]
+base_config.sa_auth.authenticators = authenticators
+base_config.sa_auth.identifiers = authenticators
+base_config.sa_auth.challengers = authenticators
 
 base_config['auth.mpapi.url'] = 'https://mastergo.mines.edu/mpapi'
-base_config.sa_auth.form_plugin = mpapi_authenticator
 base_config['depot.storage_path'] = '/tmp/depot'
 
 

@@ -50,6 +50,15 @@ class RootController(BaseController):
     @expose()
     def login(self):
         if not tg.request.identity:
+            tg.request.environ['repoze.who.challenge'] = 'mpapi'
+            who_api = get_api(tg.request.environ)
+            return who_api.challenge()
+        redirect(url('/'))
+
+    @expose()
+    def glogin(self):
+        if not tg.request.identity:
+            tg.request.environ['repoze.who.challenge'] = 'glogin'
             who_api = get_api(tg.request.environ)
             return who_api.challenge()
         redirect(url('/'))
