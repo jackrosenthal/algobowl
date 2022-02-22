@@ -24,7 +24,7 @@ setuptools.setup(
         "Kajiki >= 0.6.3",
         "filedepot >= 0.6.0",
         "zope.sqlalchemy >= 1.2",
-        "sqlalchemy",
+        "sqlalchemy>=1.3,<1.4",
         "alembic",
         "repoze.who",
         "WebHelpers2",
