@@ -32,7 +32,7 @@ class BaseAuth:
         return self.cookie_plugin.remember(environ, identity)
 
     def forget(self, environ, identity):
-        return self.cookie_plugin.forget(environ_identity)
+        return self.cookie_plugin.forget(environ, identity)
 
 
 @implementer(IIdentifier, IChallenger, IAuthenticator)
