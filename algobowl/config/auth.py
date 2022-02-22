@@ -1,4 +1,3 @@
-import os
 import tg
 import requests
 import transaction
@@ -8,7 +7,6 @@ import repoze.who.plugins.auth_tkt as auth_tkt
 
 from urllib.parse import urlencode
 from webob import Request
-from cryptography.fernet import InvalidToken
 from tg.exceptions import HTTPFound
 from zope.interface import implementer
 from repoze.who.interfaces import IIdentifier, IAuthenticator, IChallenger
