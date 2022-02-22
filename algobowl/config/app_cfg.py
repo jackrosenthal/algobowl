@@ -64,7 +64,10 @@ authenticators = [
 ]
 
 base_config.sa_auth.authenticators = authenticators
-base_config.sa_auth.identifiers = authenticators
+base_config.sa_auth.identifiers = [
+    ("default", None),
+    *authenticators,
+]
 base_config.sa_auth.challengers = authenticators
 
 base_config['auth.mpapi.url'] = 'https://mastergo.mines.edu/mpapi'

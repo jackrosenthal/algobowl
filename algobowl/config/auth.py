@@ -15,22 +15,14 @@ from algobowl.model import User, DBSession
 
 
 class BaseAuth:
-    def __init__(self):
-        self._cookie_plugin = None
-
-    @property
-    def cookie_plugin(self):
-        if not self._cookie_plugin:
-            self._cookie_plugin = auth_tkt.AuthTktCookiePlugin(
-                secret=tg.config["session.secret"],
-            )
-        return self._cookie_plugin
+    def _get_cookie_plugin(self, environ):
+        return environ["repoze.who.plugins"]["cookie"]
 
     def remember(self, environ, identity):
-        return self.cookie_plugin.remember(environ, identity)
+        return self._get_cookie_plugin(environ).remember(environ, identity)
 
     def forget(self, environ, identity):
-        return self.cookie_plugin.forget(environ, identity)
+        return self._get_cookie_plugin(environ).forget(environ, identity)
 
 
 @implementer(IIdentifier, IChallenger, IAuthenticator)
