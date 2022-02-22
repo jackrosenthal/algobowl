@@ -3,7 +3,6 @@ import requests
 import transaction
 import google_auth_oauthlib.flow as gflow
 import googleapiclient.discovery as gdiscovery
-import repoze.who.plugins.auth_tkt as auth_tkt
 
 from urllib.parse import urlencode
 from webob import Request
