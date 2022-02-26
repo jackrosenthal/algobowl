@@ -1,0 +1,47 @@
+<html py:extends="master.xhtml" py:strip="True">
+  <py:block name="title">
+    Competition Setup
+  </py:block>
+  <body py:block="body" py:strip="True">
+    <div class="container">
+      <h1>Competition Setup</h1>
+
+      <form method="POST" action="${tg.url('/setup/setup_competition')}"
+            enctype="multipart/form-data">
+        <div class="form-group">
+          <label for="name">Competition Name</label>
+          <input type="text" class="form-control" id="name" name="name" />
+        </div>
+        <div class="form-group">
+          <label for="problem">Problem</label>
+          <input type="text" class="form-control" id="problem" name="problem" />
+        </div>
+        <div class="form-group">
+          <label for="input_upload_ends">Input Upload Ends</label>
+          <input type="text" class="form-control" id="input_upload_ends" name="input_upload_ends" />
+        </div>
+        <div class="form-group">
+          <label for="output_upload_hours">Output Upload Hours</label>
+          <input type="text" class="form-control" id="output_upload_hours" name="output_upload_hours" />
+        </div>
+        <div class="form-group">
+          <label for="verification_hours">Verification Hours</label>
+          <input type="text" class="form-control" id="verification_hours" name="verification_hours" />
+        </div>
+        <div class="form-group">
+          <label for="resolution_hours">Resolution Hours</label>
+          <input type="text" class="form-control" id="resolution_hours" name="resolution_hours" />
+        </div>
+        <div class="form-group">
+          <label for="ov_hours">Eval/OV Hours</label>
+          <input type="text" class="form-control" id="ov_hours" name="ov_hours" />
+        </div>
+        <div class="form-group">
+          <label for="teams_json">Teams JSON</label>
+          <input type="file" class="form-control-file" id="teams_json" name="teams_json" />
+        </div>
+        <button type="submit" class="btn btn-primary">Setup</button>
+      </form>
+    </div>
+  </body>
+</html>

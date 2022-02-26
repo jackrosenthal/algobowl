@@ -79,6 +79,21 @@ class MPAPIAuthenticator(BaseAuth):
         transaction.commit()
         return username
 
+    def new_user_by_username(self, username):
+        url = f"{self.mpapi_url}/uid/{username}"
+        r = requests.get(url)
+        r.raise_for_status()
+        data = r.json()
+        if data["result"] != "success":
+            raise ValueError("MPAPI Failure.  User {username} may not exist?")
+        attributes = data["attributes"]
+        uid = attributes["uidNumber"]
+        full_name = f"{attributes['first']} {attributes['sn']}"
+        email = attributes["mail"]
+        user = User(id=uid, username=username, full_name=full_name, email=email)
+        DBSession.add(user)
+        return user
+
     @property
     def mpapi_url(self) -> str:
         return tg.config['auth.mpapi.url'].rstrip('/')
