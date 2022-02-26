@@ -448,6 +448,17 @@ class CompetitionController(BaseController):
         response.content_type = 'application/zip'
         return f.read()
 
+    @expose()
+    def problem_statement(self):
+        user = request.identity and request.identity['user']
+        if not (user and user.admin) and self.competition.archived:
+            abort(403,
+                  "The problem statement is no longer available as the "
+                  "competition has been archived.")
+        problem = problemlib.load_problem(self.competition)
+        response.content_type = "application/pdf"
+        return problem.get_statement_pdf()
+
 
 class CompetitionsController(BaseController):
     @expose()
