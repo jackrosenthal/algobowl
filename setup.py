@@ -1,9 +1,4 @@
 import setuptools
-import sys
-
-if sys.version_info < (3, 5):
-    print('AlgoBOWL requires at least Python 3.5', file=sys.stderr)
-    sys.exit(1)
 
 setuptools.setup(
     name='algobowl',
@@ -32,7 +27,7 @@ setuptools.setup(
         "cryptography",
         "requests",
     ],
-    python_requires='>=3.6,<4',
+    python_requires='>=3.7,<4',
     include_package_data=True,
     package_data={'algobowl': [
         'templates/*/*',

@@ -1,5 +1,6 @@
 import zipfile
 import datetime
+import algobowl.lib.problem as problemlib
 from io import BytesIO
 from statistics import mean, StatisticsError
 from collections import namedtuple, defaultdict
@@ -10,8 +11,7 @@ from sqlalchemy.sql.expression import case
 from algobowl.lib.base import BaseController
 from algobowl.lib.logoutput import logoutput
 from algobowl.model import (DBSession, Competition, Input, Output, Group,
-                            VerificationStatus, Protest, Evaluation,
-                            ProblemType)
+                            VerificationStatus, Protest, Evaluation)
 
 __all__ = ['CompetitionsController', 'CompetitionController']
 
@@ -110,6 +110,7 @@ class CompetitionController(BaseController):
         now = datetime.datetime.now()
         admin = user and user.admin
         comp = self.competition
+        problem = problemlib.load_problem(comp)
         show_scores = admin or (comp.open_verification_begins
                                 and now >= comp.open_verification_begins)
         if user:
@@ -151,10 +152,11 @@ class CompetitionController(BaseController):
 
         open_verification = user and comp.open_verification_open
 
+        problem_module = problem.get_module()
         score_sort = {
-            ProblemType.minimization: Output.score.asc(),
-            ProblemType.maximization: Output.score.desc(),
-        }[comp.problem.problem_type]
+            problemlib.RankSort.minimization: Output.score.asc(),
+            problemlib.RankSort.maximization: Output.score.desc(),
+        }[problem_module.Output.rank_sort]
 
         groups = defaultdict(GroupEntry)
         ir_query = (
@@ -354,7 +356,7 @@ class CompetitionController(BaseController):
     @logoutput
     @require(has_permission('admin'))
     def reverify(self):
-        verif_mod = self.competition.problem.output_verifier.module
+        problem = problemlib.load_problem(self.competition)
 
         changes = 0
         for group in self.competition.groups:
@@ -362,9 +364,9 @@ class CompetitionController(BaseController):
                 for output in group.input.outputs:
                     old_status = output.ground_truth
                     try:
-                        verif_mod.verify(group.input.data.file,
-                                         output.data.file)
-                    except verif_mod.VerificationError as e:
+                        problem.verify_output(group.input.data.file,
+                                              output.data.file)
+                    except problemlib.VerificationError as e:
                         output.ground_truth = VerificationStatus.rejected
                         print("{} rejected because: {}".format(output, e))
                     except Exception as e:

@@ -1,14 +1,10 @@
 import enum
 import datetime
 import sqlalchemy as sa
-from weakref import WeakValueDictionary
-from types import ModuleType
 from sqlalchemy.orm import relationship, relation
 from zope.sqlalchemy import register
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-from depot.io.utils import file_from_content
-from depot.fields.upload import UploadedFile
 from depot.fields.sqlalchemy import UploadedFileField
 
 maker = sessionmaker(autoflush=True, autocommit=False)
@@ -36,77 +32,6 @@ class VerificationStatus(enum.Enum):
         return self.name
 
 
-class ProblemType(enum.Enum):
-    minimization = 0
-    maximization = 1
-
-    def __str__(self):
-        return self.name
-
-
-class UploadedPythonModule(UploadedFile):
-    module_cache = WeakValueDictionary()
-
-    def process_content(self, content, *args, **kwargs):
-        mod = ModuleType('uploaded_module')
-        content = file_from_content(content)
-        content = content.read()
-        exec(content.decode('utf-8'), mod.__dict__)
-        self.ensure_module(mod)
-        super().process_content(content, *args, **kwargs)
-        UploadedPythonModule.module_cache[self['file_id']] = mod
-
-    def ensure_module(self, module):
-        """
-        Overridden by subclasses to make assertions about
-        the module's contents.
-        """
-
-    @property
-    def module(self):
-        mod = UploadedPythonModule.module_cache.get(self['file_id'])
-        if mod is None:
-            mod = ModuleType('uploaded_module')
-            exec(self.file.read().decode('utf-8'), mod.__dict__)
-            UploadedPythonModule.module_cache[self['file_id']] = mod
-        return mod
-
-
-class VerifierModule(UploadedPythonModule):
-    def ensure_module(self, module):
-        if not hasattr(module, 'VerificationError'):
-            raise TypeError('Verifier must define VerificationError')
-        if not hasattr(module, 'verify'):
-            raise TypeError('Verifier must define veriy')
-        if not hasattr(module.verify, '__call__'):
-            raise TypeError('verify must be callable')
-
-
-class Problem(DeclarativeBase):
-    __tablename__ = 'problem'
-    db_icon = 'fas fa-file-alt'
-
-    id = sa.Column(sa.Integer, primary_key=True)
-    name = sa.Column(sa.String, nullable=False)
-
-    input_verifier = sa.Column(
-        UploadedFileField(upload_type=VerifierModule),
-        nullable=False)
-    output_verifier = sa.Column(
-        UploadedFileField(upload_type=VerifierModule),
-        nullable=False)
-    problem_type = sa.Column(
-        sa.Enum(ProblemType),
-        nullable=False,
-        default=ProblemType.minimization)
-
-    problem_statement = sa.Column(UploadedFileField, nullable=True)
-
-    competitions = relationship(
-        'Competition', back_populates='problem', lazy='dynamic',
-        order_by='Competition.id')
-
-
 class Competition(DeclarativeBase):
     __tablename__ = 'competition'
     db_icon = 'fas fa-clipboard-list'
@@ -114,11 +39,9 @@ class Competition(DeclarativeBase):
     id = sa.Column(sa.Integer, primary_key=True)
     name = sa.Column(sa.String, nullable=False)
 
-    problem_id = sa.Column(
-        sa.Integer,
-        sa.ForeignKey('problem.id'),
-        nullable=False)
-    problem = relationship('Problem', back_populates='competitions')
+    # TODO(jrosenth): Make this non-nullable when all problems have
+    # been migrated to the new format.
+    problem = sa.Column(sa.String, nullable=True)
 
     allow_custom_team_names = sa.Column(sa.Boolean, default=True)
 

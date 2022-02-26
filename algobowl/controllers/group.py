@@ -6,6 +6,7 @@ from tg import expose, redirect, url, request, response, abort, flash
 from tg.predicates import not_anonymous
 from depot.io.utils import FileIntent
 
+import algobowl.lib.problem as problemlib
 from algobowl.lib.helpers import ftime
 from algobowl.lib.base import BaseController
 from algobowl.model import (DBSession, Group, Input, Output, Evaluation,
@@ -15,15 +16,6 @@ __all__ = ['GroupsController', 'GroupController']
 
 newline_p = re.compile(br'\s*\n')
 spacesep_p = re.compile(br'[ \t\v\f]+')
-
-
-def file_normalize(contents: bytes) -> str:
-    if not (contents.endswith(b'\n') or contents.endswith(b'\r')):
-        contents += b'\n'
-    contents = newline_p.sub(b'\n', contents)
-    contents = contents.replace(b'\r', b'\n').replace(b'\0', b'')
-    contents = spacesep_p.sub(b' ', contents)
-    return contents.decode('utf-8')
 
 
 class GroupController(BaseController):
@@ -82,27 +74,28 @@ class GroupController(BaseController):
 
         if hasattr(input_upload, "file"):
             try:
-                contents = file_normalize(input_upload.file.read())
+                contents = input_upload.file.read().decode("utf-8")
             except UnicodeDecodeError:
                 flash('Your input contains invalid characters. '
                       'Please correct and try uploading again.',
                       'danger')
                 redirect(self.base_url)
 
-            if len(contents) > 1E6:
-                abort(400, "Your input exceeds the maxiumum size.")
-            verif_mod = self.group.competition.problem.input_verifier.module
-
+            problem = problemlib.load_problem(self.group.competition)
             try:
-                verif_mod.verify(StringIO(contents))
-            except verif_mod.VerificationError as e:
-                flash('Your input has been rejected for the following reason: '
-                      '{}. Please correct and try uploading again.'.format(e),
-                      'danger')
+                input = problem.parse_input(StringIO(contents))
+            except problemlib.FileFormatError as e:
+                flash(
+                    f"Your input is not valid: {e}. Please correct and upload again.",
+                    "danger",
+                )
                 redirect(self.base_url)
 
+            reformatted_contents = StringIO()
+            input.write(reformatted_contents)
+
             f = FileIntent(
-                BytesIO(contents.encode('utf-8')),
+                BytesIO(reformatted_contents.getvalue().encode('utf-8')),
                 'input_group{}.txt'.format(self.group.id),
                 'application/octet-stream')
             if self.group.input is None:
@@ -154,52 +147,62 @@ class GroupController(BaseController):
             abort(403, "Forbidden to upload this output at this time")
 
         try:
-            contents = file_normalize(output_file.file.read())
+            contents = output_file.file.read().decode("utf-8")
         except UnicodeDecodeError:
             return {'status': 'error',
                     'msg': 'Output contains invalid characters.'}
 
-        if len(contents) > 1E6:
-            return {'status': 'error',
-                    'msg': 'Output exceeds maximum size.'}
+        problem = problemlib.load_problem(comp)
 
         try:
-            score, _, _ = contents.partition('\n')
-            score = int(score)
-        except ValueError:
-            return {'status': 'error',
-                    'msg': 'First line must only contain an integer.'}
+            output = problem.parse_output(to_group.input.data.file,
+                                          StringIO(contents))
+        except problemlib.FileFormatError as e:
+            return {
+                "status": "error",
+                "msg": f"Output has formatting errors: {e}",
+            }
+
+        new_contents = StringIO()
+        output.write(new_contents)
 
         f = FileIntent(
-            BytesIO(contents.encode('utf-8')),
+            BytesIO(new_contents.getvalue().encode("utf-8")),
             'output_from_{}_to_{}.txt'.format(self.group.id, to_group.id),
             'application/octet-stream')
+        try:
+            output.verify()
+        except problemlib.VerificationError:
+            ground_truth = VerificationStatus.rejected
+        except Exception:
+            ground_truth = VerificationStatus.waiting
+        else:
+            ground_truth = VerificationStatus.accepted
+
+        use_ground_truth = (
+            not comp.verification_begins
+            or datetime.datetime.now() >= comp.verification_begins
+        )
+
         if existing:
             if comp.resolution_open:
                 existing.active = False
             else:
                 DBSession.delete(existing)
-        output = Output(data=f, group=self.group, input=to_group.input,
-                        score=score, original=comp.output_upload_open)
 
-        verif_mod = self.group.competition.problem.output_verifier.module
-        try:
-            verif_mod.verify(to_group.input.data.file, StringIO(contents))
-        except verif_mod.VerificationError:
-            output.ground_truth = VerificationStatus.rejected
-        except Exception:
-            output.ground_truth = VerificationStatus.waiting
-        else:
-            output.ground_truth = VerificationStatus.accepted
-
-        if (not comp.verification_begins
-                or datetime.datetime.now() >= comp.verification_begins):
-            output.use_ground_truth = True
-
-        DBSession.add(output)
+        db_output = Output(
+            data=f,
+            group=self.group,
+            input=to_group.input,
+            score=output.score,
+            original=comp.output_upload_open,
+            ground_truth=ground_truth,
+            use_ground_truth=use_ground_truth,
+        )
+        DBSession.add(db_output)
         DBSession.flush()
 
-        return {'status': 'success', 'url': output.data.url}
+        return {'status': 'success', 'url': db_output.data.url}
 
     @expose('json')
     def submit_verification(self, output_id, status):

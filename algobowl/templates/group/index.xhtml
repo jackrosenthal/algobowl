@@ -51,8 +51,7 @@ show_rankings = competition.output_upload_begins <= now
           </div>
         </div>
         <div class="card-footer">
-          <a py:if="competition.problem.problem_statement"
-             href="${competition.problem.problem_statement.url}"
+          <a href="${tg.url(f'/competition/{competition.id}/problem_statement.pdf')}"
              class="btn btn-info">
             <i class="fas fa-file-pdf fa-fw"></i>
             Problem Statement
