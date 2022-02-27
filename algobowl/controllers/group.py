@@ -2,8 +2,8 @@ import datetime
 import zipfile
 import re
 from io import StringIO, BytesIO
-from tg import expose, redirect, url, request, response, abort, flash
-from tg.predicates import not_anonymous
+from tg import expose, redirect, url, request, response, abort, flash, require
+from tg.predicates import not_anonymous, has_permission
 from depot.io.utils import FileIntent
 
 import algobowl.lib.problem as problemlib
@@ -255,6 +255,17 @@ class GroupController(BaseController):
         f.seek(0)
         response.content_type = 'application/zip'
         return f.read()
+
+    @expose()
+    @require(has_permission("admin"))
+    def automatic_verification(self):
+        outputs = (DBSession
+                   .query(Output)
+                   .join(Output.input)
+                   .filter(Input.group_id == self.group.id))
+        for output in outputs:
+            output.verification = output.ground_truth
+        DBSession.flush()
 
     @expose('json')
     def resolution_protest(self, output_id):
