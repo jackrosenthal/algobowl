@@ -85,6 +85,10 @@ class BaseOutput:
                 f"Reported score ({self.score}) does not match actual ({actual_score})"
             )
 
+    def repr_score(self):
+        """Get the score as a string."""
+        return str(self.score)
+
     def write(self, f):
         """Write an output."""
         raise NotImplementedError

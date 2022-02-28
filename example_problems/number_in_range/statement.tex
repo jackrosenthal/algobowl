@@ -1,0 +1,43 @@
+% NOTE: Uploading the TeX source code for the problem statement is not
+% required by the problem format and is entirely ignored by the
+% problem format.  The problem format is looking for a "statement.pdf"
+% file.  It's done in this example simply for your convenience to
+% update the PDF.
+
+% To compile: pandoc --output=statement.pdf statement.tex
+
+\section{Problem Description}
+
+You are given two integers, $l$ and $h$ ($l \leq h$).  Your goal is to
+find the smallest integer $n$ such that $l \leq n \leq h$.
+
+\section{Input Format}
+
+The first line of input contains a single integer $l$ ($1 \leq l \leq 100$).
+
+The second line of input contains a single integer $h$ ($1 \leq h \leq 100$).
+
+An example input is given below.  Note that this input contains
+comments for your understanding, valid inputs should not contain any
+comments.
+
+\begin{verbatim}
+1                // l = 1
+5                // h = 5
+\end{verbatim}
+
+\section{Output Format}
+
+The output should contain exactly $1$ line containing only the value
+$n$.
+
+For example, a solution to the input above is shown below.  Again, the
+comments in this example are for your understanding only.  Valid
+outputs should not contain extra comments or spaces.
+
+\begin{verbatim}
+4               // n = 4
+\end{verbatim}
+
+Note that a better solution exists with only $n = 1$.  An output does
+not need to be optimal to be valid.

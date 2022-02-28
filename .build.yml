@@ -15,12 +15,14 @@ environment:
   GIT_SSH_COMMAND: >-
     ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no
 tasks:
-  - install-devtools: |
-      pip install --user tg.devtools
+  - setup-environment: |
       echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.buildenv
   - install-package: |
       cd algobowl
-      pip install --user -e .
+      pip install --user -e ".[dev]"
+  - test-example-problem: |
+      cd algobowl
+      python -m algobowl.lib.problem_tester example_problems/number_in_range
   - show-gearbox-commands: |
       cd algobowl
       gearbox help
