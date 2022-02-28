@@ -1,5 +1,4 @@
 import dataclasses
-import decimal
 
 import algobowl.lib.problem as problemlib
 
