@@ -118,7 +118,7 @@ def parse_int(lineno, value, bound=None):
         value = int(value)
     except ValueError:
         raise FileFormatError(
-            f"Line #{lineno + 1}: Unable to interpret {value} as integer"
+            f"Line #{lineno + 1}: Unable to interpret {value!r} as integer"
         )
     check_bound(lineno, bound, value)
     return value
