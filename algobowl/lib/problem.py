@@ -193,10 +193,26 @@ class Problem:
         output.verify()
 
 
+class DefaultProblem(Problem):
+    """Used when the problem is unspecified."""
+
+    def __init__(self):
+        pass
+
+    def get_module(self):
+        module = types.ModuleType("problem")
+        module.Input = BaseInput
+        module.Output = BaseOutput
+        return module
+
+
 def load_problem(competition):
     # Deferred import so this module does not depend on TurboGears for
     # most functionality.
     import tg
+
+    if not competition.problem:
+        return DefaultProblem()
 
     for path in tg.config.get("problems.search_paths", "").split():
         if not path:
