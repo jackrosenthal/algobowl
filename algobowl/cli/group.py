@@ -59,3 +59,4 @@ def set_team_name(cli, team_name):
             "team_name": team_name,
         },
     )
+    auth.check_response(r)
