@@ -7,7 +7,6 @@ import urllib.parse
 
 import click
 import requests
-import tabulate
 
 import algobowl.lib.constants
 

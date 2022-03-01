@@ -30,7 +30,7 @@ class PrefController(base.BaseController):
                 model.DBSession.add(token)
                 model.DBSession.flush()
             except sqlalchemy.exc.IntegrityError:
-                tg.flash(f"Cannot add client (already added?)", "danger")
+                tg.flash("Cannot add client (already added?)", "danger")
                 model.DBSession.rollback()
             else:
                 tg.flash(f"Client {client_name} successfully added!", "success")
