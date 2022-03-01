@@ -5,6 +5,15 @@ import tabulate
 import toml
 
 
+def cmd(text):
+    return click.style(text, fg="cyan", bold=True)
+
+
+def err(text):
+    err_prefix = click.style("ERROR:", fg="red", bold=True)
+    click.echo(f"{err_prefix} {text}", err=True)
+
+
 def filter_table(table, keys):
     table = [{k: row[k] for k in keys} for row in table]
     return table

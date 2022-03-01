@@ -15,6 +15,7 @@ class CommandContext:
     config: cfg.CLIConfig = None
     session: requests.Session = None
     formatter: fmt.JsonFormatter = dataclasses.field(default_factory=fmt.TableFormatter)
+    selected_group: int = -1
 
 
 @click.group(help="The AlgoBOWL CLI")

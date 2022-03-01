@@ -8,11 +8,8 @@ import urllib.parse
 import click
 import requests
 
+import algobowl.cli.formatter as fmt
 import algobowl.lib.constants
-
-
-def _style_cmd(text):
-    return click.style(text, fg="cyan", bold=True)
 
 
 def get_session(config):
@@ -34,8 +31,8 @@ def get_tokens(cli):
 
 def check_response(response):
     if response.status_code == requests.codes.unauthorized:
-        click.echo("This command requires authentication.")
-        click.echo(f"Run {_style_cmd('algobowl auth login')} to continue.")
+        fmt.err("This command requires authentication.")
+        fmt.err(f"Run {fmt.cmd('algobowl auth login')} to continue.")
         sys.exit(1)
     response.raise_for_status()
 
@@ -68,7 +65,7 @@ def login(cli):
     cli.config.set_server_config("access_token", client_id)
     click.echo("Open the following URL in your browser:")
     click.echo(f"    {url}")
-    click.echo(f"Then, run {_style_cmd('algobowl auth whoami')} to verify.")
+    click.echo(f"Then, run {fmt.cmd('algobowl auth whoami')} to verify.")
 
 
 @auth.command(help="Show information about the current user")
