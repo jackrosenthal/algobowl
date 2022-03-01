@@ -293,7 +293,7 @@ class Output(DeclarativeBase):
 
     # The score is separated from the data, allowing for database
     # server-side sorting
-    score = sa.Column(sa.Numeric, nullable=False)
+    score = sa.Column(sa.Integer, nullable=False)
     data = sa.Column(UploadedFileField, nullable=False)
 
     verification = sa.Column(

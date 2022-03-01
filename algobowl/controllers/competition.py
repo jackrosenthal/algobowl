@@ -182,11 +182,11 @@ class CompetitionController(BaseController):
                 potential_rank = 1
                 last_rank = 0
                 last_score = None
-            shown_score = output.score
-            shown_output = output
-            if not show_scores:
-                shown_score = None
-                shown_output = None
+            shown_score = None
+            shown_output = None
+            if show_scores:
+                shown_score = problem_module.Output.repr_score(output.score)
+                shown_output = output
             if verif is VerificationStatus.rejected:
                 rank = None
                 shown_score = None

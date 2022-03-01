@@ -85,9 +85,10 @@ class BaseOutput:
                 f"Reported score ({self.score}) does not match actual ({actual_score})"
             )
 
-    def repr_score(self):
+    @staticmethod
+    def repr_score(score):
         """Get the score as a string."""
-        return str(self.score)
+        return str(score)
 
     def write(self, f):
         """Write an output."""

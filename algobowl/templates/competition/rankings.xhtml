@@ -30,7 +30,7 @@ def tooltip_attrs(iput, ent):
         return {'data-toggle': 'tooltip', 'title': 'Rejected'}
 
     if st.score is not None:
-        return {'data-toggle': 'tooltip', 'title': '{:.0f}'.format(st.score)}
+        return {'data-toggle': 'tooltip', 'title': st.score}
 
     return {}
     ?>

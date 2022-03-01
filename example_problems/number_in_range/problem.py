@@ -40,4 +40,4 @@ class Output(problemlib.BaseOutput):
         return self.score
 
     def write(self, f):
-        print(self.repr_score(), file=f)
+        print(self.repr_score(self.score), file=f)
