@@ -399,6 +399,8 @@ class CompetitionController(BaseController):
         else:
             group = None
 
+        problem = problemlib.load_problem(self.competition)
+        problem_module = problem.get_module()
         show_input_downloads = ((user and user.admin)
                                 or not output.group.competition.archived)
         message = request.POST.get('message')
@@ -418,9 +420,13 @@ class CompetitionController(BaseController):
 
             flash('Your protest has been submitted.', 'success')
 
-        return {'output': output, 'group': group,
-                'show_input_downloads': show_input_downloads,
-                'competition': self.competition}
+        return {
+            "output": output,
+            "score": problem_module.Output.repr_score(output.score),
+            "group": group,
+            "show_input_downloads": show_input_downloads,
+            "competition": self.competition,
+        }
 
     @expose()
     def all_inputs(self):
