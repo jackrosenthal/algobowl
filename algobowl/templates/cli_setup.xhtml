@@ -1,0 +1,71 @@
+<html py:extends="master.xhtml" py:strip="True">
+  <py:block name="title">
+    CLI Setup
+  </py:block>
+  <body py:block="body" py:strip="True">
+    <div class="container">
+      <h1>Command Line Interface (Beta)</h1>
+
+      <p>
+        AlgoBOWL currently has an <strong>experimental</strong> command
+        line you can use to interface with it.  It is not currently to
+        feature-parity with the web interface.
+      </p>
+
+      <h2>Prerequisites</h2>
+
+      <ul>
+        <li>Python 3.7+</li>
+        <li><tt>pip</tt> Package Manager</li>
+      </ul>
+
+      <h2>Installing the CLI</h2>
+
+      <p>
+        Run <tt>pip install --user algobowl</tt>.
+        Ensure <tt>~/.local/bin</tt> is in your <tt>PATH</tt>.
+      </p>
+
+      <h2>Authentication</h2>
+
+      <p>
+        First, set the default server for your commands by running
+        <tt>algobowl config set-default-server ${tg.request.application_url}</tt>.
+      </p>
+
+      <p>
+        Then, run <tt>algobowl auth login</tt> and follow the instructions.
+      </p>
+
+      <h2>Usage</h2>
+
+      <p>
+        Run <tt>algobowl --help</tt>.
+      </p>
+
+      <h2>Logged-in Clients</h2>
+
+      <p>
+        Your currently logged-in clients are listed below.
+      </p>
+
+      <table class="table">
+        <tr>
+          <th>Client Name</th>
+          <th>Date Added</th>
+          <th>Options</th>
+        </tr>
+        <tr py:for="token in auth_tokens">
+          <td>${token["client_name"]}</td>
+          <td>${token["date_added"]}</td>
+          <td>
+            <a href="${tg.url('/pref/revoke_auth_token?token_id=' + str(token['id']))}"
+               class="btn btn-danger">
+              Revoke
+            </a>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>

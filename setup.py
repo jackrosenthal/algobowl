@@ -1,8 +1,11 @@
 import setuptools
 
 BASE_DEPENDS = [
+    "click>=8.0",
     "pytest>=4.6",
     "requests>=2.0",
+    "tabulate>=0.8",
+    "toml>=0.10",
 ]
 
 WEB_DEPENDS = [
@@ -46,6 +49,9 @@ setuptools.setup(
     include_package_data=True,
     package_data={"algobowl": ["templates/*/*", "public/*/*"]},
     entry_points={
+        "console_scripts": [
+            "algobowl = algobowl.cli.__main__:main",
+        ],
         "paste.app_factory": ["main = algobowl.config.middleware:make_app"],
         "gearbox.plugins": ["turbogears-devtools = tg.devtools"],
     },

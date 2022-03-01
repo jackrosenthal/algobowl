@@ -183,6 +183,12 @@ class User(DeclarativeBase):
 
     groups = relation(
         'Group', secondary='user_group_xref', back_populates='users')
+    auth_tokens = relationship(
+        "AuthToken",
+        back_populates="user",
+        lazy="dynamic",
+        order_by="AuthToken.date_added",
+    )
 
     @classmethod
     def from_username(cls, username):
@@ -192,6 +198,19 @@ class User(DeclarativeBase):
 
     def __repr__(self):
         return self.full_name or self.username
+
+
+class AuthToken(DeclarativeBase):
+    __tablename__ = "auth_token"
+    db_icon = "fas fa-terminal"
+
+    id = sa.Column(sa.Integer, primary_key=True)
+    client_name = sa.Column(sa.Unicode, nullable=True)
+    client_id = sa.Column(sa.Unicode, nullable=False, unique=True)
+    date_added = sa.Column(sa.DateTime, nullable=False)
+
+    user_id = sa.Column(sa.Integer, sa.ForeignKey("user.id"), nullable=False)
+    user = relationship("User", back_populates="auth_tokens")
 
 
 class Group(DeclarativeBase):

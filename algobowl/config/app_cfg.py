@@ -6,8 +6,9 @@ Configuration in this file is overridden by the paste config.
 """
 import tg
 import algobowl
+from repoze.who.interfaces import IChallenger
 from algobowl import model
-from algobowl.config.auth import AuthMetadata, MPAPIAuthenticator, GoogleAuth
+from algobowl.config.auth import AuthMetadata, TokenAuth, MPAPIAuthenticator, GoogleAuth
 from tg.configuration import AppConfig, milestones
 from tg.support.converters import asbool
 from tgext.admin.config import AdminConfig
@@ -59,6 +60,7 @@ base_config.sa_auth.authmetadata = AuthMetadata(base_config.sa_auth)
 base_config['identity.allow_missing_user'] = False
 
 authenticators = [
+    ("token", TokenAuth()),
     ("mpapi", MPAPIAuthenticator()),
     ("glogin", GoogleAuth()),
 ]
@@ -68,7 +70,10 @@ base_config.sa_auth.identifiers = [
     ("default", None),
     *authenticators,
 ]
-base_config.sa_auth.challengers = authenticators
+base_config.sa_auth.challengers = [
+    auth for auth in authenticators
+    if IChallenger.providedBy(auth[1])
+]
 
 base_config['auth.mpapi.url'] = 'https://mastergo.mines.edu/mpapi'
 base_config['depot.storage_path'] = '/tmp/depot'

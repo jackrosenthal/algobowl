@@ -8,6 +8,7 @@ from tg.exceptions import HTTPFound
 from repoze.who.api import get_api
 
 import algobowl.controllers.setup as setup_controller
+import algobowl.controllers.pref as pref_controller
 from algobowl.config.app_cfg import AdminConfig
 from algobowl.lib.base import BaseController
 from tgext.admin.controller import AdminController
@@ -24,6 +25,7 @@ class RootController(BaseController):
         DBSession,
         config_type=AdminConfig)
     setup = setup_controller.SetupController()
+    pref = pref_controller.PrefController()
     error = ErrorController()
     group = GroupsController()
     competition = CompetitionsController()

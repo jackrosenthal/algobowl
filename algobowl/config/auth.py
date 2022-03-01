@@ -10,7 +10,7 @@ from tg.exceptions import HTTPFound
 from zope.interface import implementer
 from repoze.who.interfaces import IIdentifier, IAuthenticator, IChallenger
 from tg.configuration.auth import TGAuthMetadata
-from algobowl.model import User, DBSession
+from algobowl.model import AuthToken, User, DBSession
 
 
 class BaseAuth:
@@ -22,6 +22,39 @@ class BaseAuth:
 
     def forget(self, environ, identity):
         return self._get_cookie_plugin(environ).forget(environ, identity)
+
+
+@implementer(IIdentifier, IAuthenticator)
+class TokenAuth:
+    def identify(self, environ):
+        auth_header = environ.get("HTTP_AUTHORIZATION")
+        if not auth_header:
+            return None
+        method, _, token = auth_header.partition(" ")
+        if method != "Bearer":
+            return None
+        environ["tg.skip_auth_challenge"] = True
+        return {"token": token, "identifier": "token"}
+
+    def remember(self, environ, identity):
+        return []
+
+    def forget(self, environ, identity):
+        return []
+
+    def authenticate(self, environ, identity):
+        if identity.get("identifier") != "token":
+            return None
+        client_id = identity["token"]
+
+        token = (
+            DBSession.query(AuthToken).filter(AuthToken.client_id == client_id)
+            .one_or_none()
+        )
+        if not token:
+            return None
+
+        return token.user.username
 
 
 @implementer(IIdentifier, IChallenger, IAuthenticator)
