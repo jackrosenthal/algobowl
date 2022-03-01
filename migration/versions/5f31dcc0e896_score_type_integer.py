@@ -16,7 +16,9 @@ down_revision = "3e307dd3c114"
 
 def upgrade():
     with op.batch_alter_table("output") as batch_op:
-        batch_op.alter_column("score", type_=sa.BigInteger)
+        batch_op.alter_column(
+            "score", type_=sa.BigInteger, postgresql_using="score::BIGINT"
+        )
 
 
 def downgrade():

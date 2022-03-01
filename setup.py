@@ -20,7 +20,7 @@ WEB_DEPENDS = [
     "filedepot >= 0.6.0",
     "zope.sqlalchemy >= 1.2",
     "sqlalchemy>=1.3,<1.4",
-    "alembic",
+    "alembic>=0.8.8",
     "repoze.who",
     "WebHelpers2",
     "recordclass",
