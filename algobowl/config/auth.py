@@ -186,6 +186,7 @@ class GoogleAuth(BaseAuth):
 
     def identify(self, environ):
         request = Request(environ)
+        self.flow.redirect_uri = f"{request.application_url}/post_login"
         try:
             code = request.GET["code"]
         except KeyError:
