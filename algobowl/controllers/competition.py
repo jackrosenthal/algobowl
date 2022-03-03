@@ -1,7 +1,7 @@
 import zipfile
 import datetime
 import algobowl.lib.problem as problemlib
-from io import BytesIO
+from io import StringIO, BytesIO
 from statistics import mean, StatisticsError
 from collections import namedtuple, defaultdict
 from recordclass import recordclass
@@ -363,9 +363,10 @@ class CompetitionController(BaseController):
             if group.input:
                 for output in group.input.outputs:
                     old_status = output.ground_truth
+                    input_file = StringIO(group.input.data.file.read().decode("utf-8"))
+                    output_file = StringIO(output.data.file.read().decode("utf-8"))
                     try:
-                        problem.verify_output(group.input.data.file,
-                                              output.data.file)
+                        problem.verify_output(input_file, output_file)
                     except problemlib.VerificationError as e:
                         output.ground_truth = VerificationStatus.rejected
                         print("{} rejected because: {}".format(output, e))
