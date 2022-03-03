@@ -265,6 +265,7 @@ class GroupController(BaseController):
                    .filter(Input.group_id == self.group.id))
         for output in outputs:
             output.verification = output.ground_truth
+            DBSession.add(output)
         DBSession.flush()
 
     @expose('json')
