@@ -4,7 +4,7 @@
   </py:block>
   <body py:block="body" py:strip="True">
     <py:def function="format_percent(num)">
-      ${'{:.2f}'.format(num)}%
+      ${num if isinstance(num, int) else f"{num:.2f}"}%
     </py:def>
     <div class="container">
       <h1 class="mb-3">
@@ -46,7 +46,7 @@
               </td>
               <td>
                 ${format_percent(gt.contributions.ranking)}
-                (${gt.rankings.adj_score})
+                (${gt.place})
               </td>
               <td>
                 ${grade}

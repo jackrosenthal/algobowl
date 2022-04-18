@@ -20,7 +20,7 @@ ScoreTuple = namedtuple('ScoreTuple',
                         ['score', 'verification', 'rank', 'output', 'vdiffer'])
 
 GradingTuple = recordclass('GradingTuple',
-                           ['rankings', 'verification', 'input',
+                           ['rankings', 'place', 'verification', 'input',
                             'contributions', 'evaluations'])
 
 GradingContributionTuple = recordclass(
@@ -39,7 +39,7 @@ GradingVerificationTuple = recordclass(
 
 CompInfoTuple = recordclass(
     'CompInfoTuple',
-    ['inputs', 'best_score', 'worst_score', 'best_input_difference'])
+    ['inputs', 'best_input_difference'])
 
 CompetitionYearTuple = recordclass(
     'CompetitionYearTuple',
@@ -97,6 +97,28 @@ class GroupEntry:
                 'input_ranks':
                     {k.id: (v[0], str(v[1]), v[2])
                      for k, v in self.input_ranks.items()}}
+
+
+def compute_rankings_grade(rank, num_groups):
+    if rank == 1:
+        return 15
+    if rank in (2, 3):
+        return 14
+    percentile = ((rank - 1) / (num_groups - 1)) * 100
+
+    for cutoff, grade in [
+        (20, 13),
+        (30, 12),
+        (40, 10),
+        (50, 8),
+        (60, 6),
+        (70, 4),
+        (80, 2),
+    ]:
+        if percentile <= cutoff:
+            return grade
+
+    return 0
 
 
 class CompetitionController(BaseController):
@@ -269,16 +291,18 @@ class CompetitionController(BaseController):
         def new_gt(rankings_entry):
             return GradingTuple(
                 rankings_entry,
+                None,
                 GradingVerificationTuple(),
                 GradingInputTuple([], set()),
                 GradingContributionTuple(),
-                defaultdict(dict))
+                defaultdict(dict),
+            )
 
         groups = {
             k: new_gt(v)
             for k, v in rankings['groups'].items()}
 
-        compinfo = CompInfoTuple(len(rankings['inputs']), float("inf"), 0, 0)
+        compinfo = CompInfoTuple(len(rankings['inputs']), 0)
 
         # in the case a group submitted an input but has no outputs
         # uploaded yet, they won't be in groups as they are off the
@@ -290,6 +314,8 @@ class CompetitionController(BaseController):
                 # If they submitted nothing, then everything is a "reject"
                 rankings_entry.reject_count = compinfo.inputs
                 groups[group] = new_gt(rankings_entry)
+
+        group_ranks = {group: 1 for group in groups}
 
         for group, gt in groups.items():
             # compute verification correctness
@@ -314,17 +340,20 @@ class CompetitionController(BaseController):
                 groups[iput.group].input.scores_l.append(st.score)
 
             adj_score = gt.rankings.adj_score
-            if adj_score < compinfo.best_score:
-                compinfo.best_score = adj_score
-            if adj_score > compinfo.worst_score:
-                compinfo.worst_score = adj_score
+            for ogroup in group_ranks:
+                if ogroup is group:
+                    continue
+                if groups[ogroup].rankings.adj_score > adj_score:
+                    group_ranks[ogroup] += 1
 
         compinfo.best_input_difference = max(
             len(g.input.scores_s) for g in groups.values())
 
         for group, gt in groups.items():
-            gt.contributions.ranking = (
-                max(16 - (gt.rankings.adj_score / compinfo.best_score), 0))
+            gt.place = group_ranks[group]
+            gt.contributions.ranking = compute_rankings_grade(
+                group_ranks[group], len(group_ranks)
+            )
             gt.contributions.verification = (
                 gt.verification.correct / sum(gt.verification) * 5
             ) if any(gt.verification) else 0
