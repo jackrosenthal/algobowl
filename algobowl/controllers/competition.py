@@ -286,7 +286,7 @@ class CompetitionController(BaseController):
     @expose('algobowl.templates.competition.grade')
     @require(has_permission('admin'))
     def grade(self):
-        rankings = self.index(ground_truth=True)
+        rankings = self.index(ground_truth=True, incognito=False)
 
         def new_gt(rankings_entry):
             return GradingTuple(
@@ -309,6 +309,8 @@ class CompetitionController(BaseController):
         # rankings table. in this case, we need to make a
         # GradingTuples for them now.
         for group in self.competition.groups:
+            if group.incognito:
+                continue
             if group not in groups.keys():
                 rankings_entry = GroupEntry()
                 # If they submitted nothing, then everything is a "reject"
@@ -318,6 +320,9 @@ class CompetitionController(BaseController):
         group_ranks = {group: 1 for group in groups}
 
         for group, gt in groups.items():
+            if group.incognito:
+                continue
+
             # compute verification correctness
             q = (DBSession.query(Output)
                           .filter(Output.original == True)
@@ -333,6 +338,8 @@ class CompetitionController(BaseController):
 
             # compute input unique ranks
             for iput, st in gt.rankings.input_ranks.items():
+                if iput.group.incognito:
+                    continue
                 if st.rank is None:
                     groups[iput.group].input.scores_s.add('R{}'.format(id(st)))
                 else:
