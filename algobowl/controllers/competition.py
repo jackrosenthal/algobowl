@@ -2,7 +2,6 @@ import zipfile
 import datetime
 import algobowl.lib.problem as problemlib
 from io import StringIO, BytesIO
-from statistics import mean, StatisticsError
 from collections import namedtuple, defaultdict
 from recordclass import recordclass
 from tg import expose, abort, request, response, flash, redirect, require
@@ -62,20 +61,14 @@ class GroupEntry:
     def adj_score(self):
         """
         Score used for grading: each rejection is assumed
-        to count as one mean score of the group.
+        to count as the number of groups.
         """
         if not self.reject_count:
             return self.score
 
-        try:
-            return (self.sum_of_ranks
-                    + self.penalties
-                    + self.reject_count * mean(
-                        s.rank
-                        for s in self.input_ranks.values()
-                        if s.rank is not None))
-        except StatisticsError:
-            return self.reject_count ** 2
+        return (self.sum_of_ranks
+                + self.penalties
+                + self.reject_count * len(self.input_ranks))
 
     def __lt__(self, other):
         if self.reject_count < other.reject_count:
