@@ -1,3 +1,5 @@
+import os
+
 import tg
 import requests
 import transaction
@@ -174,6 +176,8 @@ class GoogleAuth(BaseAuth):
     def flow(self):
         if not self._flow:
             client_secrets_file = tg.config["glogin.client_secrets_file"]
+            if not os.path.isfile(client_secrets_file):
+                return None
             self._flow = gflow.Flow.from_client_secrets_file(
                 client_secrets_file,
                 scopes=[
@@ -185,6 +189,9 @@ class GoogleAuth(BaseAuth):
         return self._flow
 
     def identify(self, environ):
+        if not self.flow:
+            return None
+
         request = Request(environ)
         self.flow.redirect_uri = f"{request.application_url}/post_login"
         try:
@@ -195,6 +202,9 @@ class GoogleAuth(BaseAuth):
         return {"code": code, "identifier": "glogin"}
 
     def authenticate(self, environ, identity):
+        if not self.flow:
+            return None
+
         try:
             code = identity["code"]
         except KeyError:
@@ -221,6 +231,9 @@ class GoogleAuth(BaseAuth):
         """
         Provide ``IChallenger`` interface.
         """
+        if not self.flow:
+            return None
+
         challenger = environ.get('repoze.who.challenge')
         if challenger != 'glogin':
             return None
