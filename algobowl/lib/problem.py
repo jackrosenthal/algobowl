@@ -100,6 +100,8 @@ def check_bound(lineno, bound, value):
         return
     if isinstance(bound, int):
         cond = value == bound
+    elif callable(bound):
+        cond = bound(value)
     else:
         cond = value in bound
     if cond:
