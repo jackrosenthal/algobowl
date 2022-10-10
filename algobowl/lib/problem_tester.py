@@ -1,5 +1,6 @@
 """Automated tester for the problem format."""
 
+import enum
 import io
 import pathlib
 import sys
@@ -9,24 +10,32 @@ import pytest
 import algobowl.lib.problem as problemlib
 
 
+class ASCIIFormat(enum.Enum):
+    UNIX = 0
+    DOS = 1
+    DOS_WITH_FINAL_TERMINATOR = 2
+
+
 @pytest.fixture
 def problem(problem_dir):
     return problemlib.Problem(problem_dir)
 
 
-def stringio_from_path(path, convert_to_dos=False):
+def stringio_from_path(path, ascii_format=False):
     contents = path.read_text()
     assert "\r\n" not in contents
-    if convert_to_dos:
+    if ascii_format != ASCIIFormat.UNIX:
         if contents.endswith("\n"):
             contents = contents[:-1]
         contents = contents.replace("\n", "\r\n")
+        if ascii_format == ASCIIFormat.DOS_WITH_FINAL_TERMINATOR:
+            contents.append("\r\n")
     return io.StringIO(contents)
 
 
-def test_good_input(problem, good_input_path, convert_to_dos):
+def test_good_input(problem, good_input_path, ascii_format):
     input = problem.parse_input(
-        stringio_from_path(good_input_path, convert_to_dos=convert_to_dos)
+        stringio_from_path(good_input_path, ascii_format=ascii_format)
     )
     output_buf = io.StringIO()
     input.write(output_buf)
@@ -38,10 +47,10 @@ def test_good_input(problem, good_input_path, convert_to_dos):
     problem.parse_input(io.StringIO(reformatted))
 
 
-def test_bad_input(problem, bad_input_path, convert_to_dos):
+def test_bad_input(problem, bad_input_path, ascii_format):
     with pytest.raises(problemlib.FileFormatError):
         problem.parse_input(
-            stringio_from_path(bad_input_path, convert_to_dos=convert_to_dos)
+            stringio_from_path(bad_input_path, ascii_format=ascii_format)
         )
 
 
@@ -51,11 +60,11 @@ def test_empty_input(problem):
         problem.parse_input(io.StringIO(""))
 
 
-def test_good_output(problem, good_output_path, convert_to_dos):
+def test_good_output(problem, good_output_path, ascii_format):
     input_path, output_path = good_output_path
     input = problem.parse_input(stringio_from_path(input_path))
     output = problem.parse_output(
-        input, stringio_from_path(output_path, convert_to_dos=convert_to_dos)
+        input, stringio_from_path(output_path, ascii_format=ascii_format)
     )
     output.verify()
 
@@ -69,20 +78,20 @@ def test_good_output(problem, good_output_path, convert_to_dos):
     assert output.score == reformatted_output.score
 
 
-def test_bad_output(problem, bad_output_path, convert_to_dos):
+def test_bad_output(problem, bad_output_path, ascii_format):
     input_path, output_path = bad_output_path
     input = problem.parse_input(stringio_from_path(input_path))
     with pytest.raises(problemlib.FileFormatError):
         problem.parse_output(
-            input, stringio_from_path(output_path, convert_to_dos=convert_to_dos)
+            input, stringio_from_path(output_path, ascii_format=ascii_format)
         )
 
 
-def test_rejected_output(problem, rejected_output_path, convert_to_dos):
+def test_rejected_output(problem, rejected_output_path, ascii_format):
     input_path, output_path = rejected_output_path
     input = problem.parse_input(stringio_from_path(input_path))
     output = problem.parse_output(
-        input, stringio_from_path(output_path, convert_to_dos=convert_to_dos)
+        input, stringio_from_path(output_path, ascii_format=ascii_format)
     )
     with pytest.raises(problemlib.VerificationError):
         output.verify()
@@ -133,7 +142,7 @@ def run_problem_tests(problem_dir, pytest_extra_args=()):
             _add_param("bad_output_path", bad_outputs)
             _add_param("rejected_output_path", rejected_outputs)
             _add_param("problem_dir", [problem_dir])
-            _add_param("convert_to_dos", [True, False])
+            _add_param("ascii_format", list(ASCIIFormat))
 
     return pytest.main([*pytest_extra_args, __file__], plugins=[ProblemDataPlugin()])
 

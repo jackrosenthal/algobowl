@@ -113,6 +113,14 @@ def assert_linecount(lines, bounds):
     try:
         check_bound(-1, bounds, len(lines))
     except FileFormatError:
+        # Try to be accommodating of extra blank lines at end of file.
+        while lines and not lines[-1].rstrip():
+            lines.pop()
+            try:
+                check_bound(-1, bounds, len(lines))
+                return
+            except FileFormatError:
+                continue
         raise FileFormatError("File has invalid number of lines")
 
 
