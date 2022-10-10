@@ -7,8 +7,8 @@ import algobowl.cli.auth as auth
 import algobowl.cli.formatter as fmt
 
 
-def get_active_groups(cli):
-    r = cli.session.get(cli.config.get_url("/group.json"))
+def get_active_groups(cli, params=None):
+    r = cli.session.get(cli.config.get_url("/group.json"), params=params)
     auth.check_response(r)
     data = r.json()
     return data["groups"]
@@ -39,10 +39,23 @@ def group(cli, group_id):
         cli.selected_group = group_id
 
 
-@group.command(name="list", help="List all active groups you're a member of")
+@group.command(name="list", help="List groups")
+@click.option("--inactive/--no-inactive", help="Include inactive groups")
+@click.option(
+    "--non-member/--no-non-member",
+    help="(Admin only) Include groups you're not a member of",
+)
+@click.option("--competition", type=int, help="Only show groups for this competition")
 @click.pass_obj
-def list_(cli):
-    groups = get_active_groups(cli)
+def list_(cli, inactive, non_member, competition):
+    params = {}
+    if inactive:
+        params["list_inactive"] = True
+    if non_member:
+        params["list_non_member"] = True
+    if competition:
+        params["competition_id"] = competition
+    groups = get_active_groups(cli, params=params)
     cli.formatter.dump_table(
         groups,
         filter_keys=["id", "name", "competition_id", "incognito"],

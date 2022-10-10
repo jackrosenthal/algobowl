@@ -347,9 +347,21 @@ class GroupsController(BaseController):
 
     @expose('algobowl.templates.group.select')
     @expose('json')
-    def index(self):
+    def index(self, list_inactive=False, list_non_member=False, competition_id=None):
         user = request.identity['user']
-        groups = [g for g in user.groups if g.competition.active]
+
+        all_groups = user.groups
+        if list_non_member:
+            if not user.admin:
+                abort(403, "Only admin may use list_non_member.")
+            all_groups = DBSession.query(Group).all()
+
+        groups = []
+        for group in all_groups:
+            if competition_id and group.competition_id != int(competition_id):
+                continue
+            if list_inactive or group.competition.active:
+                groups.append(group)
 
         if len(groups) == 1 and request.response_type != 'application/json':
             redirect(url('/group/{}'.format(groups[0].id)))
