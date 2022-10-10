@@ -41,7 +41,7 @@
           </td>
           <td id="download-link-${g.id}">
             <py:if test="g.input.id in submitted_outputs.keys()">
-              <a href="${submitted_outputs[g.input.id].data.url}"
+              <a href="${submitted_outputs[g.input.id].url}"
                  class="btn btn-info">
                 <i class="fas fa-file-download fa-fw"></i>
                 Download Submission

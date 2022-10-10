@@ -9,6 +9,7 @@ from repoze.who.api import get_api
 
 import algobowl.controllers.setup as setup_controller
 import algobowl.controllers.pref as pref_controller
+import algobowl.controllers.file_redirector as file_redirector
 from algobowl.config.app_cfg import AdminConfig
 from algobowl.lib.base import BaseController
 from tgext.admin.controller import AdminController
@@ -50,6 +51,10 @@ class RootController(BaseController):
     @expose('algobowl.templates.tos')
     def tos(self):
         return dict(page='tos')
+
+    @expose()
+    def files(self, filename):
+        file_redirector.redirect_to_file(filename)
 
     @expose()
     def login(self):

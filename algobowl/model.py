@@ -1,6 +1,7 @@
 import enum
 import datetime
 import sqlalchemy as sa
+import tg
 from sqlalchemy.orm import relationship, relation
 from zope.sqlalchemy import register
 from sqlalchemy.orm import scoped_session, sessionmaker
@@ -281,6 +282,14 @@ class Input(DeclarativeBase):
     outputs = relationship("Output", back_populates="input",
                            lazy="dynamic", order_by="Output.group_id")
 
+    @property
+    def filename(self):
+        return f"input_group{self.group_id}.txt"
+
+    @property
+    def url(self):
+        return tg.url(f"/files/{self.filename}")
+
     def __repr__(self):
         return "Input from [{!r}]".format(self.group)
 
@@ -323,6 +332,14 @@ class Output(DeclarativeBase):
 
     protests = relationship("Protest",
                             back_populates="output", lazy='dynamic')
+
+    @property
+    def filename(self):
+        return f"output_from_{self.group_id}_to_{self.input.group_id}.txt"
+
+    @property
+    def url(self):
+        return tg.url(f"/files/{self.filename}")
 
     def __repr__(self):
         return "Output from [{!r}] for {!r}".format(self.group, self.input)

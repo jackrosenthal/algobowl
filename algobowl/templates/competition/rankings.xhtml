@@ -108,7 +108,7 @@ def tooltip_attrs(iput, ent):
             <th py:for="iput in inputs"
                 class="${'bg-primary text-white' if iput.group in my_groups else ''}">
               <py:if test="show_input_downloads">
-                <a href="${iput.data.url}"
+                <a href="${iput.url}"
                    class="${'text-white' if iput.group in my_groups else ''}"
                    py:content="iput.group_id"></a>
               </py:if><py:else>

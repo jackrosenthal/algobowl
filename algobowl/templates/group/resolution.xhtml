@@ -49,13 +49,13 @@
     <tbody>
       <tr py:for="output in group.outputs">
         <td>
-          <a href="${output.input.data.url}">
-            <tt py:content="output.input.data.filename" />
+          <a href="${output.input.url}">
+            <tt py:content="output.input.filename" />
           </a>
         </td>
         <td>
-          <a href="${output.data.url}">
-            <tt py:content="output.data.filename" />
+          <a href="${output.url}">
+            <tt py:content="output.filename" />
           </a>
         </td>
         <td>
@@ -96,8 +96,8 @@
       <tr py:for="g in competition.groups"
           py:if="g.input and g.input.id not in submitted_outputs">
         <td>
-          <a href="${g.input.data.url}">
-            <tt py:content="g.input.data.filename" />
+          <a href="${g.input.url}">
+            <tt py:content="g.input.filename" />
           </a>
         </td>
         <td></td>
