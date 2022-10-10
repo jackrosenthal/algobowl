@@ -1,4 +1,5 @@
 import sys
+import pathlib
 
 import click
 
@@ -60,3 +61,35 @@ def set_team_name(cli, team_name):
         },
     )
     auth.check_response(r)
+
+
+@group.group(help="Upload and see your group's input")
+def input():
+    pass
+
+
+@input.command(help="Upload your group's input")
+@click.argument("file_path", type=pathlib.Path)
+@click.pass_obj
+def upload(cli, file_path):
+    group_id = get_group_id(cli)
+    with open(file_path, "rb") as f:
+        r = cli.session.post(
+            cli.config.get_url(f"/group/{group_id}/input_upload_api"),
+            files={"input_upload": f},
+        )
+    auth.check_response(r)
+    result = r.json()
+    if result["status"] != "success":
+        fmt.err(result["message"])
+        sys.exit(1)
+
+
+@input.command(help="Download your group's input")
+@click.argument("output_file", type=click.File("w"), default=sys.stdout)
+@click.pass_obj
+def download(cli, output_file):
+    group_id = get_group_id(cli)
+    r = cli.session.get(cli.config.get_url(f"/files/input_group{group_id}.txt"))
+    auth.check_response(r)
+    output_file.write(r.text)

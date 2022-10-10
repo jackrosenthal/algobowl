@@ -66,6 +66,46 @@ class GroupController(BaseController):
             d['evals'] = evals
         return d
 
+    @expose("json")
+    def input_upload_api(self, input_upload):
+        try:
+            contents = input_upload.file.read().decode("utf-8")
+        except UnicodeDecodeError:
+            return {
+                "status": "error",
+                "message": (
+                    "Your input contains invalid characters.  Please correct and try "
+                    "uploading again."
+                ),
+            }
+
+        problem = problemlib.load_problem(self.group.competition)
+        try:
+            input = problem.parse_input(StringIO(contents))
+        except problemlib.FileFormatError as e:
+            return {
+                "status": "error",
+                "message": (
+                    f"Your input is not valid: {e}.  Please correct and upload again."
+                ),
+            }
+
+        reformatted_contents = StringIO()
+        input.write(reformatted_contents)
+
+        f = FileIntent(
+            BytesIO(reformatted_contents.getvalue().encode('utf-8')),
+            'input_group{}.txt'.format(self.group.id),
+            'application/octet-stream')
+        if self.group.input is None:
+            iput = Input(data=f, group=self.group)
+            DBSession.add(iput)
+        else:
+            self.group.input.data = f
+        DBSession.flush()
+
+        return {"status": "success"}
+
     @expose()
     def input_upload(self, input_upload=None, team_name=None):
         user = request.identity['user']
@@ -73,37 +113,10 @@ class GroupController(BaseController):
             abort(403, "Sorry, input upload stage is closed.")
 
         if hasattr(input_upload, "file"):
-            try:
-                contents = input_upload.file.read().decode("utf-8")
-            except UnicodeDecodeError:
-                flash('Your input contains invalid characters. '
-                      'Please correct and try uploading again.',
-                      'danger')
+            result = self.input_upload_api(input_upload)
+            if result["status"] != "success":
+                flash(result["message"], "danger")
                 redirect(self.base_url)
-
-            problem = problemlib.load_problem(self.group.competition)
-            try:
-                input = problem.parse_input(StringIO(contents))
-            except problemlib.FileFormatError as e:
-                flash(
-                    f"Your input is not valid: {e}. Please correct and upload again.",
-                    "danger",
-                )
-                redirect(self.base_url)
-
-            reformatted_contents = StringIO()
-            input.write(reformatted_contents)
-
-            f = FileIntent(
-                BytesIO(reformatted_contents.getvalue().encode('utf-8')),
-                'input_group{}.txt'.format(self.group.id),
-                'application/octet-stream')
-            if self.group.input is None:
-                iput = Input(data=f, group=self.group)
-                DBSession.add(iput)
-            else:
-                self.group.input.data = f
-            DBSession.flush()
 
         if team_name is not None:
             if len(team_name) >= 100:

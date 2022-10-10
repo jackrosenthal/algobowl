@@ -17,6 +17,7 @@ class ErrorController(BaseController):
     """
 
     @expose('algobowl.templates.error')
+    @expose("json")
     def document(self, *args, **kwargs):
         """Render the error document"""
         resp = request.environ.get('tg.original_response')
@@ -32,8 +33,7 @@ class ErrorController(BaseController):
             code = 404
 
         if not message:
-            message = ("<p>We're sorry but we weren't able to process "
-                       " this request.</p>")
+            message = "We're sorry but we weren't able to process this request."
 
         values = dict(prefix=request.environ.get('SCRIPT_NAME', ''),
                       code=request.params.get('code', code),
