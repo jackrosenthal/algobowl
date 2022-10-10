@@ -44,6 +44,7 @@ def check_response(response):
         except requests.exceptions.JSONDecodeError:
             data = {}
         fmt.err(f"Reason: {data.get('message', 'Unknown.')}")
+        fmt.err(f"Error {response.status_code} on URL {response.url}.")
         sys.exit(1)
 
 
