@@ -1,3 +1,4 @@
+import re
 import sys
 import pathlib
 
@@ -94,7 +95,7 @@ def upload(cli, file_path):
     auth.check_response(r)
     result = r.json()
     if result["status"] != "success":
-        fmt.err(result["message"])
+        fmt.err(result["msg"])
         sys.exit(1)
 
 
@@ -106,3 +107,74 @@ def download(cli, output_file):
     r = cli.session.get(cli.config.get_url(f"/files/input_group{group_id}.txt"))
     auth.check_response(r)
     output_file.write(r.text)
+
+
+@group.group(help="Upload and view outputs")
+@click.option(
+    "--to-group-id",
+    type=int,
+    help=(
+        "Manually specify the group to submit to (by default, infer from the file name)"
+    ),
+)
+@click.pass_obj
+def output(cli, to_group_id):
+    cli.to_group_id = to_group_id
+
+
+def infer_group_from_path(file_path):
+    matches = re.findall(r"\d+", file_path.name)
+    if not matches:
+        fmt.err(
+            "Unable to infer the group id from file name.  "
+            "Pass --to-group-id to specify manually."
+        )
+        sys.exit(1)
+    return int(matches[-1])
+
+
+@output.command(help="Upload output")
+@click.argument("file_path", type=pathlib.Path)
+@click.pass_obj
+def upload(cli, file_path):
+    from_group_id = get_group_id(cli)
+    to_group_id = cli.to_group_id
+    if not to_group_id:
+        to_group_id = infer_group_from_path(file_path)
+    with open(file_path, "rb") as f:
+        r = cli.session.post(
+            cli.config.get_url(f"/group/{from_group_id}/submit_output"),
+            data={"to_group": to_group_id},
+            files={"output_file": f},
+        )
+    auth.check_response(r)
+    result = r.json()
+    if result["status"] != "success":
+        fmt.err(result["msg"])
+        sys.exit(1)
+
+
+@output.command(help="Download output")
+@click.argument("file_path", type=pathlib.Path)
+@click.pass_obj
+def download(cli, file_path):
+    from_group_id = get_group_id(cli)
+    to_group_id = cli.to_group_id
+    if not to_group_id:
+        to_group_id = infer_group_from_path(file_path)
+    r = cli.session.get(
+        cli.config.get_url(f"/files/output_from_{from_group_id}_to_{to_group_id}.txt"),
+    )
+    auth.check_response(r)
+    file_path.write_text(r.text)
+
+
+@output.command(help="List outputs this group (will) provide")
+@click.pass_obj
+def list(cli):
+    group_id = get_group_id(cli)
+    r = cli.session.get(
+        cli.config.get_url(f"/group/{group_id}/output_upload_list_api.json"),
+    )
+    auth.check_response(r)
+    cli.formatter.dump_table(r.json()["outputs"])

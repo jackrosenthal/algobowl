@@ -67,13 +67,34 @@ class GroupController(BaseController):
         return d
 
     @expose("json")
+    def output_upload_list_api(self):
+        outputs = {}
+        if datetime.datetime.now() < self.group.competition.output_upload_begins:
+            return outputs
+        for group in self.group.competition.groups:
+            if group.input is not None:
+                outputs[group.id] = {
+                    "input_group_id": group.id,
+                    "submitted": False,
+                }
+        for output in self.group.outputs:
+            outputs[output.input.group.id].update({
+                "submitted": True,
+                "score": output.score,
+                "url": output.url,
+            })
+        return {
+            "outputs": [value for key, value in sorted(outputs.items())],
+        }
+
+    @expose("json")
     def input_upload_api(self, input_upload):
         try:
             contents = input_upload.file.read().decode("utf-8")
         except UnicodeDecodeError:
             return {
                 "status": "error",
-                "message": (
+                "msg": (
                     "Your input contains invalid characters.  Please correct and try "
                     "uploading again."
                 ),
@@ -85,7 +106,7 @@ class GroupController(BaseController):
         except problemlib.FileFormatError as e:
             return {
                 "status": "error",
-                "message": (
+                "msg": (
                     f"Your input is not valid: {e}.  Please correct and upload again."
                 ),
             }
@@ -115,7 +136,7 @@ class GroupController(BaseController):
         if hasattr(input_upload, "file"):
             result = self.input_upload_api(input_upload)
             if result["status"] != "success":
-                flash(result["message"], "danger")
+                flash(result["msg"], "danger")
                 redirect(self.base_url)
 
         if team_name is not None:
