@@ -34,6 +34,7 @@ def output_redirector(from_group_id, to_group_id):
         .join(model.Output.input)
         .filter(model.Input.group_id == to_group_id)
         .filter(model.Output.group_id == from_group_id)
+        .filter(model.Output.active == True)
         .one()
     )
     if not output:
