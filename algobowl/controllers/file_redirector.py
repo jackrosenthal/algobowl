@@ -13,7 +13,7 @@ def input_redirector(group_id):
         tg.abort(404, "No such group.")
     competition = group.competition
 
-    user = tg.request.identity.get("user")
+    user = tg.request.identity and tg.request.identity.get("user")
     is_admin = user and user.admin
     is_group_member = user in group.users
     file_is_public = datetime.datetime.now() >= competition.output_upload_begins
@@ -40,7 +40,7 @@ def output_redirector(from_group_id, to_group_id):
         tg.abort(404, "Output does not exist.")
 
     competition = output.group.competition
-    user = tg.request.identity.get("user")
+    user = tg.request.identity and tg.request.identity.get("user")
     is_admin = user and user.admin
     is_uploader = user in output.group.users
     is_verifier = user in output.input.group.users
