@@ -94,24 +94,24 @@ class GroupEntry:
 
 def compute_rankings_grade(rank, num_groups):
     if rank == 1:
-        return 15
+        return 17
     if rank in (2, 3):
-        return 14
+        return 16
     percentile = ((rank - 1) / (num_groups - 1)) * 100
 
     for cutoff, grade in [
-        (20, 13),
-        (30, 12),
-        (40, 10),
-        (50, 8),
-        (60, 6),
-        (70, 4),
-        (80, 2),
+        (20, 15),
+        (30, 14),
+        (40, 12),
+        (50, 10),
+        (60, 8),
+        (70, 6),
+        (80, 4),
     ]:
         if percentile <= cutoff:
             return grade
 
-    return 0
+    return 2
 
 
 class CompetitionController(BaseController):
