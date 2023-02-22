@@ -76,7 +76,9 @@ class SetupController(base.BaseController):
         model.DBSession.add(competition)
 
         for team in teams_json_data:
-            users = [get_user(username) for username in team]
+            users = [get_user(username) for username in team if username]
+            if not users:
+                continue
             group = model.Group(users=users, competition=competition)
             model.DBSession.add(group)
 
