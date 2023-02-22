@@ -70,7 +70,7 @@ class GroupController(BaseController):
     def output_upload_list_api(self):
         outputs = {}
         if datetime.datetime.now() < self.group.competition.output_upload_begins:
-            return outputs
+            return {"outputs": []}
         for group in self.group.competition.groups:
             if group.input is not None:
                 outputs[group.id] = {
