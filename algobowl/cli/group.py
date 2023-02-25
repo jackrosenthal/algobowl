@@ -169,12 +169,29 @@ def download(cli, file_path):
     file_path.write_text(r.text)
 
 
-@output.command(help="List outputs this group (will) provide")
+@output.command(name="list", help="List outputs this group (will) provide")
 @click.pass_obj
-def list(cli):
+def output_list(cli):
     group_id = get_group_id(cli)
     r = cli.session.get(
         cli.config.get_url(f"/group/{group_id}/output_upload_list_api.json"),
     )
     auth.check_response(r)
     cli.formatter.dump_table(r.json()["outputs"])
+
+
+@group.group(help="Preform verifications")
+@click.pass_obj
+def verification(cli):
+    pass
+
+
+@verification.command(name="list", help="Show verifications")
+@click.pass_obj
+def verification_list(cli):
+    group_id = get_group_id(cli)
+    r = cli.session.get(
+        cli.config.get_url(f"/group/{group_id}/verification_data_v2.json"),
+    )
+    auth.check_response(r)
+    cli.formatter.dump_table(r.json()["verifications"])

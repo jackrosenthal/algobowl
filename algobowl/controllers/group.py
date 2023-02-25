@@ -271,6 +271,33 @@ class GroupController(BaseController):
                              .filter(Input.group_id == self.group.id))}
         return {'status': 'success', 'data': data}
 
+    @expose('json')
+    def verification_data_v2(self):
+        our_input = (
+            DBSession
+            .query(Input)
+            .filter(Input.group_id == self.group.id)
+            .one_or_none()
+        )
+
+        if not our_input:
+            abort(404, "Your group has no input.")
+
+        outputs = (
+            DBSession
+            .query(Output)
+            .filter(Output.input_id == our_input.id)
+        )
+
+        result = []
+        for output in outputs:
+            result.append({
+                "input_filename": our_input.filename,
+                "output_filename": output.filename,
+                "status": str(output.verification),
+            })
+        return {"verifications": result}
+
     @expose()
     def verification_outputs(self):
         user = request.identity['user']
