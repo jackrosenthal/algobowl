@@ -4,6 +4,7 @@ import pathlib
 import click
 import requests
 
+import algobowl.cli.admin as admin
 import algobowl.cli.auth as auth
 import algobowl.cli.config as cfg
 import algobowl.cli.formatter as fmt
@@ -39,6 +40,7 @@ def main(ctx, server, config, json):
 main.add_command(auth.auth)
 main.add_command(cfg.config)
 main.add_command(group.group)
+main.add_command(admin.admin)
 
 
 if __name__ == "__main__":

@@ -7,6 +7,7 @@ from tg import predicates
 from tg.exceptions import HTTPFound
 from repoze.who.api import get_api
 
+from algobowl.controllers import api
 import algobowl.controllers.setup as setup_controller
 import algobowl.controllers.pref as pref_controller
 import algobowl.controllers.file_redirector as file_redirector
@@ -25,6 +26,7 @@ class RootController(BaseController):
         algobowl.model,
         DBSession,
         config_type=AdminConfig)
+    api = api.ApiController()
     setup = setup_controller.SetupController()
     pref = pref_controller.PrefController()
     error = ErrorController()
