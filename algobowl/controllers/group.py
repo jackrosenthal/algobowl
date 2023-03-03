@@ -177,7 +177,8 @@ class GroupController(BaseController):
                 or comp.output_upload_open
                 or (comp.resolution_open
                     and existing is not None
-                    and not existing.use_ground_truth)):
+                    and not existing.use_ground_truth)
+                or (comp.resolution_open and existing is None)):
             abort(403, "Forbidden to upload this output at this time")
 
         try:
