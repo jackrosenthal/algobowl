@@ -294,9 +294,11 @@ class CompetitionController(BaseController):
         # GradingTuples for them now.
         for group in self.competition.groups:
             if group.incognito:
+                groups.pop(group, None)
                 continue
             if group.benchmark:
                 benchmark_groups.append(groups[group])
+                groups.pop(group, None)
                 continue
             if group not in groups.keys():
                 rankings_entry = GroupEntry()
@@ -308,9 +310,6 @@ class CompetitionController(BaseController):
         fleets = [[] for _ in range(len(benchmark_groups) + 1)]
 
         for group, gt in groups.items():
-            if group.incognito:
-                continue
-
             # compute verification correctness
             q = (DBSession.query(Output)
                           .filter(Output.original == True)
@@ -326,7 +325,7 @@ class CompetitionController(BaseController):
 
             # compute input unique ranks
             for iput, st in gt.rankings.input_ranks.items():
-                if iput.group.incognito:
+                if iput.group.incognito or iput.group.benchmark:
                     continue
                 if st.rank is None:
                     groups[iput.group].input.scores_s.add('R{}'.format(id(st)))
