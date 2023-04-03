@@ -96,9 +96,9 @@ def compute_rankings_grade(gt, fleet_num, fleet):
     place_in_fleet = 0
     last_adj_score = fleet[0].rankings.adj_score
     for i, other_gt in enumerate(fleet):
-        if gt.rankings.adj_score != last_adj_score:
+        if other_gt.rankings.adj_score != last_adj_score:
             place_in_fleet = i
-            last_adj_score = gt.rankings.adj_score
+            last_adj_score = other_gt.rankings.adj_score
         if other_gt is gt:
             break
     return (place_in_fleet / (len(fleet) - 1)) * 5 + fleet_num * 5
