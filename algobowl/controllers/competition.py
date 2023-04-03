@@ -66,9 +66,13 @@ class GroupEntry:
         if not self.reject_count:
             return self.score
 
+        num_inputs = len(self.input_ranks)
+        if not num_inputs:
+            num_inputs = 9999
+
         return (self.sum_of_ranks
                 + self.penalties
-                + self.reject_count * len(self.input_ranks))
+                + self.reject_count * num_inputs)
 
     def __lt__(self, other):
         if self.reject_count < other.reject_count:
