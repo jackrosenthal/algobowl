@@ -306,7 +306,7 @@ class CompetitionController(BaseController):
                 rankings_entry.reject_count = compinfo.inputs
                 groups[group] = new_gt(rankings_entry)
 
-        benchmark_groups.sort(key=lambda gt: gt.rankings.adj_score)
+        benchmark_groups.sort(key=lambda gt: -gt.rankings.adj_score)
         fleets = [[] for _ in range(len(benchmark_groups) + 1)]
 
         for group, gt in groups.items():
@@ -335,12 +335,12 @@ class CompetitionController(BaseController):
 
             gt.fleet = 0
             for bench_gt in benchmark_groups:
-                if gt.rankings.adj_score >= bench_gt.rankings.adj_score:
+                if gt.rankings.adj_score <= bench_gt.rankings.adj_score:
                     gt.fleet += 1
             fleets[gt.fleet].append(gt)
 
         for fleet in fleets:
-            fleet.sort(key=lambda gt: gt.rankings.adj_score)
+            fleet.sort(key=lambda gt: -gt.rankings.adj_score)
 
         compinfo.best_input_difference = max(
             len(g.input.scores_s) for g in groups.values())
