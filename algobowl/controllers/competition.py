@@ -19,7 +19,7 @@ ScoreTuple = namedtuple('ScoreTuple',
                         ['score', 'verification', 'rank', 'output', 'vdiffer'])
 
 GradingTuple = recordclass('GradingTuple',
-                           ['rankings', 'place', 'verification', 'input',
+                           ['rankings', 'fleet', 'verification', 'input',
                             'contributions', 'evaluations'])
 
 GradingContributionTuple = recordclass(
@@ -92,26 +92,16 @@ class GroupEntry:
                      for k, v in self.input_ranks.items()}}
 
 
-def compute_rankings_grade(rank, num_groups):
-    if rank == 1:
-        return 17
-    if rank in (2, 3):
-        return 16
-    percentile = ((rank - 1) / (num_groups - 1)) * 100
-
-    for cutoff, grade in [
-        (20, 15),
-        (30, 14),
-        (40, 12),
-        (50, 10),
-        (60, 8),
-        (70, 6),
-        (80, 4),
-    ]:
-        if percentile <= cutoff:
-            return grade
-
-    return 2
+def compute_rankings_grade(gt, fleet_num, fleet):
+    place_in_fleet = 0
+    last_adj_score = fleet[0].rankings.adj_score
+    for i, other_gt in enumerate(fleet):
+        if gt.rankings.adj_score != last_adj_score:
+            place_in_fleet = i
+            last_adj_score = gt.rankings.adj_score
+        if other_gt is gt:
+            break
+    return (place_in_fleet / (len(fleet) - 1)) * 5 + fleet_num * 5
 
 
 class CompetitionController(BaseController):
@@ -296,6 +286,7 @@ class CompetitionController(BaseController):
             for k, v in rankings['groups'].items()}
 
         compinfo = CompInfoTuple(len(rankings['inputs']), 0)
+        benchmark_groups = []
 
         # in the case a group submitted an input but has no outputs
         # uploaded yet, they won't be in groups as they are off the
@@ -304,13 +295,17 @@ class CompetitionController(BaseController):
         for group in self.competition.groups:
             if group.incognito:
                 continue
+            if group.benchmark:
+                benchmark_groups.append(groups[group])
+                continue
             if group not in groups.keys():
                 rankings_entry = GroupEntry()
                 # If they submitted nothing, then everything is a "reject"
                 rankings_entry.reject_count = compinfo.inputs
                 groups[group] = new_gt(rankings_entry)
 
-        group_ranks = {group: 1 for group in groups}
+        benchmark_groups.sort(key=lambda gt: gt.rankings.adj_score)
+        fleets = [[] for _ in range(len(benchmark_groups) + 1)]
 
         for group, gt in groups.items():
             if group.incognito:
@@ -339,20 +334,21 @@ class CompetitionController(BaseController):
                     groups[iput.group].input.scores_s.add(st.score)
                 groups[iput.group].input.scores_l.append(st.score)
 
-            adj_score = gt.rankings.adj_score
-            for ogroup in group_ranks:
-                if ogroup is group:
-                    continue
-                if groups[ogroup].rankings.adj_score > adj_score:
-                    group_ranks[ogroup] += 1
+            gt.fleet = 0
+            for bench_gt in benchmark_groups:
+                if gt.rankings.adj_score >= bench_gt.rankings.adj_score:
+                    gt.fleet += 1
+            fleets[gt.fleet].append(gt)
+
+        for fleet in fleets:
+            fleet.sort(key=lambda gt: gt.rankings.adj_score)
 
         compinfo.best_input_difference = max(
             len(g.input.scores_s) for g in groups.values())
 
         for group, gt in groups.items():
-            gt.place = group_ranks[group]
             gt.contributions.ranking = compute_rankings_grade(
-                group_ranks[group], len(group_ranks)
+                gt, gt.fleet, fleets[gt.fleet]
             )
             gt.contributions.verification = (
                 gt.verification.correct / sum(gt.verification) * 5
