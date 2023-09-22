@@ -3,6 +3,7 @@ import setuptools
 BASE_DEPENDS = [
     "click>=8.0",
     "pytest>=4.6",
+    "pytest-cov>=4.1.0",
     "requests>=2.0",
     "tabulate>=0.8",
     "toml>=0.10",
