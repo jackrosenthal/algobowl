@@ -1,0 +1,55 @@
+name: "Run Tests"
+on:
+  - push
+  - pull_request
+jobs:
+  test-example-problem:
+    name: "Test Example Problem"
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+      - name: "Install Application with pip"
+        run: pip install .
+      - name: "Run Problem Tester"
+        run: |
+          python -m algobowl algobowl.lib.problem_tester \
+            example_problems/number_in_range
+  migration-test:
+    name: "Migration Test"
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+      - name: "Install Application with pip"
+        run: pip install .[dev]
+      - name: "Setup App"
+        run: gearbox setup-app -c development.ini.sample
+      - name: "Run Migration Test"
+        run: ./migration_test.sh
+  curl-test:
+    name: "Smoke Test App with cURL"
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+      - name: "Install Application with pip"
+        run: pip install .[dev]
+      - name: "Setup App"
+        run: gearbox setup-app -c development.ini.sample
+      - name: "Run cURL test"
+        run: |
+          gearbox serve -c development.ini.sample --daemon
+          sleep 2
+          gearbox serve --status
+          sleep 2
+          curl -f http://127.0.0.1:8080/
+          curl -f http://127.0.0.1:8080/competition
+          curl -f http://127.0.0.1:8080/competition/archive
+          gearbox serve -c development.ini.sample --stop-daemon
