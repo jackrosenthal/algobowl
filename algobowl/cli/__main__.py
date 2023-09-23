@@ -9,6 +9,7 @@ import algobowl.cli.auth as auth
 import algobowl.cli.config as cfg
 import algobowl.cli.formatter as fmt
 import algobowl.cli.group as group
+import algobowl.cli.problem as problem
 
 
 @dataclasses.dataclass
@@ -41,6 +42,7 @@ main.add_command(auth.auth)
 main.add_command(cfg.config)
 main.add_command(group.group)
 main.add_command(admin.admin)
+main.add_command(problem.problem)
 
 
 if __name__ == "__main__":

@@ -22,14 +22,14 @@ def problem(problem_dir):
 
 
 def stringio_from_path(path, ascii_format=False):
-    contents = path.read_text()
+    contents = path.read_text(encoding="ascii")
     assert "\r\n" not in contents
     if ascii_format != ASCIIFormat.UNIX:
         if contents.endswith("\n"):
             contents = contents[:-1]
         contents = contents.replace("\n", "\r\n")
         if ascii_format == ASCIIFormat.DOS_WITH_FINAL_TERMINATOR:
-            contents.append("\r\n")
+            contents += "\r\n"
     return io.StringIO(contents)
 
 
@@ -114,6 +114,7 @@ def load_inputs_from_dir(path):
 def load_outputs_from_dir(path):
     result = []
     for input_path in load_inputs_from_dir(path):
+        assert input_path.is_symlink()
         output_path = input_path.parent / f"{input_path.stem}.out"
         result.append((input_path, output_path))
     return result

@@ -57,7 +57,7 @@ $ pip install .
 Finally, validate you can now run the problem tester on the example problem:
 
 ```shellsession
-$ python -m algobowl.lib.problem_tester example_problems/number_in_range
+$ algobowl problem example_problems/number_in_range test
 ```
 
 ## Writing a new problem
@@ -196,7 +196,7 @@ Once you've written some example inputs, you can run the problem tester and to
 test them on your `Input` class:
 
 ```shellsession
-$ python -m algobowl.lib.problem_tester .
+$ algobowl problem . test
 ```
 
 ## Implementing the `Output` class
@@ -303,14 +303,8 @@ test cases pass!
 ## Test Coverage
 
 Ideally, you want to bring your module to 100% test coverage, as then you know
-that each edge case students may hit is tested.  You can get a coverage report
-by adding flags to the end of your tester command:
-
-```
---cov problem --cov-report term-missing:skip-covered
-```
-
-Keep adding example inputs and outputs until you've reached 100% test coverage.
+that each edge case students may hit is tested.  Keep adding example inputs and
+outputs until you've reached 100% test coverage.
 
 ## Uploading for review
 

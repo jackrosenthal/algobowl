@@ -16,6 +16,8 @@ import pathlib
 import types
 import typing
 
+from algobowl.lib import problem_tester
+
 
 class FileFormatError(Exception):
     """Raised from .read() for either an input or an output.
@@ -32,6 +34,9 @@ class VerificationError(Exception):
     output rejection from the instructor.  The instructor will be able
     to see the exception message, but not students.
     """
+
+class ProblemTestError(Exception):
+    """Tests did not pass successfully."""
 
 
 class RankSort(enum.Enum):
@@ -201,6 +206,12 @@ class Problem:
     def verify_output(self, input, output_file):
         output = self.parse_output(input, output_file)
         output.verify()
+
+    def run_tests(self, pytest_extra_args=()):
+        """Run tests on this problem."""
+        retcode = problem_tester.run_problem_tests(self.path, pytest_extra_args)
+        if retcode != 0:
+            raise ProblemTestError(f"Tests failed with error code {retcode}")
 
 
 class DefaultProblem(Problem):

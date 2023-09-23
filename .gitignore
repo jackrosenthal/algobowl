@@ -13,6 +13,9 @@ sdist/
 pip-log.txt
 .\#*
 \#*\#
+.coverage
+pytest.xml
+coverage.xml
 
 development.ini
 production.ini
