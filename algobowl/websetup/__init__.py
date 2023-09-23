@@ -1,7 +1,8 @@
 """Setup the algobowl application"""
 from algobowl.config.environment import load_environment
-from .schema import setup_schema
+
 from .bootstrap import bootstrap
+from .schema import setup_schema
 
 
 def setup_app(command, conf, vars):

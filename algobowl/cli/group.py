@@ -1,6 +1,6 @@
+import pathlib
 import re
 import sys
-import pathlib
 
 import click
 

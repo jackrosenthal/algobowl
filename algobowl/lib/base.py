@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 """The base Controller API."""
 
-from tg import TGController, tmpl_context
-from tg import request
-
+from tg import TGController, request, tmpl_context
 
 __all__ = ["BaseController"]
 

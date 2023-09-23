@@ -1,4 +1,5 @@
-from tg import request, expose
+from tg import expose, request
+
 from algobowl.lib.base import BaseController
 
 __all__ = ["ErrorController"]

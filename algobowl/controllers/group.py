@@ -1,20 +1,21 @@
 import datetime
-import zipfile
 import re
-from io import StringIO, BytesIO
-from tg import expose, redirect, url, request, response, abort, flash, require
-from tg.predicates import not_anonymous, has_permission
+import zipfile
+from io import BytesIO, StringIO
+
 from depot.io.utils import FileIntent
+from tg import abort, expose, flash, redirect, request, require, response, url
+from tg.predicates import has_permission, not_anonymous
 
 import algobowl.lib.problem as problemlib
-from algobowl.lib.helpers import ftime
 from algobowl.lib.base import BaseController
+from algobowl.lib.helpers import ftime
 from algobowl.model import (
     DBSession,
+    Evaluation,
     Group,
     Input,
     Output,
-    Evaluation,
     VerificationStatus,
 )
 

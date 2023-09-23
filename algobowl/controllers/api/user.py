@@ -2,8 +2,8 @@ import dataclasses
 
 import tg
 
-from algobowl.lib import base
 from algobowl import model
+from algobowl.lib import base
 
 
 @dataclasses.dataclass

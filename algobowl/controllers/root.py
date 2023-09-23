@@ -1,22 +1,20 @@
 import tg
-import algobowl.model
-from algobowl.model import DBSession
-from tg import expose, flash, require, url, lurl
-from tg import redirect, tmpl_context
-from tg import predicates
-from tg.exceptions import HTTPFound
 from repoze.who.api import get_api
-
-from algobowl.controllers import api
-import algobowl.controllers.setup as setup_controller
-import algobowl.controllers.pref as pref_controller
-import algobowl.controllers.file_redirector as file_redirector
-from algobowl.config.app_cfg import AdminConfig
-from algobowl.lib.base import BaseController
+from tg import expose, flash, lurl, predicates, redirect, require, tmpl_context, url
+from tg.exceptions import HTTPFound
 from tgext.admin.controller import AdminController
+
+import algobowl.controllers.file_redirector as file_redirector
+import algobowl.controllers.pref as pref_controller
+import algobowl.controllers.setup as setup_controller
+import algobowl.model
+from algobowl.config.app_cfg import AdminConfig
+from algobowl.controllers import api
+from algobowl.controllers.competition import CompetitionsController
 from algobowl.controllers.error import ErrorController
 from algobowl.controllers.group import GroupsController
-from algobowl.controllers.competition import CompetitionsController
+from algobowl.lib.base import BaseController
+from algobowl.model import DBSession
 
 __all__ = ["RootController"]
 

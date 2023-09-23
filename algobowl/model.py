@@ -1,12 +1,12 @@
-import enum
 import datetime
+import enum
+
 import sqlalchemy as sa
 import tg
-from sqlalchemy.orm import relationship, relation
-from zope.sqlalchemy import register
-from sqlalchemy.orm import scoped_session, sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
 from depot.fields.sqlalchemy import UploadedFileField
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relation, relationship, scoped_session, sessionmaker
+from zope.sqlalchemy import register
 
 maker = sessionmaker(autoflush=True, autocommit=False)
 DBSession = scoped_session(maker)

@@ -5,17 +5,18 @@ Default configuration for AlgoBOWL
 Configuration in this file is overridden by the paste config.
 """
 import tg
-import algobowl
+from depot.manager import DepotManager
+from markupsafe import Markup
 from repoze.who.interfaces import IChallenger
-from algobowl import model
-from algobowl.config.auth import AuthMetadata, TokenAuth, MPAPIAuthenticator, GoogleAuth
 from tg.configuration import AppConfig, milestones
 from tg.support.converters import asbool
 from tgext.admin.config import AdminConfig
 from tgext.admin.layouts import BootstrapAdminLayout
 from tgext.admin.widgets import BootstrapAdminTableFiller
-from depot.manager import DepotManager
-from markupsafe import Markup
+
+import algobowl
+from algobowl import model
+from algobowl.config.auth import AuthMetadata, GoogleAuth, MPAPIAuthenticator, TokenAuth
 
 base_config = AppConfig()
 base_config.renderers = []

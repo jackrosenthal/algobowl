@@ -1,18 +1,18 @@
 import os
+from urllib.parse import urlencode
 
-import tg
-import requests
-import transaction
 import google_auth_oauthlib.flow as gflow
 import googleapiclient.discovery as gdiscovery
-
-from urllib.parse import urlencode
-from webob import Request
-from tg.exceptions import HTTPFound
-from zope.interface import implementer
-from repoze.who.interfaces import IIdentifier, IAuthenticator, IChallenger
+import requests
+import tg
+import transaction
+from repoze.who.interfaces import IAuthenticator, IChallenger, IIdentifier
 from tg.configuration.auth import TGAuthMetadata
-from algobowl.model import AuthToken, User, DBSession
+from tg.exceptions import HTTPFound
+from webob import Request
+from zope.interface import implementer
+
+from algobowl.model import AuthToken, DBSession, User
 
 
 class BaseAuth:

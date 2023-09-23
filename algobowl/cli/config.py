@@ -1,13 +1,13 @@
 import dataclasses
 import os
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import click
 import toml
 
-from algobowl.cli import formatter
 import algobowl.lib.problem as problemlib
+from algobowl.cli import formatter
 
 
 def get_default_config_path():

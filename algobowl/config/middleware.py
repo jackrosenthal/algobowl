@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """WSGI middleware initialization for the algobowl application."""
+from depot.manager import DepotManager
+
 from algobowl.config.app_cfg import base_config
 from algobowl.config.environment import load_environment
-from depot.manager import DepotManager
 
 __all__ = ["make_app"]
 

@@ -1,6 +1,6 @@
-import io
 import contextlib
 import functools
+import io
 
 from tg import expose
 

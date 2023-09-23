@@ -1,12 +1,12 @@
 import concurrent.futures
 import io
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import click
 
-from algobowl.cli import formatter
 import algobowl.lib.problem as problemlib
+from algobowl.cli import formatter
 
 
 def _parse_input(cli, path: Path):

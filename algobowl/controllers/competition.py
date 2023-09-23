@@ -1,23 +1,25 @@
-import zipfile
 import datetime
-import algobowl.lib.problem as problemlib
-from io import StringIO, BytesIO
-from collections import namedtuple, defaultdict
+import zipfile
+from collections import defaultdict, namedtuple
+from io import BytesIO, StringIO
+
 from recordclass import recordclass
-from tg import expose, abort, request, response, flash, redirect, require
-from tg.predicates import has_permission
 from sqlalchemy.sql.expression import case
+from tg import abort, expose, flash, redirect, request, require, response
+from tg.predicates import has_permission
+
+import algobowl.lib.problem as problemlib
 from algobowl.lib.base import BaseController
 from algobowl.lib.logoutput import logoutput
 from algobowl.model import (
-    DBSession,
     Competition,
+    DBSession,
+    Evaluation,
+    Group,
     Input,
     Output,
-    Group,
-    VerificationStatus,
     Protest,
-    Evaluation,
+    VerificationStatus,
 )
 
 __all__ = ["CompetitionsController", "CompetitionController"]

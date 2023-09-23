@@ -7,7 +7,6 @@ Create Date: 2021-02-23 12:55:36.771977
 """
 
 import sqlalchemy as sa
-
 from alembic import op
 from depot.fields.sqlalchemy import UploadedFileField
 

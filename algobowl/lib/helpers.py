@@ -4,7 +4,8 @@ Template Helpers for AlgoBOWL
 
 This module is exposed in all templates under the name ``h``.
 """
-from datetime import datetime, date, time, timedelta
+from datetime import date, datetime, time, timedelta
+
 import tg
 
 

@@ -2,8 +2,8 @@
 """Setup the algobowl application"""
 from __future__ import print_function
 
-from tg import config
 import transaction
+from tg import config
 
 
 def setup_schema(command, conf, vars):
@@ -14,7 +14,6 @@ def setup_schema(command, conf, vars):
     from algobowl import model
 
     # <websetup.websetup.schema.after.model.import>
-
     # <websetup.websetup.schema.before.metadata.create_all>
     print("Creating tables")
     model.metadata.create_all(bind=config["tg.app_globals"].sa_engine)
