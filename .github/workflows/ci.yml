@@ -15,8 +15,7 @@ jobs:
         run: pip install .
       - name: "Run Problem Tester"
         run: |
-          python -m algobowl algobowl.lib.problem_tester \
-            example_problems/number_in_range
+          python -m algobowl.lib.problem_tester example_problems/number_in_range
   migration-test:
     name: "Migration Test"
     runs-on: ubuntu-22.04
