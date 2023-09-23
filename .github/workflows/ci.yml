@@ -52,3 +52,27 @@ jobs:
           curl -f http://127.0.0.1:8080/competition
           curl -f http://127.0.0.1:8080/competition/archive
           gearbox serve -c development.ini.sample --stop-daemon
+  black-check:
+    name: "Check source is formatted with Black"
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+      - name: "Install black"
+        run: pip install black
+      - name: "Check source code is formatted with Black"
+        run: black --check .
+  isort-check:
+    name: "Check source is formatted with isort"
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+      - name: "Install isort"
+        run: pip install isort
+      - name: "Check source code is formatted with isort"
+        run: isort --check .
