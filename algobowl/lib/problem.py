@@ -35,6 +35,7 @@ class VerificationError(Exception):
     to see the exception message, but not students.
     """
 
+
 class ProblemTestError(Exception):
     """Tests did not pass successfully."""
 

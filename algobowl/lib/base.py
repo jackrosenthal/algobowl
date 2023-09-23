@@ -5,7 +5,7 @@ from tg import TGController, tmpl_context
 from tg import request
 
 
-__all__ = ['BaseController']
+__all__ = ["BaseController"]
 
 
 class BaseController(TGController):

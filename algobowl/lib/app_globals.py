@@ -2,7 +2,7 @@
 import tg
 from cryptography.fernet import Fernet
 
-__all__ = ['Globals']
+__all__ = ["Globals"]
 
 
 class Globals:
@@ -14,4 +14,4 @@ class Globals:
     """
 
     def __init__(self):
-        self.fernet = Fernet(tg.config['fernet.key'])
+        self.fernet = Fernet(tg.config["fernet.key"])

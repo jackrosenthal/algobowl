@@ -20,13 +20,13 @@ def ftime(dt, duration=None, show_day=False):
     :rtype: string
     """
     if show_day:
-        date_fmt = tg.config.get('locale.dow_date_fmt', '%A, %B %-d, %Y')
+        date_fmt = tg.config.get("locale.dow_date_fmt", "%A, %B %-d, %Y")
     else:
-        date_fmt = tg.config.get('locale.date_fmt', '%B %-d, %Y')
-    time_fmt = tg.config.get('locale.time_fmt', '%-I:%M %p')
-    dt_sep = tg.config.get('locale.dt_sep', ' at ')
-    dt_duration_sep = tg.config.get('locale.dt_duration_sep', ' from ')
-    duration_time_sep = tg.config.get('locale.duration_time_sep', ' to ')
+        date_fmt = tg.config.get("locale.date_fmt", "%B %-d, %Y")
+    time_fmt = tg.config.get("locale.time_fmt", "%-I:%M %p")
+    dt_sep = tg.config.get("locale.dt_sep", " at ")
+    dt_duration_sep = tg.config.get("locale.dt_duration_sep", " from ")
+    duration_time_sep = tg.config.get("locale.duration_time_sep", " to ")
 
     if isinstance(duration, timedelta):
         # convert a duration to an end date
@@ -41,8 +41,9 @@ def ftime(dt, duration=None, show_day=False):
             return dt.strftime(date_fmt + dt_sep + time_fmt)
         elif isinstance(duration, datetime):
             # Format date with duration
-            start = (dt.strftime(date_fmt + dt_duration_sep + time_fmt)
-                     + duration_time_sep)
+            start = (
+                dt.strftime(date_fmt + dt_duration_sep + time_fmt) + duration_time_sep
+            )
             if dt.date() == duration.date():
                 return start + duration.strftime(time_fmt)
             return start + duration.strftime(date_fmt + dt_sep + time_fmt)

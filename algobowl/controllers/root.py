@@ -18,14 +18,11 @@ from algobowl.controllers.error import ErrorController
 from algobowl.controllers.group import GroupsController
 from algobowl.controllers.competition import CompetitionsController
 
-__all__ = ['RootController']
+__all__ = ["RootController"]
 
 
 class RootController(BaseController):
-    admin = AdminController(
-        algobowl.model,
-        DBSession,
-        config_type=AdminConfig)
+    admin = AdminController(algobowl.model, DBSession, config_type=AdminConfig)
     api = api.ApiController()
     setup = setup_controller.SetupController()
     pref = pref_controller.PrefController()
@@ -36,23 +33,23 @@ class RootController(BaseController):
     def _before(self, *args, **kw):
         tmpl_context.project_name = "algobowl"
 
-    @expose('algobowl.templates.index')
+    @expose("algobowl.templates.index")
     def index(self):
         """Handle the front-page."""
-        return dict(page='index')
+        return dict(page="index")
 
     @expose()
     def algobowl(self):
         """Redirect for old route to homepage"""
-        redirect(url('/'))
+        redirect(url("/"))
 
-    @expose('algobowl.templates.privacy')
+    @expose("algobowl.templates.privacy")
     def privacy(self):
-        return dict(page='privacy')
+        return dict(page="privacy")
 
-    @expose('algobowl.templates.tos')
+    @expose("algobowl.templates.tos")
     def tos(self):
-        return dict(page='tos')
+        return dict(page="tos")
 
     @expose()
     def files(self, filename):
@@ -61,18 +58,18 @@ class RootController(BaseController):
     @expose()
     def login(self):
         if not tg.request.identity:
-            tg.request.environ['repoze.who.challenge'] = 'mpapi'
+            tg.request.environ["repoze.who.challenge"] = "mpapi"
             who_api = get_api(tg.request.environ)
             return who_api.challenge()
-        redirect(url('/'))
+        redirect(url("/"))
 
     @expose()
     def glogin(self):
         if not tg.request.identity:
-            tg.request.environ['repoze.who.challenge'] = 'glogin'
+            tg.request.environ["repoze.who.challenge"] = "glogin"
             who_api = get_api(tg.request.environ)
             return who_api.challenge()
-        redirect(url('/'))
+        redirect(url("/"))
 
     @expose()
     @require(predicates.not_anonymous())
@@ -82,16 +79,15 @@ class RootController(BaseController):
         return HTTPFound(headers=headers)
 
     @expose()
-    def post_login(self, came_from=lurl('/')):
+    def post_login(self, came_from=lurl("/")):
         if tg.request.identity:
-            user = tg.request.identity['user']
-            flash("Welcome, {}!".format(user), 'success')
-            u = tg.request.relative_url(str(came_from),
-                                        to_application=True)
+            user = tg.request.identity["user"]
+            flash("Welcome, {}!".format(user), "success")
+            u = tg.request.relative_url(str(came_from), to_application=True)
             if not u.startswith(tg.request.application_url):
                 flash("Dangerous redirect prevented", "warning")
-                redirect('/')
+                redirect("/")
             redirect(u)
         else:
-            flash("Login failure", 'error')
-            redirect('/')
+            flash("Login failure", "error")
+            redirect("/")

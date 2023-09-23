@@ -7,6 +7,7 @@ from sqlalchemy import engine_from_config, pool
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 from algobowl import model
+
 target_metadata = model.metadata
 
 # this is the Alembic Config object, which provides
@@ -27,7 +28,7 @@ def run_migrations_offline():
 
     """
     url = config.get_main_option("sqlalchemy.url")
-    context.configure(url=url, version_table='migrate_version')
+    context.configure(url=url, version_table="migrate_version")
 
     with context.begin_transaction():
         context.run_migrations()
@@ -42,15 +43,15 @@ def run_migrations_online():
     """
     engine = engine_from_config(
         config.get_section(config.config_ini_section),
-        prefix='sqlalchemy.',
-        poolclass=pool.NullPool
+        prefix="sqlalchemy.",
+        poolclass=pool.NullPool,
     )
 
     connection = engine.connect()
     context.configure(
         connection=connection,
         target_metadata=target_metadata,
-        version_table='migrate_version'
+        version_table="migrate_version",
     )
 
     try:

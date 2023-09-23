@@ -9,40 +9,46 @@ from tg.predicates import has_permission
 from sqlalchemy.sql.expression import case
 from algobowl.lib.base import BaseController
 from algobowl.lib.logoutput import logoutput
-from algobowl.model import (DBSession, Competition, Input, Output, Group,
-                            VerificationStatus, Protest, Evaluation)
+from algobowl.model import (
+    DBSession,
+    Competition,
+    Input,
+    Output,
+    Group,
+    VerificationStatus,
+    Protest,
+    Evaluation,
+)
 
-__all__ = ['CompetitionsController', 'CompetitionController']
+__all__ = ["CompetitionsController", "CompetitionController"]
 
 
-ScoreTuple = namedtuple('ScoreTuple',
-                        ['score', 'verification', 'rank', 'output', 'vdiffer'])
+ScoreTuple = namedtuple(
+    "ScoreTuple", ["score", "verification", "rank", "output", "vdiffer"]
+)
 
-GradingTuple = recordclass('GradingTuple',
-                           ['rankings', 'fleet', 'verification', 'input',
-                            'contributions', 'evaluations'])
+GradingTuple = recordclass(
+    "GradingTuple",
+    ["rankings", "fleet", "verification", "input", "contributions", "evaluations"],
+)
 
 GradingContributionTuple = recordclass(
-    'GradingContributionTuple',
-    ['participation', 'verification', 'input_difficulty', 'ranking'],
-    defaults=[0, 0, 0, 0])
+    "GradingContributionTuple",
+    ["participation", "verification", "input_difficulty", "ranking"],
+    defaults=[0, 0, 0, 0],
+)
 
-GradingInputTuple = recordclass(
-    'GradingInputTuple',
-    ['scores_l', 'scores_s'])
+GradingInputTuple = recordclass("GradingInputTuple", ["scores_l", "scores_s"])
 
 GradingVerificationTuple = recordclass(
-    'GradingVerificationTuple',
-    ['correct', 'false_positives', 'false_negatives'],
-    defaults=[0, 0, 0])
+    "GradingVerificationTuple",
+    ["correct", "false_positives", "false_negatives"],
+    defaults=[0, 0, 0],
+)
 
-CompInfoTuple = recordclass(
-    'CompInfoTuple',
-    ['inputs', 'best_input_difference'])
+CompInfoTuple = recordclass("CompInfoTuple", ["inputs", "best_input_difference"])
 
-CompetitionYearTuple = recordclass(
-    'CompetitionYearTuple',
-    ['year', 'competitions'])
+CompetitionYearTuple = recordclass("CompetitionYearTuple", ["year", "competitions"])
 
 
 class GroupEntry:
@@ -70,9 +76,7 @@ class GroupEntry:
         if not num_inputs:
             num_inputs = 9999
 
-        return (self.sum_of_ranks
-                + self.penalties
-                + self.reject_count * num_inputs)
+        return self.sum_of_ranks + self.penalties + self.reject_count * num_inputs
 
     def __lt__(self, other):
         if self.reject_count < other.reject_count:
@@ -82,18 +86,19 @@ class GroupEntry:
         return self.score < other.score
 
     def __eq__(self, other):
-        return (self.reject_count == other.reject_count
-                and self.score == other.score)
+        return self.reject_count == other.reject_count and self.score == other.score
 
     def to_dict(self):
-        return {'reject_count': self.reject_count,
-                'sum_of_ranks': self.sum_of_ranks,
-                'penalties': self.penalties,
-                'score': self.score,
-                'place': self.place,
-                'input_ranks':
-                    {k.id: (v[0], str(v[1]), v[2])
-                     for k, v in self.input_ranks.items()}}
+        return {
+            "reject_count": self.reject_count,
+            "sum_of_ranks": self.sum_of_ranks,
+            "penalties": self.penalties,
+            "score": self.score,
+            "place": self.place,
+            "input_ranks": {
+                k.id: (v[0], str(v[1]), v[2]) for k, v in self.input_ranks.items()
+            },
+        }
 
 
 def compute_rankings_grade(gt, fleet_num, fleet):
@@ -112,21 +117,21 @@ class CompetitionController(BaseController):
     def __init__(self, competition):
         self.competition = competition
 
-    @expose('algobowl.templates.competition.rankings')
-    @expose('json')
+    @expose("algobowl.templates.competition.rankings")
+    @expose("json")
     def index(self, ground_truth=False, incognito=False):
-        user = request.identity and request.identity['user']
+        user = request.identity and request.identity["user"]
         now = datetime.datetime.now()
         admin = user and user.admin
         comp = self.competition
         problem = problemlib.load_problem(comp)
-        show_scores = admin or (comp.open_verification_begins
-                                and now >= comp.open_verification_begins)
+        show_scores = admin or (
+            comp.open_verification_begins and now >= comp.open_verification_begins
+        )
         if user:
-            my_groups = (DBSession
-                         .query(Group)
-                         .filter(Group.competition_id == comp.id)
-                         .all())
+            my_groups = (
+                DBSession.query(Group).filter(Group.competition_id == comp.id).all()
+            )
             # non-sql filter, bleh
             my_groups = [g for g in my_groups if user in g.users]
         else:
@@ -136,11 +141,12 @@ class CompetitionController(BaseController):
         show_incognito_option = admin or any(g.incognito for g in my_groups)
 
         if show_incognito_option:
-            incognito_teams = (DBSession
-                               .query(Group)
-                               .filter(Group.competition_id == comp.id)
-                               .filter(Group.incognito == True)
-                               .all())
+            incognito_teams = (
+                DBSession.query(Group)
+                .filter(Group.competition_id == comp.id)
+                .filter(Group.incognito == True)
+                .all()
+            )
         else:
             incognito = False
             incognito_teams = []
@@ -157,7 +163,8 @@ class CompetitionController(BaseController):
         else:
             verification_column = case(
                 [(Output.use_ground_truth, Output.ground_truth)],
-                else_=Output.verification)
+                else_=Output.verification,
+            )
 
         open_verification = user and comp.open_verification_open
 
@@ -170,14 +177,16 @@ class CompetitionController(BaseController):
         groups = defaultdict(GroupEntry)
         ir_query = (
             DBSession.query(Input, Group, Output, verification_column)
-                     .join(Input.outputs)
-                     .join(Output.group)
-                     .filter(Group.competition_id == comp.id)
-                     .filter(Output.active == True)
-                     .order_by(Input.group_id,
-                               verification_column
-                               == VerificationStatus.rejected,
-                               score_sort))
+            .join(Input.outputs)
+            .join(Output.group)
+            .filter(Group.competition_id == comp.id)
+            .filter(Output.active == True)
+            .order_by(
+                Input.group_id,
+                verification_column == VerificationStatus.rejected,
+                score_sort,
+            )
+        )
 
         inputs = []
         last_iput = None
@@ -206,14 +215,17 @@ class CompetitionController(BaseController):
 
             vdiffer = False
             if ground_truth:
-                if (output.use_ground_truth
-                        or output.verification == output.ground_truth):
+                if (
+                    output.use_ground_truth
+                    or output.verification == output.ground_truth
+                ):
                     accurate_count += 1
                 else:
                     vdiffer = True
 
             groups[ogroup].input_ranks[iput] = ScoreTuple(
-                shown_score, verif, rank, shown_output, vdiffer)
+                shown_score, verif, rank, shown_output, vdiffer
+            )
             if verif is VerificationStatus.rejected:
                 groups[ogroup].reject_count += 1
             else:
@@ -236,10 +248,12 @@ class CompetitionController(BaseController):
                     group.reject_count += 1
 
         # add open verification protest rejections to penalty
-        rprotests = (DBSession.query(Protest)
-                              .filter(Protest.accepted == False)
-                              .join(Protest.submitter)
-                              .filter(Group.competition_id == comp.id))
+        rprotests = (
+            DBSession.query(Protest)
+            .filter(Protest.accepted == False)
+            .join(Protest.submitter)
+            .filter(Group.competition_id == comp.id)
+        )
         for protest in rprotests:
             # technically, a group which failed to submit anything
             # COULD protest... but this case is unlikely ;)
@@ -252,26 +266,31 @@ class CompetitionController(BaseController):
                 if other_ent < this_ent:
                     this_ent.place += 1
 
-        if request.response_type == 'application/json':
-            return {'status': 'success',
-                    'groups': {k.id: v.to_dict() for k, v in groups.items()}}
+        if request.response_type == "application/json":
+            return {
+                "status": "success",
+                "groups": {k.id: v.to_dict() for k, v in groups.items()},
+            }
         else:
-            return {'groups': groups,
-                    'my_groups': my_groups,
-                    'competition': comp,
-                    'inputs': inputs,
-                    'admin': admin,
-                    'incognito': incognito,
-                    'show_incognito_option': show_incognito_option,
-                    'incognito_teams': incognito_teams,
-                    'show_input_downloads': show_input_downloads,
-                    'ground_truth': ground_truth,
-                    'verification_accuracy': (0 if not total_count else
-                                              (accurate_count / total_count)),
-                    'open_verification': open_verification}
+            return {
+                "groups": groups,
+                "my_groups": my_groups,
+                "competition": comp,
+                "inputs": inputs,
+                "admin": admin,
+                "incognito": incognito,
+                "show_incognito_option": show_incognito_option,
+                "incognito_teams": incognito_teams,
+                "show_input_downloads": show_input_downloads,
+                "ground_truth": ground_truth,
+                "verification_accuracy": (
+                    0 if not total_count else (accurate_count / total_count)
+                ),
+                "open_verification": open_verification,
+            }
 
-    @expose('algobowl.templates.competition.grade')
-    @require(has_permission('admin'))
+    @expose("algobowl.templates.competition.grade")
+    @require(has_permission("admin"))
     def grade(self):
         rankings = self.index(ground_truth=True, incognito=False)
 
@@ -285,11 +304,9 @@ class CompetitionController(BaseController):
                 defaultdict(dict),
             )
 
-        groups = {
-            k: new_gt(v)
-            for k, v in rankings['groups'].items()}
+        groups = {k: new_gt(v) for k, v in rankings["groups"].items()}
 
-        compinfo = CompInfoTuple(len(rankings['inputs']), 0)
+        compinfo = CompInfoTuple(len(rankings["inputs"]), 0)
         benchmark_groups = []
 
         # in the case a group submitted an input but has no outputs
@@ -315,10 +332,12 @@ class CompetitionController(BaseController):
 
         for group, gt in groups.items():
             # compute verification correctness
-            q = (DBSession.query(Output)
-                          .filter(Output.original == True)
-                          .join(Output.input)
-                          .filter(Input.group_id == group.id))
+            q = (
+                DBSession.query(Output)
+                .filter(Output.original == True)
+                .join(Output.input)
+                .filter(Input.group_id == group.id)
+            )
             for oput in q:
                 if oput.verification == oput.ground_truth:
                     gt.verification.correct += 1
@@ -332,7 +351,7 @@ class CompetitionController(BaseController):
                 if iput.group.incognito or iput.group.benchmark:
                     continue
                 if st.rank is None:
-                    groups[iput.group].input.scores_s.add('R{}'.format(id(st)))
+                    groups[iput.group].input.scores_s.add("R{}".format(id(st)))
                 else:
                     groups[iput.group].input.scores_s.add(st.score)
                 groups[iput.group].input.scores_l.append(st.score)
@@ -347,42 +366,46 @@ class CompetitionController(BaseController):
             fleet.sort(key=lambda gt: -gt.rankings.adj_score)
 
         compinfo.best_input_difference = max(
-            len(g.input.scores_s) for g in groups.values())
+            len(g.input.scores_s) for g in groups.values()
+        )
 
         for group, gt in groups.items():
             gt.contributions.ranking = compute_rankings_grade(
                 gt, gt.fleet, fleets[gt.fleet]
             )
             gt.contributions.verification = (
-                gt.verification.correct / sum(gt.verification) * 5
-            ) if any(gt.verification) else 0
+                (gt.verification.correct / sum(gt.verification) * 5)
+                if any(gt.verification)
+                else 0
+            )
             gt.contributions.participation = (
-                (compinfo.inputs - gt.rankings.reject_count)
-                / compinfo.inputs
-                * 70)
+                (compinfo.inputs - gt.rankings.reject_count) / compinfo.inputs * 70
+            )
             gt.contributions.input_difficulty = (
-                7 + len(gt.input.scores_s) / compinfo.best_input_difference * 3
-            ) if gt.input.scores_l else 0
+                (7 + len(gt.input.scores_s) / compinfo.best_input_difference * 3)
+                if gt.input.scores_l
+                else 0
+            )
 
         for group, gt in groups.items():
             for from_member in group.users:
-                q = (DBSession
-                     .query(Evaluation, Evaluation.score)
-                     .filter(Evaluation.group_id == group.id)
-                     .filter(Evaluation.from_student_id == from_member.id)
-                     .all())
+                q = (
+                    DBSession.query(Evaluation, Evaluation.score)
+                    .filter(Evaluation.group_id == group.id)
+                    .filter(Evaluation.from_student_id == from_member.id)
+                    .all()
+                )
                 evals = {e.to_student: s for e, s in q}
                 for to_member in group.users:
                     if to_member not in evals.keys():
                         evals[to_member] = 1.0
                 for to_member, score in evals.items():
-                    gt.evaluations[to_member][from_member] = (
-                        score / sum(evals.values()))
+                    gt.evaluations[to_member][from_member] = score / sum(evals.values())
 
-        return {'groups': groups, 'competition': self.competition}
+        return {"groups": groups, "competition": self.competition}
 
     @logoutput
-    @require(has_permission('admin'))
+    @require(has_permission("admin"))
     def reverify(self):
         problem = problemlib.load_problem(self.competition)
 
@@ -400,39 +423,43 @@ class CompetitionController(BaseController):
                         print("{} rejected because: {}".format(output, e))
                     except Exception as e:
                         output.ground_truth = VerificationStatus.waiting
-                        print("Verifier module failed on {}: {}".format(
-                            output, e))
+                        print("Verifier module failed on {}: {}".format(output, e))
                     else:
                         output.ground_truth = VerificationStatus.accepted
                     if old_status != output.ground_truth:
-                        print("{} changed ground truth from {} to {}".format(
-                            output, old_status, output.ground_truth))
+                        print(
+                            "{} changed ground truth from {} to {}".format(
+                                output, old_status, output.ground_truth
+                            )
+                        )
                         changes += 1
         DBSession.flush()
         print("{} ground truths changed".format(changes))
 
-    @expose('algobowl.templates.competition.ov')
+    @expose("algobowl.templates.competition.ov")
     def ov(self, output_id):
         output = DBSession.query(Output).get(int(output_id))
         if output.group.competition_id != self.competition.id:
             abort(404)
         if not output.active:
             abort(404, "This output is no longer active.")
-        user = request.identity and request.identity['user']
+        user = request.identity and request.identity["user"]
         if user:
-            group = (DBSession.query(Group)
-                              .filter(Group.competition_id
-                                      == self.competition.id)
-                              .filter(Group.users.any(id=user.id))
-                              .first())
+            group = (
+                DBSession.query(Group)
+                .filter(Group.competition_id == self.competition.id)
+                .filter(Group.users.any(id=user.id))
+                .first()
+            )
         else:
             group = None
 
         problem = problemlib.load_problem(self.competition)
         problem_module = problem.get_module()
-        show_input_downloads = ((user and user.admin)
-                                or not output.group.competition.archived)
-        message = request.POST.get('message')
+        show_input_downloads = (
+            user and user.admin
+        ) or not output.group.competition.archived
+        message = request.POST.get("message")
         if group and message:
             if output.use_ground_truth:
                 abort(403, "The instructor has already reviewed this output.")
@@ -442,12 +469,13 @@ class CompetitionController(BaseController):
                 message=message,
                 accepted=output.verification != output.ground_truth,
                 submitter=group,
-                output=output)
+                output=output,
+            )
 
             DBSession.add(output)
             DBSession.add(protest)
 
-            flash('Your protest has been submitted.', 'success')
+            flash("Your protest has been submitted.", "success")
 
         return {
             "output": output,
@@ -459,37 +487,46 @@ class CompetitionController(BaseController):
 
     @expose()
     def all_inputs(self):
-        user = request.identity and request.identity['user']
+        user = request.identity and request.identity["user"]
         now = datetime.datetime.now()
         comp = self.competition
         if not (user and user.admin) and now < comp.output_upload_begins:
-            abort(403, "Input downloading is not available until the output"
-                       " upload stage begins.")
+            abort(
+                403,
+                "Input downloading is not available until the output"
+                " upload stage begins.",
+            )
         if not (user and user.admin) and comp.archived:
-            abort(403,
-                  "Input downloading is unavailable for old competitions. "
-                  "Contact the site administrator if you need access.")
+            abort(
+                403,
+                "Input downloading is unavailable for old competitions. "
+                "Contact the site administrator if you need access.",
+            )
         f = BytesIO()
-        archive = zipfile.ZipFile(f, mode='w')
-        inputs = (DBSession.query(Input)
-                           .join(Input.group)
-                           .filter(Group.competition_id == comp.id))
+        archive = zipfile.ZipFile(f, mode="w")
+        inputs = (
+            DBSession.query(Input)
+            .join(Input.group)
+            .filter(Group.competition_id == comp.id)
+        )
         for iput in inputs:
             archive.writestr(
-                'inputs/{}'.format(iput.data.filename),
-                iput.data.file.read())
+                "inputs/{}".format(iput.data.filename), iput.data.file.read()
+            )
         archive.close()
         f.seek(0)
-        response.content_type = 'application/zip'
+        response.content_type = "application/zip"
         return f.read()
 
     @expose()
     def problem_statement(self):
-        user = request.identity and request.identity['user']
+        user = request.identity and request.identity["user"]
         if not (user and user.admin) and self.competition.archived:
-            abort(403,
-                  "The problem statement is no longer available as the "
-                  "competition has been archived.")
+            abort(
+                403,
+                "The problem statement is no longer available as the "
+                "competition has been archived.",
+            )
         problem = problemlib.load_problem(self.competition)
         response.content_type = "application/pdf"
         return problem.get_statement_pdf()
@@ -508,31 +545,32 @@ class CompetitionsController(BaseController):
 
         return CompetitionController(competition), args
 
-    @expose('algobowl.templates.competition.archive')
+    @expose("algobowl.templates.competition.archive")
     def archive(self):
         now = datetime.datetime.now()
         comps = []
-        for comp in (DBSession
-                     .query(Competition)
-                     .filter(Competition.open_verification_ends <= now)
-                     .order_by(Competition.input_upload_ends.desc())):
+        for comp in (
+            DBSession.query(Competition)
+            .filter(Competition.open_verification_ends <= now)
+            .order_by(Competition.input_upload_ends.desc())
+        ):
             if not comps or comps[-1].year != comp.input_upload_ends.year:
-                comps.append(
-                    CompetitionYearTuple(comp.input_upload_ends.year, [comp]))
+                comps.append(CompetitionYearTuple(comp.input_upload_ends.year, [comp]))
             else:
                 comps[-1].competitions.append(comp)
 
-        return {'competitions': comps}
+        return {"competitions": comps}
 
-    @expose('algobowl.templates.competition.list')
+    @expose("algobowl.templates.competition.list")
     def index(self):
         now = datetime.datetime.now()
-        comps = (DBSession
-                 .query(Competition)
-                 .filter(Competition.input_upload_begins <= now)
-                 .filter(Competition.open_verification_ends > now)
-                 .order_by(Competition.input_upload_ends)
-                 .all())
+        comps = (
+            DBSession.query(Competition)
+            .filter(Competition.input_upload_begins <= now)
+            .filter(Competition.open_verification_ends > now)
+            .order_by(Competition.input_upload_ends)
+            .all()
+        )
         if len(comps) == 1:
-            redirect('/competition/{}'.format(comps[0].id))
-        return {'competitions': comps}
+            redirect("/competition/{}".format(comps[0].id))
+        return {"competitions": comps}

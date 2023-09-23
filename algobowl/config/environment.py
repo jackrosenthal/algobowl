@@ -2,7 +2,7 @@
 """WSGI environment setup for algobowl."""
 from algobowl.config.app_cfg import base_config
 
-__all__ = ['load_environment']
+__all__ = ["load_environment"]
 
 # Use base_config to setup the environment loader function
 load_environment = base_config.make_load_environment()

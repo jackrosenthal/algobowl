@@ -17,10 +17,12 @@ def get_session(config):
     auth_token = config.get_server_config("access_token")
     if auth_token and len(auth_token) == 88:
         session.headers.update({"Authorization": f"Bearer {auth_token}"})
-    session.headers.update({
-        "Accept": "application/json",
-        "X-AlgoBOWL-CLI-Compatible": str(algobowl.lib.constants.cli_compatible),
-    })
+    session.headers.update(
+        {
+            "Accept": "application/json",
+            "X-AlgoBOWL-CLI-Compatible": str(algobowl.lib.constants.cli_compatible),
+        }
+    )
     return session
 
 
@@ -36,9 +38,11 @@ def check_response(response):
         fmt.err(f"Run {fmt.cmd('algobowl auth login')} to continue.")
         sys.exit(1)
     if not response.ok:
-        fmt.err({
-            requests.codes.forbidden: "You are not authorized to perform this command.",
-        }.get(response.status_code, "Your request failed to process."))
+        fmt.err(
+            {
+                requests.codes.forbidden: "You are not authorized to perform this command.",
+            }.get(response.status_code, "Your request failed to process.")
+        )
         try:
             data = response.json()
         except requests.exceptions.JSONDecodeError:

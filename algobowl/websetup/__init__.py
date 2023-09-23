@@ -10,4 +10,4 @@ def setup_app(command, conf, vars):
     bootstrap(command, conf, vars)
 
 
-__all__ = ['setup_app']
+__all__ = ["setup_app"]

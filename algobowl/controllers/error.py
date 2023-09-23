@@ -1,7 +1,7 @@
 from tg import request, expose
 from algobowl.lib.base import BaseController
 
-__all__ = ['ErrorController']
+__all__ = ["ErrorController"]
 
 
 class ErrorController(BaseController):
@@ -16,11 +16,11 @@ class ErrorController(BaseController):
 
     """
 
-    @expose('algobowl.templates.error')
+    @expose("algobowl.templates.error")
     @expose("json")
     def document(self, *args, **kwargs):
         """Render the error document"""
-        resp = request.environ.get('tg.original_response')
+        resp = request.environ.get("tg.original_response")
         try:
             # tg.abort exposes the message as .detail in response
             message = resp.detail
@@ -35,7 +35,9 @@ class ErrorController(BaseController):
         if not message:
             message = "We're sorry but we weren't able to process this request."
 
-        values = dict(prefix=request.environ.get('SCRIPT_NAME', ''),
-                      code=request.params.get('code', code),
-                      message=request.params.get('message', message))
+        values = dict(
+            prefix=request.environ.get("SCRIPT_NAME", ""),
+            code=request.params.get("code", code),
+            message=request.params.get("message", message),
+        )
         return values

@@ -10,17 +10,14 @@ from alembic import op
 import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
-revision = '819923a3acd9'
-down_revision = '4f7581127c93'
+revision = "819923a3acd9"
+down_revision = "4f7581127c93"
 
 
 def upgrade():
-    op.add_column('group',
-                  sa.Column('incognito',
-                            sa.Boolean,
-                            nullable=True))
+    op.add_column("group", sa.Column("incognito", sa.Boolean, nullable=True))
 
 
 def downgrade():
-    with op.batch_alter_table('group') as batch_op:
-        batch_op.drop_column('incognito')
+    with op.batch_alter_table("group") as batch_op:
+        batch_op.drop_column("incognito")
