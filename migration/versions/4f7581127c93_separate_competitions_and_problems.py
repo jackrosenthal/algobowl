@@ -49,8 +49,6 @@ def upgrade():
         batch_op.drop_column('output_verifier')
         batch_op.drop_column('problem_type')
         batch_op.drop_column('problem_statement')
-        batch_op.alter_column('problem_id', sa.ForeignKey('problem.id'),
-                              server_default=None)
 
 
 def downgrade():
