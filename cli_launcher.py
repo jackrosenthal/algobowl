@@ -41,7 +41,7 @@ def quiet_run(argv) -> None:
         )
     except subprocess.CalledProcessError as e:
         print(f"Command failed ({argv})!", file=sys.stderr)
-        sys.stderr.write(subprocess.stdout)
+        sys.stderr.write(e.stdout)
         raise
 
 
