@@ -68,10 +68,10 @@ def get_venv_dir() -> Path:
 
 def venv_cmd(executable: str) -> Path:
     """Get the path to a command in the virtual environment."""
-    scripts_file = get_venv_dir() / "Scripts" / executable
+    scripts_file = get_venv_dir() / "Scripts" / f"{executable}.exe"
     if scripts_file.exists():
         return scripts_file
-    return get_venv_dir() / "bin" / "executable"
+    return get_venv_dir() / "bin" / executable
 
 
 def build_venv() -> None:
