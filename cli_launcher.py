@@ -37,7 +37,11 @@ def quiet_run(argv) -> None:
     """Run a command, staying quiet unless there's an error."""
     try:
         subprocess.run(
-            argv, check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+            argv,
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            encoding="utf-8",
         )
     except subprocess.CalledProcessError as e:
         print(f"Command failed ({argv})!", file=sys.stderr)
