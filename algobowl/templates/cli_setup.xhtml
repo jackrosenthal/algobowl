@@ -7,40 +7,70 @@
       <h1>Command Line Interface (Beta)</h1>
 
       <p>
-        AlgoBOWL currently has an <strong>experimental</strong> command
-        line you can use to interface with it.  It is not currently to
-        feature-parity with the web interface.
+        AlgoBOWL has a command-line interface for power-users to interact with
+        the site from the command-line or from scripts.  The CLI is currently in
+        beta, and commands may be subject to change in the future.  Not all
+        functionality that's currently available on the site is also implemented
+        in the CLI.
       </p>
 
-      <h2>Prerequisites</h2>
-
-      <ul>
-        <li>Python 3.7+</li>
-        <li><tt>pip</tt> Package Manager</li>
-      </ul>
-
-      <h2>Installing the CLI</h2>
+      <h2>Installation</h2>
 
       <p>
-        Run <tt>pip install --user algobowl</tt>.
-        Ensure <tt>~/.local/bin</tt> is in your <tt>PATH</tt>.
-      </p>
-
-      <h2>Authentication</h2>
-
-      <p>
-        First, set the default server for your commands by running
-        <tt>algobowl config set-default-server ${tg.request.application_url}</tt>.
+      Download the
+      <a href="https://raw.githubusercontent.com/jackrosenthal/algobowl/main/cli_launcher.py">launcher script</a>
+      and mark it executable.  For example:
       </p>
 
       <p>
-        Then, run <tt>algobowl auth login</tt> and follow the instructions.
+        <tt>curl https://raw.githubusercontent.com/jackrosenthal/algobowl/main/cli_launcher.py -o algobowl &amp;&amp; chmod +x algobowl</tt>
+      </p>
+
+      <p>
+        You can either put it in a location referenced by your <tt>PATH</tt>
+        environment variable and run it as <tt>algobowl</tt>, or it's designed
+        so you can check it in to your group's Git repo as well (and run it as
+        <tt>./algobowl</tt>).
+      </p>
+
+      <p>
+        The launcher is designed to depend on nothing but Python 3.8+, so you
+        don't need to worry about installing any dependencies.
+      </p>
+
+      <h3>Authentication</h3>
+
+      <p>
+        Run <tt>algobowl auth login</tt> and follow the instructions.
       </p>
 
       <h2>Usage</h2>
 
       <p>
-        Run <tt>algobowl --help</tt>.
+        Run <tt>algobowl --help</tt> for help.  Here are some commands you may
+        be interested in:
+      </p>
+
+      <h3>Input Upload</h3>
+
+      <ul>
+        <li><tt>algobowl group input upload FILENAME</tt>: Upload your group's input.</li>
+        <li><tt>algobowl group input download OUTPUT_FILE</tt>: Download your group's input.</li>
+        <li><tt>algobowl group set-team-name TEAM_NAME</tt>: Set your team name.</li>
+      </ul>
+
+      <h3>Output Upload</h3>
+
+      <ul>
+        <li><tt>algobowl group output --to-group-id GROUP_ID upload FILENAME</tt>: Upload an output.</li>
+        <li><tt>algobowl group output --to-group-id GROUP_ID download OUTPUT_FILE</tt>: Download one of your submitted outputs.</li>
+        <li><tt>algobowl group output list</tt>: List output files you'll need to provide.</li>
+      </ul>
+
+      <p>
+        Note: if you use filenames containing the group ID, (e.g.,
+        <tt>output_group123.txt</tt>), the CLI can infer the group ID from the
+        filename, and passing <tt>--to-group-id</tt> is not required.
       </p>
 
       <h2>Logged-in Clients</h2>
