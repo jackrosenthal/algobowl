@@ -63,7 +63,7 @@ jobs:
       - name: "Install black"
         run: pip install black
       - name: "Check source code is formatted with Black"
-        run: black --check .
+        run: black --check --diff .
   isort-check:
     name: "Check source is formatted with isort"
     runs-on: ubuntu-22.04
