@@ -41,7 +41,7 @@ setuptools.setup(
     author_email="",
     url="",
     packages=setuptools.find_packages(),
-    python_requires=">=3.7,<4",
+    python_requires=">=3.8,<4",
     install_requires=BASE_DEPENDS,
     extras_require={
         "web": WEB_DEPENDS,
