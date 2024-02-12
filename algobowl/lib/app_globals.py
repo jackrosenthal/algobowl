@@ -1,4 +1,5 @@
 """The application's Globals object"""
+
 import tg
 from cryptography.fernet import Fernet
 

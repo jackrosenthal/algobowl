@@ -1,4 +1,5 @@
 """Setup the algobowl application"""
+
 from algobowl.config.environment import load_environment
 
 from .bootstrap import bootstrap

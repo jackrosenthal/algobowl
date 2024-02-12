@@ -4,6 +4,7 @@ Default configuration for AlgoBOWL
 
 Configuration in this file is overridden by the paste config.
 """
+
 import tg
 from depot.manager import DepotManager
 from markupsafe import Markup
