@@ -76,7 +76,7 @@ def build_venv() -> None:
     venv.EnvBuilder(
         system_site_packages=False,
         clear=bool(os.environ.get("ALGOBOWL_FORCE_UPDATE")),
-        symlinks=True,
+        symlinks=sys.platform != "win32",
         with_pip=True,
     ).create(get_venv_dir())
     quiet_run([venv_cmd("pip"), "install", "--upgrade", "pip"])
