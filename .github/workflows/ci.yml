@@ -85,7 +85,7 @@ jobs:
         with:
           python-version: 3.11
       - name: "Install build dependencies"
-        run: pip install --upgrade wheel setuptools
+        run: pip install --upgrade build wheel setuptools
       - name: "Build"
         run: python -m build
       - name: "Upload Artifacts"
