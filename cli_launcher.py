@@ -87,11 +87,7 @@ def build_venv() -> None:
         with_pip=True,
     ).create(get_venv_dir())
     quiet_run([venv_cmd("python"), "-m", "pip", "install", "--upgrade", "pip"])
-    url = os.environ.get(
-        "ALGOBOWL_URL",
-        "https://github.com/jackrosenthal/algobowl/archive/refs/heads/main.zip",
-    )
-    quiet_run([venv_cmd("python"), "-m", "pip", "install", "--upgrade", url])
+    quiet_run([venv_cmd("python"), "-m", "pip", "install", "--upgrade", "algobowl"])
 
 
 def update_venv() -> None:
