@@ -15,7 +15,7 @@ BASE_DEPENDS = [
 
 WEB_DEPENDS = [
     "TurboGears2 >= 2.3.12",
-    "tgext.admin",
+    "tgext.admin-jmr",
     "decorator",
     "google-api-python-client",
     "google-auth-oauthlib",
@@ -31,7 +31,6 @@ WEB_DEPENDS = [
     "recordclass",
     "cryptography",
     "requests",
-    "sprox @ https://github.com/jackrosenthal/sprox/archive/refs/heads/getargspec.zip",
 ]
 
 DEV_DEPENDS = [
