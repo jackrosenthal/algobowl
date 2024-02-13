@@ -1,4 +1,4 @@
-name: "Run Tests"
+name: "CI"
 on:
   - push
   - pull_request
@@ -76,3 +76,20 @@ jobs:
         run: pip install isort
       - name: "Check source code is formatted with isort"
         run: isort --check .
+  build-dist:
+    name: "Build Wheel"
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+      - name: "Install build dependencies"
+        run: pip install --upgrade wheel setuptools
+      - name: "Build"
+        run: python -m build
+      - name: "Upload Artifacts"
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
