@@ -40,7 +40,9 @@ DEV_DEPENDS = [
 setuptools.setup(
     name="algobowl",
     version=(HERE / "VERSION").read_text(encoding="ascii").strip(),
-    description="",
+    description="Competition-based group project for Algorithms courses",
+    long_description=(HERE / "README.md").read_text(encoding="utf-8"),
+    long_description_content_type="text/markdown",
     author="",
     author_email="",
     url="",

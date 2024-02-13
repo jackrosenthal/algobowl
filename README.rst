@@ -1,4 +1,0 @@
-AlgoBOWL
-========
-
-Yadda yadda yadda
