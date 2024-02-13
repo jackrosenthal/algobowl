@@ -1,4 +1,7 @@
+include VERSION
 recursive-include algobowl/public *
 include algobowl/public/favicon.ico
 recursive-include algobowl/i18n *
 recursive-include algobowl/templates *
+global-exclude *.pyc
+prune __pycache__

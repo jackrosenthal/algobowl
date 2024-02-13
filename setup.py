@@ -1,4 +1,8 @@
+from pathlib import Path
+
 import setuptools
+
+HERE = Path(__file__).resolve().parent
 
 BASE_DEPENDS = [
     "click>=8.0",
@@ -35,7 +39,7 @@ DEV_DEPENDS = [
 
 setuptools.setup(
     name="algobowl",
-    version="0.1",
+    version=(HERE / "VERSION").read_text(encoding="ascii").strip(),
     description="",
     author="",
     author_email="",
