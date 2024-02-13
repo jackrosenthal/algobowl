@@ -31,6 +31,7 @@ WEB_DEPENDS = [
     "recordclass",
     "cryptography",
     "requests",
+    "sprox @ https://github.com/jackrosenthal/sprox/archive/refs/heads/getargspec.zip",
 ]
 
 DEV_DEPENDS = [
