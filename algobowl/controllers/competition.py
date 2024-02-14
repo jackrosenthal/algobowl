@@ -112,6 +112,8 @@ def compute_rankings_grade(gt, fleet_num, fleet):
             last_adj_score = other_gt.rankings.adj_score
         if other_gt is gt:
             break
+    if len(fleet) == 1:
+        return 5 + fleet_num * 5
     return (place_in_fleet / (len(fleet) - 1)) * 5 + fleet_num * 5
 
 
@@ -376,15 +378,15 @@ class CompetitionController(BaseController):
                 gt, gt.fleet, fleets[gt.fleet]
             )
             gt.contributions.verification = (
-                (gt.verification.correct / sum(gt.verification) * 5)
+                (gt.verification.correct / sum(gt.verification) * 20)
                 if any(gt.verification)
                 else 0
             )
             gt.contributions.participation = (
-                (compinfo.inputs - gt.rankings.reject_count) / compinfo.inputs * 70
+                (compinfo.inputs - gt.rankings.reject_count) / compinfo.inputs * 50
             )
             gt.contributions.input_difficulty = (
-                (7 + len(gt.input.scores_s) / compinfo.best_input_difference * 3)
+                (5 + len(gt.input.scores_s) / compinfo.best_input_difference * 10)
                 if gt.input.scores_l
                 else 0
             )
