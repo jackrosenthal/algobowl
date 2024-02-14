@@ -101,9 +101,8 @@ def main():
     dev_version = dataclasses.replace(release_version, suffix="dev0")
     release_version.write()
     run(["git", "tag", str(release_version)])
-    run(["git", "push", "--tags", "origin", "HEAD:refs/heads/release"])
     dev_version.write()
-    run(["git", "push"])
+    run(["git", "push", "--tags"])
 
 
 if __name__ == "__main__":
