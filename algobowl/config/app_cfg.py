@@ -77,7 +77,6 @@ base_config.sa_auth.challengers = [
 ]
 
 base_config["auth.mpapi.url"] = "https://mastergo.mines.edu/mpapi"
-base_config["depot.storage_path"] = "/tmp/depot"
 
 
 def variable_provider():
@@ -90,7 +89,10 @@ base_config.variable_provider = variable_provider
 def config_ready():
     """Executed once the configuration is ready."""
     # Configure default depot
-    DepotManager.configure("default", tg.config)
+    depot_config = dict(tg.config)
+    if "depot.backend" not in depot_config:
+        depot_config.setdefault("depot.storage_path", "/tmp/depot")
+    DepotManager.configure("default", depot_config)
 
 
 milestones.config_ready.register(config_ready)
