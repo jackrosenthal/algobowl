@@ -93,16 +93,20 @@ def main():
         sys.exit(1)
     current_version = Version.read()
     if current_version.is_today:
-        release_version = dataclasses.replace(
-            current_version, rel=current_version.rel + 1, suffix=""
-        )
+        rel = current_version.rel
+        if not current_version.suffix:
+            rel += 1
+        release_version = dataclasses.replace(current_version, rel=rel, suffix="")
     else:
         release_version = Version.today()
-    dev_version = dataclasses.replace(release_version, suffix="dev0")
+    dev_version = dataclasses.replace(
+        release_version, rel=current_version.rel + 1, suffix="dev0"
+    )
     release_version.write()
     run(["git", "tag", str(release_version)])
-    dev_version.write()
     run(["git", "push", "--tags"])
+    dev_version.write()
+    run(["git", "push"])
 
 
 if __name__ == "__main__":
