@@ -1,8 +1,5 @@
 """The application's Globals object"""
 
-import tg
-from cryptography.fernet import Fernet
-
 __all__ = ["Globals"]
 
 
@@ -15,4 +12,4 @@ class Globals:
     """
 
     def __init__(self):
-        self.fernet = Fernet(tg.config["fernet.key"])
+        pass

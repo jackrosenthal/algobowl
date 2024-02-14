@@ -29,7 +29,6 @@ WEB_DEPENDS = [
     "repoze.who",
     "WebHelpers2",
     "recordclass",
-    "cryptography",
     "requests",
 ]
 
