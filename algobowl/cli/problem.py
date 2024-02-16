@@ -1,5 +1,6 @@
 import concurrent.futures
 import io
+import random
 import sys
 from pathlib import Path
 
@@ -101,3 +102,24 @@ def verify(cli, input_file, output_files):
         click.echo(message)
 
     sys.exit(rv)
+
+
+@problem.command(help="Generate an input")
+@click.option("--seed", type=int, help="Seed to use.  Default: use SystemRandom.")
+@click.pass_obj
+def generate_input(cli, seed):
+    if seed:
+        rng = random.Random(seed)
+    else:
+        rng = random.SystemRandom()
+    iput = cli.problem.get_module().Input.generate(rng)
+    iput.write(sys.stdout)
+
+
+@problem.command(help="Trivially solve an input")
+@click.argument("input_file", type=Path)
+@click.pass_obj
+def trivial_solve(cli, input_file):
+    iput = _parse_input(cli, input_file)
+    output = iput.trivial_solve()
+    output.write(sys.stdout)
