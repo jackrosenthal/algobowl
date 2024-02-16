@@ -51,7 +51,9 @@ class RootController(BaseController):
 
     @expose()
     def files(self, filename):
-        file_redirector.redirect_to_file(filename)
+        file = file_redirector.get_file(filename)
+        tg.response.content_type = "application/octet-stream"
+        return file.file.read()
 
     @expose()
     def login(self):

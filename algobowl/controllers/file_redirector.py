@@ -21,7 +21,7 @@ def input_redirector(group_id):
     if file_is_public or is_group_member or is_admin:
         if not group.input:
             tg.abort(404, "An input file has not been uploaded yet.")
-        tg.redirect(group.input.data.url)
+        return group.input.data
 
     tg.abort(403, "You do not have access to this file at this time.")
 
@@ -54,7 +54,7 @@ def output_redirector(from_group_id, to_group_id):
         or is_admin
         or (is_verifier and visible_to_verifier)
     ):
-        tg.redirect(output.data.url)
+        return output.data
 
     tg.abort(403, "You do not have access to this file at this time.")
 
@@ -65,11 +65,10 @@ file_pattern_handlers = [
 ]
 
 
-def redirect_to_file(filename):
+def get_file(filename):
     for pattern, func in file_pattern_handlers:
         m = pattern.fullmatch(filename)
         if m:
-            func(*m.groups())
-            return
+            return func(*m.groups())
 
     tg.abort(404, "No handler found for filename.")
