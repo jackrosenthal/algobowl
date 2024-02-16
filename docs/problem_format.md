@@ -178,6 +178,23 @@ def write(self, f):
     print(*self.list_of_ints, file=f)
 ```
 
+The `Input` class should also provide a `generate` method to generate a random
+input.  This will be used to create default inputs for each group should they
+fail to upload an input.
+
+The `generate` method takes a pre-seeded
+[`random.Random`](https://docs.python.org/3/library/random.html#random.Random)
+object to generate random numbers.  *You should not use random numbers except
+from this object.*  The tests use a fixed-set of seeds so they are reproducible.
+
+For example:
+
+```python
+@classmethod
+def generate(cls, rng):
+    return cls(list_of_ints=[rng.randint(0, 100) for _ in range(20)], ...)
+```
+
 ## Writing example inputs
 
 Now that you've written the `Input` class, it's time to write example inputs.
@@ -305,6 +322,25 @@ test cases pass!
 Ideally, you want to bring your module to 100% test coverage, as then you know
 that each edge case students may hit is tested.  Keep adding example inputs and
 outputs until you've reached 100% test coverage.
+
+## Optional: Implement a trivial solver
+
+While it's not required, it's highly recommended to implement a trivial solver
+for the problem.  This solver will be used by tests to provide a little fuzz
+coverage when coupled with `Input.generate()`.
+
+You should implement the absolute most trivial solution for the problem
+possible.  Think: *how can I make the answer as bad as possible?*
+
+The method is called `trivial_solve` on your `Input` class, and returns
+an `Output` object.
+
+For example:
+
+```python
+def trivial_solve(self):
+    return Output(...)
+```
 
 ## Uploading for review
 

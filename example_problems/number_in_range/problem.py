@@ -22,6 +22,15 @@ class Input(problemlib.BaseInput):
         print(self.low, file=f)
         print(self.high, file=f)
 
+    @classmethod
+    def generate(cls, rng):
+        low = rng.randint(1, 100)
+        high = rng.randint(low, 100)
+        return cls(low=low, high=high)
+
+    def trivial_solve(self):
+        return Output(input=self, score=self.high)
+
 
 @dataclasses.dataclass
 class Output(problemlib.BaseOutput):

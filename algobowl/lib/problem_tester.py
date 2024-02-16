@@ -3,6 +3,7 @@
 import enum
 import io
 import pathlib
+import random
 import sys
 
 import pytest
@@ -19,6 +20,11 @@ class ASCIIFormat(enum.Enum):
 @pytest.fixture
 def problem(problem_dir):
     return problemlib.Problem(problem_dir)
+
+
+@pytest.fixture(params=[1337, 0xDEADBEEF, 0xDEADD00D, 55378008])
+def rng(request):
+    return random.Random(request.param)
 
 
 def stringio_from_path(path, ascii_format=False):
@@ -105,6 +111,36 @@ def test_rejected_output(problem, rejected_output_path, ascii_format):
     with pytest.raises(problemlib.VerificationError):
         output.verify()
     assert output.score == reformatted_output.score
+
+
+def test_generate_input(problem, rng):
+    try:
+        input = problem.get_module().Input.generate(rng)
+    except NotImplementedError:
+        pytest.skip("Input.generate() is not required (yet!)")
+
+    # The input should be writable.
+    input_buf = io.StringIO()
+    input.write(input_buf)
+
+    # We should be able to parse the generated input.
+    problem.parse_input(io.StringIO(input_buf.getvalue()))
+
+    # Solve the generated input.
+    try:
+        output = input.trivial_solve()
+    except NotImplementedError:
+        pytest.skip("Input.trivial_solve() not implemented")
+
+    # The solved output should be valid.
+    output.verify()
+
+    # The solved output should be writable.
+    output_buf = io.StringIO()
+    output.write(output_buf)
+
+    # We should be able to parse the written output.
+    problem.parse_output(input, io.StringIO(output_buf.getvalue()))
 
 
 def load_inputs_from_dir(path):

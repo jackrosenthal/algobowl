@@ -13,8 +13,11 @@ This module contains two things:
 import dataclasses
 import enum
 import pathlib
+import random
 import types
 import typing
+
+from typing_extensions import Self
 
 from algobowl.lib import problem_tester
 
@@ -54,6 +57,22 @@ class BaseInput:
 
     def write(self, f):
         """Write an input file."""
+        raise NotImplementedError
+
+    @classmethod
+    def generate(cls, rng: random.Random) -> Self:
+        """Generate an input."""
+        raise NotImplementedError
+
+    def trivial_solve(self) -> "BaseOutput":
+        """Solve this input in the most trivial way possible.
+
+        This should solve the input in a valid but computationally cheap manner.
+        Perhaps you want to aim to solve the problem with the worst answer
+        possible.  Problems are not required to implement this, but it does
+        provide some fuzz testing of outputs and the verifier when combined with
+        the generate() method.
+        """
         raise NotImplementedError
 
 

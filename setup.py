@@ -11,6 +11,7 @@ BASE_DEPENDS = [
     "requests>=2.0",
     "tabulate>=0.8",
     "toml>=0.10",
+    "typing-extensions",
 ]
 
 WEB_DEPENDS = [
