@@ -100,7 +100,7 @@ def main():
     else:
         release_version = Version.today()
     dev_version = dataclasses.replace(
-        release_version, rel=current_version.rel + 1, suffix="dev0"
+        release_version, rel=release_version.rel + 1, suffix="dev0"
     )
     release_version.write()
     run(["git", "tag", str(release_version)])
