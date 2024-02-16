@@ -12,7 +12,7 @@
       specification on the validity of outputs.
     </p>
     <p>
-      For reference, <a href="${group.input.url}">here</a>
+      For reference, <a href="${group.input.url}" download="${group.input.filename}">here</a>
       is the input that your group uploaded and you should verify against.
     </p>
     <a class="btn btn-primary"
@@ -36,7 +36,7 @@
       <tbody>
         <tr py:for="output in group.input.outputs">
           <td>
-            <a href="${output.url}">
+            <a href="${output.url}" download="${output.filename}">
               <tt py:content="output.filename" />
             </a>
           </td>

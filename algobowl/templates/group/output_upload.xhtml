@@ -28,7 +28,7 @@
       <py:for each="g in competition.groups">
         <tr py:if="g.input is not None">
           <td>
-            <a href="${g.input.data.url}">
+            <a href="${g.input.data.url}" download="${g.input.data.filename}">
               <tt py:content="g.input.data.filename" />
             </a>
           </td>
@@ -42,6 +42,7 @@
           <td id="download-link-${g.id}">
             <py:if test="g.input.id in submitted_outputs.keys()">
               <a href="${submitted_outputs[g.input.id].url}"
+                 download="${submitted_outputs[g.input.id].filename}"
                  class="btn btn-info">
                 <i class="fas fa-file-download fa-fw"></i>
                 Download Submission

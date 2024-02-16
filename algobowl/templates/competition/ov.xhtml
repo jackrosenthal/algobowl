@@ -13,7 +13,7 @@
         <tr py:if="show_input_downloads">
           <th>Input File</th>
           <td>
-            <a href="${output.input.url}">
+            <a href="${output.input.url}" download="${output.input.filename}">
               ${output.input.filename}
             </a>
           </td>
@@ -21,7 +21,7 @@
         <tr>
           <th>Output File</th>
           <td>
-            <a href="${output.url}">
+            <a href="${output.url}" download="${output.filename}">
               ${output.filename}
             </a>
           </td>
