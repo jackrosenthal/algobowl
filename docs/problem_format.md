@@ -32,7 +32,10 @@ required to implement on their own.
 Validate you have access (requesting it from Jack if necessary).  This is where
 you are going to push your problem implementation.
 
-## Setup AlgoBOWL development environment
+## Set up the AlgoBOWL CLI
+
+The AlgoBOWL CLI is used to run the problem tester.  Set it up by following
+[these instructions](./cli.md).
 
 Clone this repository, and create a new Python virtual environment:
 

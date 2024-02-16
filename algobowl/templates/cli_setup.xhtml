@@ -14,66 +14,13 @@
         in the CLI.
       </p>
 
-      <h2>Installation</h2>
+      <a href="https://github.com/jackrosenthal/algobowl/blob/main/docs/cli.md"
+         target="_blank"
+         class="btn btn-large btn-primary">
+       <i class="fas fa-book fa-fw"></i> Documentation
+      </a>
 
-      <p>
-      Download the
-      <a href="https://raw.githubusercontent.com/jackrosenthal/algobowl/main/cli_launcher.py">launcher script</a>
-      and mark it executable.  For example:
-      </p>
-
-      <p>
-        <tt>curl https://raw.githubusercontent.com/jackrosenthal/algobowl/main/cli_launcher.py -o algobowl &amp;&amp; chmod +x algobowl</tt>
-      </p>
-
-      <p>
-        You can either put it in a location referenced by your <tt>PATH</tt>
-        environment variable and run it as <tt>algobowl</tt>, or it's designed
-        so you can check it in to your group's Git repo as well (and run it as
-        <tt>./algobowl</tt>).
-      </p>
-
-      <p>
-        The launcher is designed to depend on nothing but Python 3.8+, so you
-        don't need to worry about installing any dependencies.
-      </p>
-
-      <h3>Authentication</h3>
-
-      <p>
-        Run <tt>algobowl auth login</tt> and follow the instructions.
-      </p>
-
-      <h2>Usage</h2>
-
-      <p>
-        Run <tt>algobowl --help</tt> for help.  Here are some commands you may
-        be interested in:
-      </p>
-
-      <h3>Input Upload</h3>
-
-      <ul>
-        <li><tt>algobowl group input upload FILENAME</tt>: Upload your group's input.</li>
-        <li><tt>algobowl group input download OUTPUT_FILE</tt>: Download your group's input.</li>
-        <li><tt>algobowl group set-team-name TEAM_NAME</tt>: Set your team name.</li>
-      </ul>
-
-      <h3>Output Upload</h3>
-
-      <ul>
-        <li><tt>algobowl group output --to-group-id GROUP_ID upload FILENAME</tt>: Upload an output.</li>
-        <li><tt>algobowl group output --to-group-id GROUP_ID download OUTPUT_FILE</tt>: Download one of your submitted outputs.</li>
-        <li><tt>algobowl group output list</tt>: List output files you'll need to provide.</li>
-      </ul>
-
-      <p>
-        Note: if you use filenames containing the group ID, (e.g.,
-        <tt>output_group123.txt</tt>), the CLI can infer the group ID from the
-        filename, and passing <tt>--to-group-id</tt> is not required.
-      </p>
-
-      <h2>Logged-in Clients</h2>
+      <h2 class="mt-3">Logged-in Clients</h2>
 
       <p>
         Your currently logged-in clients are listed below.
