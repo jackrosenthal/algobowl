@@ -91,3 +91,8 @@ class RootController(BaseController):
         else:
             flash("Login failure", "error")
             redirect("/")
+
+    @expose()
+    @require(predicates.has_permission("admin"))
+    def force_error(self):
+        raise RuntimeError("Forced error")
