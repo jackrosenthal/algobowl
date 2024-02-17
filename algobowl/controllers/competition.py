@@ -31,24 +31,20 @@ ScoreTuple = namedtuple(
 
 GradingTuple = recordclass(
     "GradingTuple",
-    ["rankings", "fleet", "verification", "input", "contributions", "evaluations"],
+    ["rankings", "fleet", "verification", "input_ones", "contributions", "evaluations"],
 )
 
 GradingContributionTuple = recordclass(
     "GradingContributionTuple",
-    ["participation", "verification", "input_difficulty", "ranking"],
-    defaults=[0, 0, 0, 0],
+    ["participation", "verification", "input_submitted", "input_difficulty", "ranking"],
+    defaults=[0, 0, 0, 0, 0],
 )
-
-GradingInputTuple = recordclass("GradingInputTuple", ["scores_l", "scores_s"])
 
 GradingVerificationTuple = recordclass(
     "GradingVerificationTuple",
     ["correct", "false_positives", "false_negatives"],
     defaults=[0, 0, 0],
 )
-
-CompInfoTuple = recordclass("CompInfoTuple", ["inputs", "best_input_difference"])
 
 CompetitionYearTuple = recordclass("CompetitionYearTuple", ["year", "competitions"])
 
@@ -303,14 +299,14 @@ class CompetitionController(BaseController):
                 rankings_entry,
                 None,
                 GradingVerificationTuple(),
-                GradingInputTuple([], set()),
+                0,
                 GradingContributionTuple(),
                 defaultdict(dict),
             )
 
         groups = {k: new_gt(v) for k, v in rankings["groups"].items()}
 
-        compinfo = CompInfoTuple(len(rankings["inputs"]), 0)
+        num_inputs = len(rankings["inputs"])
         benchmark_groups = []
 
         # in the case a group submitted an input but has no outputs
@@ -328,7 +324,7 @@ class CompetitionController(BaseController):
             if group not in groups.keys():
                 rankings_entry = GroupEntry()
                 # If they submitted nothing, then everything is a "reject"
-                rankings_entry.reject_count = compinfo.inputs
+                rankings_entry.reject_count = num_inputs
                 groups[group] = new_gt(rankings_entry)
 
         benchmark_groups.sort(key=lambda gt: -gt.rankings.adj_score)
@@ -350,15 +346,12 @@ class CompetitionController(BaseController):
                 else:
                     gt.verification.false_negatives += 1
 
-            # compute input unique ranks
+            # Compute input difficulty
             for iput, st in gt.rankings.input_ranks.items():
                 if iput.group.incognito or iput.group.benchmark:
                     continue
-                if st.rank is None:
-                    groups[iput.group].input.scores_s.add("R{}".format(id(st)))
-                else:
-                    groups[iput.group].input.scores_s.add(st.score)
-                groups[iput.group].input.scores_l.append(st.score)
+                if st.rank == 1:
+                    groups[iput.group].input_ones += 1
 
             gt.fleet = 0
             for bench_gt in benchmark_groups:
@@ -368,10 +361,6 @@ class CompetitionController(BaseController):
 
         for fleet in fleets:
             fleet.sort(key=lambda gt: -gt.rankings.adj_score)
-
-        compinfo.best_input_difference = max(
-            len(g.input.scores_s) for g in groups.values()
-        )
 
         for group, gt in groups.items():
             gt.contributions.ranking = compute_rankings_grade(
@@ -383,13 +372,17 @@ class CompetitionController(BaseController):
                 else 0
             )
             gt.contributions.participation = (
-                (compinfo.inputs - gt.rankings.reject_count) / compinfo.inputs * 50
+                (num_inputs - gt.rankings.reject_count) / num_inputs * 50
             )
-            gt.contributions.input_difficulty = (
-                (5 + len(gt.input.scores_s) / compinfo.best_input_difference * 10)
-                if gt.input.scores_l
-                else 0
-            )
+            if group.input:
+                gt.contributions.input_submitted = 5
+                gt.contributions.input_difficulty = max(
+                    10 - (gt.input_ones - 1),
+                    0,
+                )
+            else:
+                gt.contributions.input_submitted = 0
+                gt.contributions.input_difficulty = 0
 
         for group, gt in groups.items():
             for from_member in group.users:

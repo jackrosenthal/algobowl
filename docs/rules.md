@@ -94,14 +94,15 @@ UNIX-style newlines).
 
 * 5 points for uploading any valid input.
 * 10 points will be awarded based on how "difficult" your input was.
-  The more unique outputs get uploaded for your input, the more
-  difficult we consider it.  For example, if all outputs that were
-  uploaded for your input had a different score, you'd get a full 10
-  points.  If everyone uploads the same output for your input (likely,
-  it was not difficult to find the optimal solution), you'll get no
-  points in this category.  When designing your input, keep this in
-  mind.  Try to design an input you think will be very hard to find
-  the optimal solution.
+  Difficulty is defined by the number of groups which find the best
+  solution.  You will be awarded 10 points if only one group finds
+  the best solution, and we subtract 1 point for each additional group
+  which finds the best solution.  For example, if 4 groups all get a
+  rank of 1 on your input, you will be awarded `10-(4-1) = 7` points.
+  If 11 or more groups get a rank of 1, you'll be awarded no points in
+  this category.  When designing your input, keep this in mind.  Try
+  to design an input you think will be very hard to find the optimal
+  solution.
 
 ### Default
 

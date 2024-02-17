@@ -18,6 +18,7 @@
             <th>Group</th>
             <th>Name</th>
             <th>Verification</th>
+            <th>Input Submitted</th>
             <th>Input Difficulty</th>
             <th>Participation</th>
             <th>Rankings</th>
@@ -37,8 +38,12 @@
                  ${gt.verification.false_negatives}FN)
               </td>
               <td>
+                ${format_percent(gt.contributions.input_submitted)}
+                (${"Yes" if gt.contributions.input_submitted else "No"})
+              </td>
+              <td>
                 ${format_percent(gt.contributions.input_difficulty)}
-                (${len(gt.input.scores_s)})
+                (${gt.input_ones})
               </td>
               <td>
                 ${format_percent(gt.contributions.participation)}
@@ -57,7 +62,7 @@
                          if max(gt.evaluations[u].values()) > 0.45
                          else 'bg-secondary text-light'}"
                 py:with="mult=sum(gt.evaluations[u].values())">
-              <td colspan="2">
+              <td colspan="3">
                 ${u}
               </td>
               <td colspan="4">
