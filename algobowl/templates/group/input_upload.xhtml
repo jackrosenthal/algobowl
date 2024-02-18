@@ -11,7 +11,7 @@
     <div class="form-group">
       <label for="input-upload">Input Upload</label>
       <input type="file" class="form-control-file" id="input-upload" name="input_upload" />
-      <small class="form-text text-muted" py:if="group.input is not None">
+      <small class="form-text text-muted" py:if="group.input and not group.input.is_default">
         An input has already been uploaded. You may wish to
         <a href="${group.input.url}" download="${group.input.filename}">download your current input</a>.
       </small>

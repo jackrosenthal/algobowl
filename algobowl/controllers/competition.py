@@ -374,7 +374,7 @@ class CompetitionController(BaseController):
             gt.contributions.participation = (
                 (num_inputs - gt.rankings.reject_count) / num_inputs * 50
             )
-            if group.input:
+            if group.input and not group.input.is_default:
                 gt.contributions.input_submitted = 5
                 gt.contributions.input_difficulty = max(
                     10 - (gt.input_ones - 1),

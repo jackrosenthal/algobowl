@@ -212,6 +212,10 @@ class Problem:
     def get_statement_pdf(self):
         return _cache_getent(_statement_cache, self.path / "statement.pdf")
 
+    def generate_input(self, rng):
+        module = self.get_module()
+        return module.Input.generate(rng)
+
     def parse_input(self, input_file):
         module = self.get_module()
         return module.Input.read(input_file)

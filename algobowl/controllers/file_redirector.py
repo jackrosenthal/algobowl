@@ -18,6 +18,9 @@ def input_redirector(group_id):
     is_group_member = user in group.users
     file_is_public = datetime.datetime.now() >= competition.output_upload_begins
 
+    if not file_is_public and not is_admin and group.input and group.input.is_default:
+        tg.abort(403, "Default inputs are not downloadable until output upload begins.")
+
     if file_is_public or is_group_member or is_admin:
         if not group.input:
             tg.abort(404, "An input file has not been uploaded yet.")

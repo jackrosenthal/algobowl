@@ -293,6 +293,7 @@ class Input(DeclarativeBase):
 
     id = sa.Column(sa.Integer, primary_key=True)
     data = sa.Column(UploadedFileField, nullable=False)
+    is_default = sa.Column(sa.Boolean, nullable=True)
 
     group_id = sa.Column(sa.Integer, sa.ForeignKey("group.id"), nullable=False)
     group = relationship("Group", back_populates="input")

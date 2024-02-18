@@ -115,7 +115,7 @@ def test_rejected_output(problem, rejected_output_path, ascii_format):
 
 def test_generate_input(problem, rng):
     try:
-        input = problem.get_module().Input.generate(rng)
+        input = problem.generate_input(rng)
     except NotImplementedError:
         pytest.skip("Input.generate() is not required (yet!)")
 

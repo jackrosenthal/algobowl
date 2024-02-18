@@ -112,7 +112,7 @@ def generate_input(cli, seed):
         rng = random.Random(seed)
     else:
         rng = random.SystemRandom()
-    iput = cli.problem.get_module().Input.generate(rng)
+    iput = cli.problem.generate_input(rng)
     iput.write(sys.stdout)
 
 

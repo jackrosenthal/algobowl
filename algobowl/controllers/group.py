@@ -132,10 +132,11 @@ class GroupController(BaseController):
             "application/octet-stream",
         )
         if self.group.input is None:
-            iput = Input(data=f, group=self.group)
+            iput = Input(data=f, group=self.group, is_default=False)
             DBSession.add(iput)
         else:
             self.group.input.data = f
+            self.group.input.is_default = False
         DBSession.flush()
 
         return {"status": "success"}
