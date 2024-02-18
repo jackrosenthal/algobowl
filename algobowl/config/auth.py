@@ -8,7 +8,7 @@ import tg
 import transaction
 from repoze.who.interfaces import IAuthenticator, IChallenger, IIdentifier
 from tg.configuration.auth import TGAuthMetadata
-from tg.exceptions import HTTPFound
+from tg.exceptions import HTTPFound, HTTPUnauthorized
 from webob import Request
 from zope.interface import implementer
 
@@ -153,6 +153,11 @@ class MPAPIAuthenticator(BaseAuth):
         if challenger and challenger != "mpapi":
             return None
         request = Request(environ)
+
+        # Never attempt to redirect the CLI to MPAPI.
+        if "X-AlgoBOWL-CLI-Compatible" in request.headers:
+            return HTTPUnauthorized("Please run 'algobowl auth login' first.")
+
         return_url = tg.url(
             request.application_url + "/post_login", {"came_from": request.path_qs}
         )
