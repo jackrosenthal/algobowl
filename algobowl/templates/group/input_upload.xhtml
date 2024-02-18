@@ -2,8 +2,8 @@
   <h1>Input Upload</h1>
   <p class="lead">
     Welcome to ${tg.config['site.branding.name']}! You will have until
-    <strong>${h.ftime(competition.input_upload_ends)}</strong> to submit
-    your input and decide upon a team name.
+    <strong>${literal(h.ftime(competition.input_upload_ends))}</strong> to
+    submit your input and decide upon a team name.
   </p>
   <form method="POST"
         action="${tg.url(f'/group/{group.id}/input_upload')}"

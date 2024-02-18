@@ -18,19 +18,29 @@ show_rankings = competition.output_upload_begins <= now
             </py:if>
           </h2>
           <ul>
-            <li><strong>Input Upload:</strong> ${h.ftime(competition.input_upload_begins, competition.input_upload_ends)}</li>
-            <li><strong>Output Upload:</strong> ${h.ftime(competition.output_upload_begins, competition.output_upload_ends)}</li>
+            <li>
+              <strong>Input Upload:</strong>
+              ${literal(h.ftime(competition.input_upload_begins, competition.input_upload_ends))}
+            </li>
+            <li>
+              <strong>Output Upload:</strong>
+              ${literal(h.ftime(competition.output_upload_begins, competition.output_upload_ends))}
+            </li>
             <li py:if="competition.verification_begins">
-              <strong>Verification:</strong> ${h.ftime(competition.verification_begins, competition.verification_ends)}
+              <strong>Verification:</strong>
+              ${literal(h.ftime(competition.verification_begins, competition.verification_ends))}
             </li>
             <li py:if="competition.resolution_begins">
-              <strong>Resolution:</strong> ${h.ftime(competition.resolution_begins, competition.resolution_ends)}
+              <strong>Resolution:</strong>
+              ${literal(h.ftime(competition.resolution_begins, competition.resolution_ends))}
             </li>
             <li py:if="competition.open_verification_begins">
-              <strong>Open Verification:</strong> ${h.ftime(competition.open_verification_begins, competition.open_verification_ends)}
+              <strong>Open Verification:</strong>
+              ${literal(h.ftime(competition.open_verification_begins, competition.open_verification_ends))}
             </li>
             <li py:if="competition.evaluation_begins">
-              <strong>Evaluation:</strong> ${h.ftime(competition.evaluation_begins, competition.evaluation_ends)}
+              <strong>Evaluation:</strong>
+              ${literal(h.ftime(competition.evaluation_begins, competition.evaluation_ends))}
             </li>
           </ul>
           <p class="card-text" py:if="competition.open_verification_open">
