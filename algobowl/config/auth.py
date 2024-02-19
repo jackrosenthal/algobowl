@@ -12,6 +12,7 @@ from tg.exceptions import HTTPFound, HTTPUnauthorized
 from webob import Request
 from zope.interface import implementer
 
+from algobowl.lib import constants
 from algobowl.model import AuthToken, DBSession, User
 
 
@@ -29,6 +30,7 @@ class BaseAuth:
 @implementer(IIdentifier, IAuthenticator)
 class TokenAuth:
     def identify(self, environ):
+        request = Request(environ)
         auth_header = environ.get("HTTP_AUTHORIZATION")
         if not auth_header:
             return None
@@ -36,7 +38,8 @@ class TokenAuth:
         if method != "Bearer":
             return None
         environ["tg.skip_auth_challenge"] = True
-        return {"token": token, "identifier": "token"}
+        sudo = request.headers.get(constants.SUDO_HEADER) == "True"
+        return {"token": token, "identifier": "token", "sudo": sudo}
 
     def remember(self, environ, identity):
         return []
@@ -155,7 +158,7 @@ class MPAPIAuthenticator(BaseAuth):
         request = Request(environ)
 
         # Never attempt to redirect the CLI to MPAPI.
-        if "X-AlgoBOWL-CLI-Compatible" in request.headers:
+        if constants.CLI_COMPATIBLE_HEADER in request.headers:
             return HTTPUnauthorized("Please run 'algobowl auth login' first.")
 
         return_url = tg.url(
@@ -266,4 +269,6 @@ class AuthMetadata(TGAuthMetadata):
         return ["admin"] if identity["user"].admin else []
 
     def get_permissions(self, identity, userid):
+        if "sudo" in identity and not identity["sudo"]:
+            return []
         return ["admin"] if identity["user"].admin else []

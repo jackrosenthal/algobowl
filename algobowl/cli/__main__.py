@@ -24,15 +24,24 @@ class CommandContext:
 @click.option("--config", type=pathlib.Path, help="Config file to use")
 @click.option("--server", help="Server to use")
 @click.option("--json", is_flag=True, help="Use JSON output instead of tables")
+@click.option(
+    "--sudo/--no-sudo",
+    type=bool,
+    default=False,
+    help=(
+        "Grant admin permissions on the server.  Doesn't do anything unless "
+        "your account is actually an admin."
+    ),
+)
 @click.pass_context
-def main(ctx, server, config, json):
+def main(ctx, server, config, json, sudo):
     ctx.ensure_object(CommandContext)
 
     if not config:
         config = cfg.get_default_config_path()
 
     ctx.obj.config = cfg.CLIConfig(path=config, server=server)
-    ctx.obj.session = auth.get_session(ctx.obj.config)
+    ctx.obj.session = auth.get_session(ctx.obj.config, sudo=sudo)
     if json:
         ctx.obj.formatter = fmt.JsonFormatter()
     ctx.call_on_close(ctx.obj.config.write)

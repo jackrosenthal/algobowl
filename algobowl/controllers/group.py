@@ -31,6 +31,7 @@ class GroupController(BaseController):
     def __init__(self, group):
         self.group = group
         self.base_url = "/group/{}".format(group.id)
+        super().__init__()
 
     @expose("algobowl.templates.group.index")
     def index(self):
@@ -49,10 +50,8 @@ class GroupController(BaseController):
         return self.stagepage(stage)
 
     @expose("algobowl.templates.group.index")
+    @require(has_permission("admin"))
     def stage(self, stage):
-        user = request.identity["user"]
-        if not user.admin:
-            abort(403, "Manual stage selection is for admin users only.")
         return self.stagepage(stage)
 
     def stagepage(self, stage):
@@ -101,6 +100,12 @@ class GroupController(BaseController):
 
     @expose("json")
     def input_upload_api(self, input_upload):
+        if (
+            not request.environ["is_admin"]
+            and not self.group.competition.input_upload_open
+        ):
+            abort(403, "Sorry, input upload stage is closed.")
+
         try:
             contents = input_upload.file.read().decode("utf-8")
         except UnicodeDecodeError:
@@ -143,8 +148,10 @@ class GroupController(BaseController):
 
     @expose()
     def input_upload(self, input_upload=None, team_name=None):
-        user = request.identity["user"]
-        if not user.admin and not self.group.competition.input_upload_open:
+        if (
+            not request.environ["is_admin"]
+            and not self.group.competition.input_upload_open
+        ):
             abort(403, "Sorry, input upload stage is closed.")
 
         if hasattr(input_upload, "file"):
@@ -174,7 +181,6 @@ class GroupController(BaseController):
 
     @expose("json")
     def submit_output(self, to_group, output_file=None):
-        user = request.identity["user"]
         to_group = DBSession.query(Group).get(to_group)
         if not to_group:
             abort(404, "No such group")
@@ -191,7 +197,7 @@ class GroupController(BaseController):
             .one_or_none()
         )
         if not (
-            user.admin
+            request.environ["is_admin"]
             or comp.output_upload_open
             or (
                 comp.resolution_open
@@ -261,7 +267,6 @@ class GroupController(BaseController):
 
     @expose("json")
     def submit_verification(self, output_id, status):
-        user = request.identity["user"]
         try:
             output_id = int(output_id)
         except ValueError:
@@ -277,7 +282,10 @@ class GroupController(BaseController):
             status = VerificationStatus[status]
         except KeyError:
             abort(404)
-        if not user.admin and not self.group.competition.verification_open:
+        if (
+            not request.environ["is_admin"]
+            and not self.group.competition.verification_open
+        ):
             return {"status": "error", "msg": "Verification closed"}
         assert output.original is True
         assert output.active is True
@@ -321,8 +329,10 @@ class GroupController(BaseController):
 
     @expose()
     def verification_outputs(self):
-        user = request.identity["user"]
-        if not user.admin and not self.group.competition.verification_open:
+        if (
+            not request.environ["is_admin"]
+            and not self.group.competition.verification_open
+        ):
             abort(403, "This file is only available during verification.")
         f = BytesIO()
         archive = zipfile.ZipFile(f, mode="w")
@@ -417,7 +427,7 @@ class GroupsController(BaseController):
         group = DBSession.query(Group).get(group_id)
         if not group:
             abort(404, "No such group.")
-        if user not in group.users and not user.admin:
+        if user not in group.users and not request.environ["is_admin"]:
             abort(403, "You are not a part of this group.")
         return GroupController(group), args
 
@@ -428,7 +438,7 @@ class GroupsController(BaseController):
 
         all_groups = user.groups
         if list_non_member:
-            if not user.admin:
+            if not request.environ["is_admin"]:
                 abort(403, "Only admin may use list_non_member.")
             all_groups = DBSession.query(Group).all()
 

@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 """The base Controller API."""
 
-from tg import TGController, request, tmpl_context
+import tg
 
 __all__ = ["BaseController"]
 
 
-class BaseController(TGController):
+class BaseController(tg.TGController):
     """
     Base class for the controllers in the application.
 
@@ -20,6 +20,6 @@ class BaseController(TGController):
         # TGController.__call__ dispatches to the Controller method
         # the request is routed to.
 
-        tmpl_context.identity = request.identity
-
-        return TGController.__call__(self, environ, context)
+        tg.tmpl_context.identity = tg.request.identity
+        environ["is_admin"] = tg.predicates.has_permission("admin").is_met(environ)
+        return super().__call__(environ, context)

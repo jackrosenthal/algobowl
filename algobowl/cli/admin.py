@@ -6,6 +6,7 @@ import click
 import requests
 
 import algobowl.cli.formatter as fmt
+from algobowl.lib import constants
 
 
 def create_group(
@@ -31,10 +32,14 @@ def create_group(
     return r.json()
 
 
-@click.group(help="Administration")
+@click.group(
+    help="Administration",
+    epilog="Note: --sudo is implicit for this command group.",
+)
 @click.pass_obj
 def admin(cli):
-    pass
+    # Give implicit --sudo for admin commands.
+    cli.session.headers[constants.SUDO_HEADER] = "True"
 
 
 @admin.command(help="Setup a new competition")

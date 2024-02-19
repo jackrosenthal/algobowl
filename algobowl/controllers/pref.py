@@ -63,7 +63,7 @@ class PrefController(base.BaseController):
         )
         token = query.one_or_none()
 
-        if not user.admin and token.user_id != user.id:
+        if not tg.request.environ["is_admin"] and token.user_id != user.id:
             tg.abort(403, "You don't have permission to revoke this token")
 
         client_name = token.client_name

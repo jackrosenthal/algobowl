@@ -116,16 +116,16 @@ def compute_rankings_grade(gt, fleet_num, fleet):
 class CompetitionController(BaseController):
     def __init__(self, competition):
         self.competition = competition
+        super().__init__()
 
     @expose("algobowl.templates.competition.rankings")
     @expose("json")
     def index(self, ground_truth=False, incognito=False):
         user = request.identity and request.identity["user"]
         now = datetime.datetime.now()
-        admin = user and user.admin
         comp = self.competition
         problem = problemlib.load_problem(comp)
-        show_scores = admin or (
+        show_scores = request.environ["is_admin"] or (
             comp.open_verification_begins and now >= comp.open_verification_begins
         )
         if user:
@@ -137,8 +137,10 @@ class CompetitionController(BaseController):
         else:
             my_groups = []
 
-        show_input_downloads = admin or not comp.archived
-        show_incognito_option = admin or any(g.incognito for g in my_groups)
+        show_input_downloads = request.environ["is_admin"] or not comp.archived
+        show_incognito_option = request.environ["is_admin"] or any(
+            g.incognito for g in my_groups
+        )
 
         if show_incognito_option:
             incognito_teams = (
@@ -151,11 +153,11 @@ class CompetitionController(BaseController):
             incognito = False
             incognito_teams = []
 
-        if not admin and now < comp.output_upload_begins:
+        if not request.environ["is_admin"] and now < comp.output_upload_begins:
             flash("Rankings are not available yet", "info")
             redirect("/competition")
 
-        if ground_truth and not admin:
+        if ground_truth and not request.environ["is_admin"]:
             abort(403, "You do not have permission for this option")
 
         if ground_truth:
@@ -277,7 +279,7 @@ class CompetitionController(BaseController):
                 "my_groups": my_groups,
                 "competition": comp,
                 "inputs": inputs,
-                "admin": admin,
+                "admin": request.environ["is_admin"],
                 "incognito": incognito,
                 "show_incognito_option": show_incognito_option,
                 "incognito_teams": incognito_teams,
@@ -454,8 +456,8 @@ class CompetitionController(BaseController):
         problem = problemlib.load_problem(self.competition)
         problem_module = problem.get_module()
         show_input_downloads = (
-            user and user.admin
-        ) or not output.group.competition.archived
+            request.environ["is_admin"] or not output.group.competition.archived
+        )
         message = request.POST.get("message")
         if group and message:
             if output.use_ground_truth:
@@ -484,16 +486,15 @@ class CompetitionController(BaseController):
 
     @expose()
     def all_inputs(self):
-        user = request.identity and request.identity["user"]
         now = datetime.datetime.now()
         comp = self.competition
-        if not (user and user.admin) and now < comp.output_upload_begins:
+        if not request.environ["is_admin"] and now < comp.output_upload_begins:
             abort(
                 403,
                 "Input downloading is not available until the output"
                 " upload stage begins.",
             )
-        if not (user and user.admin) and comp.archived:
+        if not request.environ["is_admin"] and comp.archived:
             abort(
                 403,
                 "Input downloading is unavailable for old competitions. "
@@ -517,8 +518,7 @@ class CompetitionController(BaseController):
 
     @expose()
     def problem_statement(self):
-        user = request.identity and request.identity["user"]
-        if not (user and user.admin) and self.competition.archived:
+        if not request.environ["is_admin"] and self.competition.archived:
             abort(
                 403,
                 "The problem statement is no longer available as the "

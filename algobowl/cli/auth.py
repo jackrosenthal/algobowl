@@ -9,10 +9,10 @@ import click
 import requests
 
 import algobowl.cli.formatter as fmt
-import algobowl.lib.constants
+from algobowl.lib import constants
 
 
-def get_session(config):
+def get_session(config, sudo=False):
     session = requests.Session()
     auth_token = config.get_server_config("access_token")
     if auth_token and len(auth_token) == 88:
@@ -20,7 +20,8 @@ def get_session(config):
     session.headers.update(
         {
             "Accept": "application/json",
-            "X-AlgoBOWL-CLI-Compatible": str(algobowl.lib.constants.cli_compatible),
+            constants.CLI_COMPATIBLE_HEADER: str(constants.CLI_COMPATIBLE_VALUE),
+            constants.SUDO_HEADER: str(sudo),
         }
     )
     return session
@@ -40,7 +41,10 @@ def check_response(response):
     if not response.ok:
         fmt.err(
             {
-                requests.codes.forbidden: "You are not authorized to perform this command.",
+                requests.codes.forbidden: (
+                    "You are not authorized to perform this command.  Hint: if "
+                    f"you're an admin, you can try adding {fmt.cmd('--sudo')}."
+                ),
             }.get(response.status_code, "Your request failed to process.")
         )
         try:
