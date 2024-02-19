@@ -55,6 +55,9 @@ class CLIConfig:
     def get_url(self, path):
         return f"{self.get_server()}{path}"
 
+    def get_file_url(self, name):
+        return self.get_url(f"/files/{name}?redirect=true")
+
     def set_default_server(self, server):
         defaults = self.config.get("defaults", {})
         defaults["server"] = server

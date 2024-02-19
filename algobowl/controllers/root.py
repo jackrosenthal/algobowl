@@ -1,6 +1,6 @@
 import tg
 from repoze.who.api import get_api
-from tg import expose, flash, lurl, predicates, redirect, require, tmpl_context, url
+from tg import expose, flash, lurl, predicates, require, tmpl_context, url
 from tg.exceptions import HTTPFound
 from tgext.admin.controller import AdminController
 
@@ -39,7 +39,7 @@ class RootController(BaseController):
     @expose()
     def algobowl(self):
         """Redirect for old route to homepage"""
-        redirect(url("/"))
+        tg.redirect(url("/"))
 
     @expose("algobowl.templates.privacy")
     def privacy(self):
@@ -50,8 +50,10 @@ class RootController(BaseController):
         return dict(page="tos")
 
     @expose()
-    def files(self, filename):
+    def files(self, filename, redirect=False):
         file = file_redirector.get_file(filename)
+        if redirect:
+            tg.redirect(file.url)
         tg.response.content_type = "application/octet-stream"
         return file.file.read()
 
@@ -61,7 +63,7 @@ class RootController(BaseController):
             tg.request.environ["repoze.who.challenge"] = "mpapi"
             who_api = get_api(tg.request.environ)
             return who_api.challenge()
-        redirect(url("/"))
+        tg.redirect(url("/"))
 
     @expose()
     def glogin(self):
@@ -69,7 +71,7 @@ class RootController(BaseController):
             tg.request.environ["repoze.who.challenge"] = "glogin"
             who_api = get_api(tg.request.environ)
             return who_api.challenge()
-        redirect(url("/"))
+        tg.redirect(url("/"))
 
     @expose()
     @require(predicates.not_anonymous())
@@ -86,11 +88,11 @@ class RootController(BaseController):
             u = tg.request.relative_url(str(came_from), to_application=True)
             if not u.startswith(tg.request.application_url):
                 flash("Dangerous redirect prevented", "warning")
-                redirect("/")
-            redirect(u)
+                tg.redirect("/")
+            tg.redirect(u)
         else:
             flash("Login failure", "error")
-            redirect("/")
+            tg.redirect("/")
 
     @expose()
     @require(predicates.has_permission("admin"))

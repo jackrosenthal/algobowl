@@ -104,7 +104,7 @@ def input_upload(cli, file_path):
 @click.pass_obj
 def input_download(cli, output_file):
     group_id = get_group_id(cli)
-    r = cli.session.get(cli.config.get_url(f"/files/input_group{group_id}.txt"))
+    r = cli.session.get(cli.config.get_file_url(f"input_group{group_id}.txt"))
     auth.check_response(r)
     output_file.write(r.text)
 
@@ -163,7 +163,7 @@ def output_download(cli, file_path):
     if not to_group_id:
         to_group_id = infer_group_from_path(file_path)
     r = cli.session.get(
-        cli.config.get_url(f"/files/output_from_{from_group_id}_to_{to_group_id}.txt"),
+        cli.config.get_file_url(f"output_from_{from_group_id}_to_{to_group_id}.txt"),
     )
     auth.check_response(r)
     file_path.write_text(r.text)
