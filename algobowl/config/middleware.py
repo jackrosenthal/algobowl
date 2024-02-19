@@ -16,7 +16,7 @@ make_base_app = base_config.setup_tg_wsgi_app(load_environment)
 
 def force_ssl_middleware(app, environ, start_response):
     if environ.get("wsgi.url_scheme") != "https":
-        server_name = environ["SERVER_NAME"]
+        server_name = environ.get("HTTP_HOST", environ["SERVER_NAME"])
         path_info = environ["PATH_INFO"]
         query_string = environ["QUERY_STRING"]
         new_url = f"https://{server_name}{path_info}"
