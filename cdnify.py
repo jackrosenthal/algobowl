@@ -6,11 +6,11 @@ This gets called prior to building a wheel, that way we can remove assets from
 the wheel and source distributions on PyPI.
 """
 
-from pathlib import Path
 import subprocess
+from pathlib import Path
 
-import s3fs
 import click
+import s3fs
 
 HERE = Path(__file__).resolve().parent
 
