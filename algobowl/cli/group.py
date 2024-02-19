@@ -82,10 +82,10 @@ def input():
     pass
 
 
-@input.command(help="Upload your group's input")
+@input.command(name="upload", help="Upload your group's input")
 @click.argument("file_path", type=pathlib.Path)
 @click.pass_obj
-def upload(cli, file_path):
+def input_upload(cli, file_path):
     group_id = get_group_id(cli)
     with open(file_path, "rb") as f:
         r = cli.session.post(
@@ -99,10 +99,10 @@ def upload(cli, file_path):
         sys.exit(1)
 
 
-@input.command(help="Download your group's input")
+@input.command(name="download", help="Download your group's input")
 @click.argument("output_file", type=click.File("w"), default=sys.stdout)
 @click.pass_obj
-def download(cli, output_file):
+def input_download(cli, output_file):
     group_id = get_group_id(cli)
     r = cli.session.get(cli.config.get_url(f"/files/input_group{group_id}.txt"))
     auth.check_response(r)
@@ -133,10 +133,10 @@ def infer_group_from_path(file_path):
     return int(matches[-1])
 
 
-@output.command(help="Upload output")
+@output.command(name="upload", help="Upload output")
 @click.argument("file_path", type=pathlib.Path)
 @click.pass_obj
-def upload(cli, file_path):
+def output_upload(cli, file_path):
     from_group_id = get_group_id(cli)
     to_group_id = cli.to_group_id
     if not to_group_id:
@@ -154,10 +154,10 @@ def upload(cli, file_path):
         sys.exit(1)
 
 
-@output.command(help="Download output")
+@output.command(name="download", help="Download output")
 @click.argument("file_path", type=pathlib.Path)
 @click.pass_obj
-def download(cli, file_path):
+def output_download(cli, file_path):
     from_group_id = get_group_id(cli)
     to_group_id = cli.to_group_id
     if not to_group_id:

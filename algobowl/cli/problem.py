@@ -1,5 +1,4 @@
 import concurrent.futures
-import io
 import random
 import sys
 from pathlib import Path
