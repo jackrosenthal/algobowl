@@ -86,7 +86,7 @@ jobs:
         with:
           python-version: 3.11
       - name: "Install build dependencies"
-        run: pip install --upgrade build wheel setuptools s3fs
+        run: pip install --upgrade build wheel setuptools click s3fs
       - name: "Upload assets to CDN"
         run: ./cdnify.py
       - name: "Build"
