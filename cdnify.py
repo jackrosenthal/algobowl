@@ -6,13 +6,22 @@ This gets called prior to building a wheel, that way we can remove assets from
 the wheel and source distributions on PyPI.
 """
 
-import subprocess
+import hashlib
 from pathlib import Path
 
 import click
 import s3fs
 
 HERE = Path(__file__).resolve().parent
+
+
+def get_assets_hash(public_dir: Path) -> str:
+    hasher = hashlib.md5(usedforsecurity=False)
+    for path in sorted(public_dir.glob("**/*")):
+        if not path.is_file():
+            continue
+        hasher.update(path.read_bytes())
+    return hasher.hexdigest()
 
 
 def write_py_out(f, url_map):
@@ -40,12 +49,7 @@ def main(
 ):
     s3 = s3fs.S3FileSystem(endpoint_url=endpoint_url, key=access_key, secret=secret_key)
     url_map = {}
-    assets_hash = subprocess.run(
-        ["git", "log", "-n1", "--format=%H", "--", public_dir],
-        stdout=subprocess.PIPE,
-        encoding="utf-8",
-        check=True,
-    ).stdout.strip()
+    assets_hash = get_assets_hash(public_dir)
 
     for path in public_dir.glob("**/*"):
         if not path.is_file():
