@@ -28,8 +28,8 @@
       <py:for each="g in competition.groups">
         <tr py:if="g.input is not None">
           <td>
-            <a href="${g.input.data.url}" download="${g.input.data.filename}">
-              <tt py:content="g.input.data.filename" />
+            <a href="${g.input.url}" download="${g.input.filename}">
+              <tt py:content="g.input.filename" />
             </a>
           </td>
           <td>
