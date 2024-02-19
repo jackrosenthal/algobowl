@@ -1,12 +1,13 @@
 import datetime
 import re
+from typing import Union
 
 import tg
 
 import algobowl.model as model
 
 
-def input_redirector(group_id):
+def input_redirector(group_id: str) -> model.Input:
     group_id = int(group_id)
     group = model.DBSession.query(model.Group).get(group_id)
     if not group:
@@ -24,12 +25,12 @@ def input_redirector(group_id):
     if file_is_public or is_group_member or is_admin:
         if not group.input:
             tg.abort(404, "An input file has not been uploaded yet.")
-        return group.input.data
+        return group.input
 
     tg.abort(403, "You do not have access to this file at this time.")
 
 
-def output_redirector(from_group_id, to_group_id):
+def output_redirector(from_group_id: str, to_group_id: str) -> model.Output:
     from_group_id = int(from_group_id)
     to_group_id = int(to_group_id)
     output = (
@@ -57,7 +58,7 @@ def output_redirector(from_group_id, to_group_id):
         or is_admin
         or (is_verifier and visible_to_verifier)
     ):
-        return output.data
+        return output
 
     tg.abort(403, "You do not have access to this file at this time.")
 
@@ -68,7 +69,7 @@ file_pattern_handlers = [
 ]
 
 
-def get_file(filename):
+def get_file(filename: str) -> Union[model.Input, model.Output]:
     for pattern, func in file_pattern_handlers:
         m = pattern.fullmatch(filename)
         if m:

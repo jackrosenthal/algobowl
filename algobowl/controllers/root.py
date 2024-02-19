@@ -51,11 +51,13 @@ class RootController(BaseController):
 
     @expose()
     def files(self, filename, redirect=False):
-        file = file_redirector.get_file(filename)
+        db_obj = file_redirector.get_file(filename)
+        if "://" in db_obj.url:
+            tg.redirect(db_obj.url)
         if redirect:
-            tg.redirect(file.url)
+            tg.redirect(db_obj.data.url)
         tg.response.content_type = "application/octet-stream"
-        return file.file.read()
+        return db_obj.data.file.read()
 
     @expose()
     def login(self):

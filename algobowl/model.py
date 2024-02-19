@@ -1,5 +1,6 @@
 import datetime
 import enum
+from typing import Optional
 
 import sqlalchemy as sa
 import tg
@@ -287,6 +288,14 @@ user_group_xref = sa.Table(
 )
 
 
+def _get_depot_url(filename: str, file_id: Optional[str]) -> str:
+    """Helper to implement .url property of Input/Output objects."""
+    rewrite_rule = tg.config.get("algobowl.depot_url_rewrite")
+    if rewrite_rule and file_id:
+        return rewrite_rule.format(filename=filename, file_id=file_id)
+    return tg.url(f"/files/{filename}")
+
+
 class Input(DeclarativeBase):
     __tablename__ = "input"
     db_icon = "far fa-file"
@@ -308,7 +317,7 @@ class Input(DeclarativeBase):
 
     @property
     def url(self):
-        return tg.url(f"/files/{self.filename}")
+        return _get_depot_url(self.filename, self.data and self.data.file_id)
 
     def __repr__(self):
         return "Input from [{!r}]".format(self.group)
@@ -350,7 +359,7 @@ class Output(DeclarativeBase):
 
     @property
     def url(self):
-        return tg.url(f"/files/{self.filename}")
+        return _get_depot_url(self.filename, self.data and self.data.file_id)
 
     def __repr__(self):
         return "Output from [{!r}] for {!r}".format(self.group, self.input)
