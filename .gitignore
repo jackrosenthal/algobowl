@@ -21,3 +21,4 @@ development.ini
 production.ini
 gearbox.pid
 client_secrets.json
+/algobowl/lib/algocdn.py

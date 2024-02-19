@@ -79,13 +79,16 @@ jobs:
   build-dist:
     name: "Build Wheel"
     runs-on: ubuntu-22.04
+    if: github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         with:
           python-version: 3.11
       - name: "Install build dependencies"
-        run: pip install --upgrade build wheel setuptools
+        run: pip install --upgrade build wheel setuptools s3fs
+      - name: "Upload assets to CDN"
+        run: ./cdnify.py
       - name: "Build"
         run: python -m build
       - name: "Upload Artifacts"

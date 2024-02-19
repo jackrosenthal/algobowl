@@ -39,3 +39,16 @@ def ftime(dt, duration=None):
             raise ValueError("Duration cannot be before the specified time")
         result += f" to {ftime(duration)}"
     return result
+
+
+def url(path: str) -> str:
+    try:
+        from algobowl.lib import algocdn
+    except ImportError:
+        pass
+    else:
+        try:
+            return algocdn.url_map[path]
+        except KeyError:
+            pass
+    return tg.url(path)
