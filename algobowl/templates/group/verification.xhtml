@@ -12,11 +12,21 @@
       specification on the validity of outputs.
     </p>
     <p>
-      For reference, <a href="${group.input.url}" download="${group.input.filename}">here</a>
-      is the input that your group uploaded and you should verify against.
+      For reference,
+      <a
+        href="${group.input.url}"
+        download="${group.input.filename}"
+        data-zip-path="${group.input.filename}">here</a>
+      is your input you should verify against.
+      <span py:if="group.input.is_default">
+        Note: since you didn't upload an input, this is a randomly-generated
+        default.
+      </span>
     </p>
     <a class="btn btn-primary"
-       href="${tg.url('/group/{}/verification_outputs.zip'.format(group.id))}">
+       id="zip-button"
+       download="verification_outputs.zip"
+       role="button">
       <i class="fas fa-file-archive fa-fw fa-lg"></i>
       Download Outputs as a ZIP Archive
     </a>
@@ -36,7 +46,9 @@
       <tbody>
         <tr py:for="output in group.input.outputs">
           <td>
-            <a href="${output.url}" download="${output.filename}">
+            <a href="${output.url}"
+               download="${output.filename}"
+               data-zip-path="outputs/${output.filename}">
               <tt py:content="output.filename" />
             </a>
           </td>

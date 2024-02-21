@@ -6,7 +6,9 @@
     to submit your outputs.
   </p>
   <a class="btn btn-primary"
-     href="${tg.url('/competition/{}/all_inputs.zip'.format(competition.id))}">
+     id="zip-button"
+     role="button"
+     download="all_inputs.zip">
     <i class="fas fa-file-archive fa-fw fa-lg"></i>
     Download All Inputs as a ZIP Archive
   </a>
@@ -28,7 +30,9 @@
       <py:for each="g in competition.groups">
         <tr py:if="g.input is not None">
           <td>
-            <a href="${g.input.url}" download="${g.input.filename}">
+            <a href="${g.input.url}"
+               download="${g.input.filename}"
+               data-zip-path="inputs/${g.input.filename}">
               <tt py:content="g.input.filename" />
             </a>
           </td>

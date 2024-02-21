@@ -1,7 +1,6 @@
 import datetime
-import zipfile
 from collections import defaultdict, namedtuple
-from io import BytesIO, StringIO
+from io import StringIO
 
 from recordclass import recordclass
 from sqlalchemy.sql.expression import case
@@ -483,38 +482,6 @@ class CompetitionController(BaseController):
             "show_input_downloads": show_input_downloads,
             "competition": self.competition,
         }
-
-    @expose()
-    def all_inputs(self):
-        now = datetime.datetime.now()
-        comp = self.competition
-        if not request.environ["is_admin"] and now < comp.output_upload_begins:
-            abort(
-                403,
-                "Input downloading is not available until the output"
-                " upload stage begins.",
-            )
-        if not request.environ["is_admin"] and comp.archived:
-            abort(
-                403,
-                "Input downloading is unavailable for old competitions. "
-                "Contact the site administrator if you need access.",
-            )
-        f = BytesIO()
-        archive = zipfile.ZipFile(f, mode="w")
-        inputs = (
-            DBSession.query(Input)
-            .join(Input.group)
-            .filter(Group.competition_id == comp.id)
-        )
-        for iput in inputs:
-            archive.writestr(
-                "inputs/{}".format(iput.data.filename), iput.data.file.read()
-            )
-        archive.close()
-        f.seek(0)
-        response.content_type = "application/zip"
-        return f.read()
 
     @expose()
     def problem_statement(self):

@@ -1,10 +1,9 @@
 import datetime
 import re
-import zipfile
 from io import BytesIO, StringIO
 
 from depot.io.utils import FileIntent
-from tg import abort, expose, flash, redirect, request, require, response, url
+from tg import abort, expose, flash, redirect, request, require, url
 from tg.predicates import has_permission, not_anonymous
 
 import algobowl.lib.problem as problemlib
@@ -326,30 +325,6 @@ class GroupController(BaseController):
                 }
             )
         return {"verifications": result}
-
-    @expose()
-    def verification_outputs(self):
-        if (
-            not request.environ["is_admin"]
-            and not self.group.competition.verification_open
-        ):
-            abort(403, "This file is only available during verification.")
-        f = BytesIO()
-        archive = zipfile.ZipFile(f, mode="w")
-        outputs = (
-            DBSession.query(Output)
-            .join(Output.input)
-            .filter(Input.group_id == self.group.id)
-        )
-        for output in outputs:
-            archive.writestr(
-                "verification_outputs/{}".format(output.data.filename),
-                output.data.file.read(),
-            )
-        archive.close()
-        f.seek(0)
-        response.content_type = "application/zip"
-        return f.read()
 
     @expose()
     @require(has_permission("admin"))
