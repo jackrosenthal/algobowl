@@ -263,7 +263,7 @@ class GroupController(BaseController):
         DBSession.add(db_output)
         DBSession.flush()
 
-        return {"status": "success", "url": db_output.data.url}
+        return {"status": "success", "url": db_output.url}
 
     @expose("json")
     def submit_verification(self, output_id, status):
