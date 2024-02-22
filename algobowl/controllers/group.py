@@ -8,7 +8,6 @@ from tg.predicates import has_permission, not_anonymous
 
 import algobowl.lib.problem as problemlib
 from algobowl.lib.base import BaseController
-from algobowl.lib.helpers import ftime
 from algobowl.model import (
     DBSession,
     Evaluation,
@@ -170,12 +169,7 @@ class GroupController(BaseController):
 
             self.group.name = team_name
 
-        flash(
-            "Thank you. Please return here for output upload on {}".format(
-                ftime(self.group.competition.output_upload_begins)
-            ),
-            "success",
-        )
+        flash("Thank you. Your input has been accepted!", "success")
         redirect(self.base_url)
 
     @expose("json")
