@@ -153,8 +153,7 @@ class CompetitionController(BaseController):
             incognito_teams = []
 
         if not request.environ["is_admin"] and now < comp.output_upload_begins:
-            flash("Rankings are not available yet", "info")
-            redirect("/competition")
+            abort(403, "Rankings for this competition are not available yet")
 
         if ground_truth and not request.environ["is_admin"]:
             abort(403, "You do not have permission for this option")
@@ -530,7 +529,7 @@ class CompetitionsController(BaseController):
         now = datetime.datetime.now()
         comps = (
             DBSession.query(Competition)
-            .filter(Competition.input_upload_begins <= now)
+            .filter(Competition.output_upload_begins <= now)
             .filter(Competition.open_verification_ends > now)
             .order_by(Competition.input_upload_ends)
             .all()
