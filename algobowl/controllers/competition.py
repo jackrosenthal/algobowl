@@ -124,9 +124,7 @@ class CompetitionController(BaseController):
         now = datetime.datetime.now()
         comp = self.competition
         problem = problemlib.load_problem(comp)
-        show_scores = request.environ["is_admin"] or (
-            comp.open_verification_begins and now >= comp.open_verification_begins
-        )
+        show_scores = request.environ["is_admin"] or comp.open_verification_open
         if user:
             my_groups = (
                 DBSession.query(Group).filter(Group.competition_id == comp.id).all()
@@ -438,9 +436,13 @@ class CompetitionController(BaseController):
 
     @expose("algobowl.templates.competition.ov")
     def ov(self, output_id):
+        if not (request.environ["is_admin"] or self.competition.open_verification_open):
+            abort(403, "Open verification is not currently open.")
         output = DBSession.query(Output).get(int(output_id))
+        if not output:
+            abort(404, "Output does not exist.")
         if output.group.competition_id != self.competition.id:
-            abort(404)
+            abort(404, "This output is not associated with this competition.")
         if not output.active:
             abort(404, "This output is no longer active.")
         user = request.identity and request.identity["user"]
@@ -456,9 +458,6 @@ class CompetitionController(BaseController):
 
         problem = problemlib.load_problem(self.competition)
         problem_module = problem.get_module()
-        show_input_downloads = (
-            request.environ["is_admin"] or not output.group.competition.archived
-        )
         message = request.POST.get("message")
         if group and message:
             if output.use_ground_truth:
@@ -481,7 +480,6 @@ class CompetitionController(BaseController):
             "output": output,
             "score": problem_module.Output.repr_score(output.score),
             "group": group,
-            "show_input_downloads": show_input_downloads,
             "competition": self.competition,
         }
 

@@ -10,7 +10,7 @@
         <a href="${tg.url('/competition/{}'.format(competition.id))}">Return to Leaderboard</a>
       </p>
       <table class="table table-striped">
-        <tr py:if="show_input_downloads">
+        <tr>
           <th>Input File</th>
           <td>
             <a href="${output.input.url}" download="${output.input.filename}">
