@@ -167,6 +167,12 @@ class GroupController(BaseController):
                 flash("You must set a team name.", "danger")
                 redirect(self.base_url)
 
+            if "benchmark" in team_name.lower() and not (
+                self.group.incognito or self.group.benchmark
+            ):
+                flash("Your team name has a banned word: benchmark", "danger")
+                redirect(self.base_url)
+
             self.group.name = team_name
 
         flash("Thank you. Your input has been accepted!", "success")
