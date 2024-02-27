@@ -152,11 +152,13 @@ class GroupController(BaseController):
         ):
             abort(403, "Sorry, input upload stage is closed.")
 
+        input_uploaded = False
         if hasattr(input_upload, "file"):
             result = self.input_upload_api(input_upload)
             if result["status"] != "success":
                 flash(result["msg"], "danger")
                 redirect(self.base_url)
+            input_uploaded = True
 
         if team_name is not None:
             if len(team_name) >= 100:
@@ -175,7 +177,8 @@ class GroupController(BaseController):
 
             self.group.name = team_name
 
-        flash("Thank you. Your input has been accepted!", "success")
+        if input_uploaded:
+            flash("Thank you. Your input has been accepted!", "success")
         redirect(self.base_url)
 
     @expose("json")
