@@ -123,7 +123,7 @@ class MPAPIAuthenticator(BaseAuth):
         r.raise_for_status()
         data = r.json()
         if data["result"] != "success":
-            raise ValueError("MPAPI Failure.  User {username} may not exist?")
+            raise ValueError(f"MPAPI Failure.  User {username} may not exist?")
         attributes = data["attributes"]
         uid = attributes["uidNumber"]
         full_name = f"{attributes['first']} {attributes['sn']}"
