@@ -218,7 +218,10 @@ class GroupController(BaseController):
         problem = problemlib.load_problem(comp)
 
         try:
-            output = problem.parse_output(to_group.input.data.file, StringIO(contents))
+            output = problem.parse_output(
+                StringIO(to_group.input.data.file.read().decode("utf-8")),
+                StringIO(contents),
+            )
         except problemlib.FileFormatError as e:
             return {
                 "status": "error",
