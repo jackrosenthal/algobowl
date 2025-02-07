@@ -29,7 +29,6 @@ WEB_DEPENDS = [
     "alembic>=0.8.8",
     "repoze.who",
     "WebHelpers2",
-    "recordclass",
     "requests",
 ]
 

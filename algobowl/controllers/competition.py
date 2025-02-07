@@ -5,7 +5,6 @@ import datetime
 from collections import defaultdict
 from io import StringIO
 
-from recordclass import recordclass
 from sqlalchemy.sql.expression import case
 from tg import abort, expose, flash, redirect, request, require, response
 from tg.predicates import has_permission
@@ -36,24 +35,39 @@ class ScoreTuple:
     vdiffer: bool
 
 
-GradingTuple = recordclass(
-    "GradingTuple",
-    ["rankings", "fleet", "verification", "input_ones", "contributions", "evaluations"],
-)
+@dataclasses.dataclass
+class GradingTuple:
+    rankings: GroupEntry
+    fleet: int
+    verification: GradingVerificationTuple
+    input_ones: int
+    contributions: GradingContributionTuple
+    evaluations: defaultdict[dict]
 
-GradingContributionTuple = recordclass(
-    "GradingContributionTuple",
-    ["participation", "verification", "input_submitted", "input_difficulty", "ranking"],
-    defaults=[0, 0, 0, 0, 0],
-)
 
-GradingVerificationTuple = recordclass(
-    "GradingVerificationTuple",
-    ["correct", "false_positives", "false_negatives"],
-    defaults=[0, 0, 0],
-)
+@dataclasses.dataclass
+class GradingContributionTuple:
+    participation: float | int = 0
+    verification: float | int = 0
+    input_submitted: int = 0
+    input_difficulty: int = 0
+    ranking: int | float = 0
 
-CompetitionYearTuple = recordclass("CompetitionYearTuple", ["year", "competitions"])
+    def __iter__(self):
+        yield from dataclasses.asdict(self).values()
+
+
+@dataclasses.dataclass
+class GradingVerificationTuple:
+    correct: int = 0
+    false_positives: int = 0
+    false_negatives: int = 0
+
+
+@dataclasses.dataclass
+class CompetitionYearTuple:
+    year: int
+    competitions: list[Competition]
 
 
 class GroupEntry:
@@ -106,7 +120,7 @@ class GroupEntry:
         }
 
 
-def compute_rankings_grade(gt, fleet_num, fleet):
+def compute_rankings_grade(gt: GradingTuple, fleet_num: int, fleet: int) -> int | float:
     place_in_fleet = 0
     last_adj_score = fleet[0].rankings.adj_score
     for i, other_gt in enumerate(fleet):
@@ -301,12 +315,12 @@ class CompetitionController(BaseController):
 
         def new_gt(rankings_entry):
             return GradingTuple(
-                rankings_entry,
-                None,
-                GradingVerificationTuple(),
-                0,
-                GradingContributionTuple(),
-                defaultdict(dict),
+                rankings=rankings_entry,
+                fleet=0,
+                verification=GradingVerificationTuple(),
+                input_ones=0,
+                contributions=GradingContributionTuple(),
+                evaluations=defaultdict(dict),
             )
 
         groups = {k: new_gt(v) for k, v in rankings["groups"].items()}
