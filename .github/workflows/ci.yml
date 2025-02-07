@@ -5,7 +5,7 @@ on:
 jobs:
   test-example-problem:
     name: "Test Example Problem"
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
@@ -18,7 +18,7 @@ jobs:
           python -m algobowl.lib.problem_tester example_problems/number_in_range
   migration-test:
     name: "Migration Test"
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
@@ -32,7 +32,7 @@ jobs:
         run: ./migration_test.sh
   curl-test:
     name: "Smoke Test App with cURL"
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
@@ -61,7 +61,7 @@ jobs:
       - run: ruff format --check
   build-dist:
     name: "Build Wheel"
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     if: github.event_name == 'push'
     env:
       S3_ACCESS_KEY: ${{ secrets.S3_ACCESS_KEY }}
@@ -85,7 +85,7 @@ jobs:
   pypi-publish:
     name: Upload release to PyPI
     needs: build-dist
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     environment:
       name: release
       url: https://pypi.org/p/algobowl
