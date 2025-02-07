@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 import enum
 from typing import Optional
@@ -261,8 +263,8 @@ class Group(DeclarativeBase):
 
     def __repr__(self):
         if self.name:
-            return "{} (Group {})".format(self.name, self.id)
-        return "Group {}".format(self.id)
+            return f"{self.name} (Group {self.id})"
+        return f"Group {self.id}"
 
 
 # N users can be a part of M groups
@@ -320,7 +322,7 @@ class Input(DeclarativeBase):
         return _get_depot_url(self.filename, self.data and self.data.file_id)
 
     def __repr__(self):
-        return "Input from [{!r}]".format(self.group)
+        return f"Input from [{self.group!r}]"
 
 
 class Output(DeclarativeBase):
@@ -362,7 +364,7 @@ class Output(DeclarativeBase):
         return _get_depot_url(self.filename, self.data and self.data.file_id)
 
     def __repr__(self):
-        return "Output from [{!r}] for {!r}".format(self.group, self.input)
+        return f"Output from [{self.group!r}] for {self.input!r}"
 
 
 class Protest(DeclarativeBase):
@@ -387,9 +389,7 @@ class Protest(DeclarativeBase):
     output = relationship("Output", back_populates="protests")
 
     def __repr__(self):
-        return "Protest {}, from [{!r}] on {!r}".format(
-            self.id, self.submitter, self.output
-        )
+        return f"Protest {self.id}, from [{self.submitter!r}] on {self.output!r}"
 
 
 class Evaluation(DeclarativeBase):

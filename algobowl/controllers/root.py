@@ -1,15 +1,14 @@
 import tg
 from repoze.who.api import get_api
-from tg import expose, flash, lurl, predicates, require, tmpl_context, url
+from tg import expose, flash, predicates, require, tmpl_context, url
 from tg.exceptions import HTTPFound
 from tgext.admin.controller import AdminController
 
-import algobowl.controllers.file_redirector as file_redirector
 import algobowl.controllers.pref as pref_controller
 import algobowl.controllers.setup as setup_controller
 import algobowl.model
 from algobowl.config.app_cfg import AdminConfig
-from algobowl.controllers import api
+from algobowl.controllers import api, file_redirector
 from algobowl.controllers.competition import CompetitionsController
 from algobowl.controllers.error import ErrorController
 from algobowl.controllers.group import GroupsController
@@ -34,7 +33,7 @@ class RootController(BaseController):
     @expose("algobowl.templates.index")
     def index(self):
         """Handle the front-page."""
-        return dict(page="index")
+        return {"page": "index"}
 
     @expose()
     def algobowl(self):
@@ -43,11 +42,11 @@ class RootController(BaseController):
 
     @expose("algobowl.templates.privacy")
     def privacy(self):
-        return dict(page="privacy")
+        return {"page": "privacy"}
 
     @expose("algobowl.templates.tos")
     def tos(self):
-        return dict(page="tos")
+        return {"page": "tos"}
 
     @expose()
     def files(self, filename, redirect=False):
@@ -66,6 +65,7 @@ class RootController(BaseController):
             who_api = get_api(tg.request.environ)
             return who_api.challenge()
         tg.redirect(url("/"))
+        return None
 
     @expose()
     def glogin(self):
@@ -74,6 +74,7 @@ class RootController(BaseController):
             who_api = get_api(tg.request.environ)
             return who_api.challenge()
         tg.redirect(url("/"))
+        return None
 
     @expose()
     @require(predicates.not_anonymous())
@@ -83,10 +84,10 @@ class RootController(BaseController):
         return HTTPFound(headers=headers)
 
     @expose()
-    def post_login(self, came_from=lurl("/")):
+    def post_login(self, came_from="/"):
         if tg.request.identity:
             user = tg.request.identity["user"]
-            flash("Welcome, {}!".format(user), "success")
+            flash(f"Welcome, {user}!", "success")
             u = tg.request.relative_url(str(came_from), to_application=True)
             if not u.startswith(tg.request.application_url):
                 flash("Dangerous redirect prevented", "warning")

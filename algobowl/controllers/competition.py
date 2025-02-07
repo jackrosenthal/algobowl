@@ -1,6 +1,10 @@
+from __future__ import annotations
+
+import dataclasses
 import datetime
-from collections import defaultdict, namedtuple
+from collections import defaultdict
 from io import StringIO
+from typing import Optional
 
 from recordclass import recordclass
 from sqlalchemy.sql.expression import case
@@ -21,12 +25,17 @@ from algobowl.model import (
     VerificationStatus,
 )
 
-__all__ = ["CompetitionsController", "CompetitionController"]
+__all__ = ["CompetitionController", "CompetitionsController"]
 
 
-ScoreTuple = namedtuple(
-    "ScoreTuple", ["score", "verification", "rank", "output", "vdiffer"]
-)
+@dataclasses.dataclass
+class ScoreTuple:
+    score: Optional[str]
+    verification: VerificationStatus
+    rank: Optional[int]
+    output: Optional[Output]
+    vdiffer: bool
+
 
 GradingTuple = recordclass(
     "GradingTuple",
@@ -242,7 +251,7 @@ class CompetitionController(BaseController):
         # no submission? this adds to reject count
         for group in groups.values():
             for iput in inputs:
-                if iput not in group.input_ranks.keys():
+                if iput not in group.input_ranks:
                     group.reject_count += 1
 
         # add open verification protest rejections to penalty
@@ -255,7 +264,7 @@ class CompetitionController(BaseController):
         for protest in rprotests:
             # technically, a group which failed to submit anything
             # COULD protest... but this case is unlikely ;)
-            if protest.submitter in groups.keys():
+            if protest.submitter in groups:
                 groups[protest.submitter].penalties += 1
 
         # compute places for groups
@@ -269,23 +278,22 @@ class CompetitionController(BaseController):
                 "status": "success",
                 "groups": {k.id: v.to_dict() for k, v in groups.items()},
             }
-        else:
-            return {
-                "groups": groups,
-                "my_groups": my_groups,
-                "competition": comp,
-                "inputs": inputs,
-                "admin": request.environ["is_admin"],
-                "incognito": incognito,
-                "show_incognito_option": show_incognito_option,
-                "incognito_teams": incognito_teams,
-                "show_input_downloads": show_input_downloads,
-                "ground_truth": ground_truth,
-                "verification_accuracy": (
-                    0 if not total_count else (accurate_count / total_count)
-                ),
-                "open_verification": open_verification,
-            }
+        return {
+            "groups": groups,
+            "my_groups": my_groups,
+            "competition": comp,
+            "inputs": inputs,
+            "admin": request.environ["is_admin"],
+            "incognito": incognito,
+            "show_incognito_option": show_incognito_option,
+            "incognito_teams": incognito_teams,
+            "show_input_downloads": show_input_downloads,
+            "ground_truth": ground_truth,
+            "verification_accuracy": (
+                0 if not total_count else (accurate_count / total_count)
+            ),
+            "open_verification": open_verification,
+        }
 
     @expose("algobowl.templates.competition.grade")
     @require(has_permission("admin"))
@@ -319,7 +327,7 @@ class CompetitionController(BaseController):
                 benchmark_groups.append(groups[group])
                 groups.pop(group, None)
                 continue
-            if group not in groups.keys():
+            if group not in groups:
                 rankings_entry = GroupEntry()
                 # If they submitted nothing, then everything is a "reject"
                 rankings_entry.reject_count = num_inputs
@@ -395,7 +403,7 @@ class CompetitionController(BaseController):
                 )
                 evals = {e.to_student: s for e, s in q}
                 for to_member in group.users:
-                    if to_member not in evals.keys():
+                    if to_member not in evals:
                         evals[to_member] = 1.0
                 for to_member, score in evals.items():
                     gt.evaluations[to_member][from_member] = score / sum(evals.values())
@@ -418,21 +426,19 @@ class CompetitionController(BaseController):
                         problem.verify_output(input_file, output_file)
                     except problemlib.VerificationError as e:
                         output.ground_truth = VerificationStatus.rejected
-                        print("{} rejected because: {}".format(output, e))
+                        print(f"{output} rejected because: {e}")
                     except Exception as e:
                         output.ground_truth = VerificationStatus.waiting
-                        print("Verifier module failed on {}: {}".format(output, e))
+                        print(f"Verifier module failed on {output}: {e}")
                     else:
                         output.ground_truth = VerificationStatus.accepted
                     if old_status != output.ground_truth:
                         print(
-                            "{} changed ground truth from {} to {}".format(
-                                output, old_status, output.ground_truth
-                            )
+                            f"{output} changed: {old_status} -> {output.ground_truth}"
                         )
                         changes += 1
         DBSession.flush()
-        print("{} ground truths changed".format(changes))
+        print(f"{changes} ground truths changed")
 
     @expose("algobowl.templates.competition.ov")
     def ov(self, output_id):
@@ -536,5 +542,5 @@ class CompetitionsController(BaseController):
             .all()
         )
         if len(comps) == 1:
-            redirect("/competition/{}".format(comps[0].id))
+            redirect(f"/competition/{comps[0].id}")
         return {"competitions": comps}

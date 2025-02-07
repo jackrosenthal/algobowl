@@ -76,11 +76,8 @@ def downgrade():
     op.execute(
         "UPDATE competition SET {}".format(
             ", ".join(
-                "{0} = "
-                "(SELECT {0} FROM problem WHERE problem.id = problem_id)".format(
-                    column_name
-                )
-                for column_name in (
+                f"{x} = (SELECT {x} FROM problem WHERE problem.id = problem_id)"
+                for x in (
                     "input_verifier",
                     "output_verifier",
                     "problem_statement",

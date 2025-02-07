@@ -111,7 +111,9 @@ def update_venv() -> None:
 def main():
     """The main function."""
     update_venv()
-    sys.exit(subprocess.run([venv_cmd("algobowl")] + sys.argv[1:]).returncode)
+    sys.exit(
+        subprocess.run([venv_cmd("algobowl")] + sys.argv[1:], check=False).returncode
+    )
 
 
 if __name__ == "__main__":

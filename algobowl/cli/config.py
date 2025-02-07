@@ -18,7 +18,7 @@ def get_default_config_path():
 
 
 def _ensure_protocol(server):
-    if server.startswith("http://") or server.startswith("https://"):
+    if server.startswith(("http://", "https://")):
         return server
     if server.endswith(":8080"):
         return f"http://{server}"

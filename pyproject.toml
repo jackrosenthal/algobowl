@@ -1,2 +1,63 @@
-[tool.isort]
-profile = "black"
+[tool.ruff]
+target-version = "py38"
+
+[tool.ruff.lint]
+preview = true
+explicit-preview-rules = true
+extend-select = [
+    "A",
+    "ASYNC",
+    "B",
+    "C4",
+    "COM",
+    "DOC",
+    "E",
+    "EXE",
+    "F",
+    "FA",
+    "FBT003",
+    "FURB",
+    "I",
+    "ICN",
+    "INP",
+    "ISC001",
+    "N",
+    "PIE",
+    "PLC",
+    "PLE",
+    "PLR",
+    "PLW",
+    "PT",
+    "PTH",
+    "PYI",
+    "RET",
+    "RSE",
+    "RUF",
+    "SIM",
+    "SLF",
+    "SLOT",
+    "TID",
+    "UP",
+    "W",
+]
+ignore = [
+    "A001",     # Fixes needed.
+    "A002",     # Fixes needed.
+    "COM812",   # Conflicts with formatter.
+    "E712",     # Conflicts with SQLAlchemy filter expressions.
+    "PLR0912",  # "too many branches"... noisy.
+    "PLR0913",  # "too many arguments"... noisy.
+    "PLR0915",  # "too many statements"... noisy.
+    "PLR2004",  # "magic value should be a constant"... noisy.
+    "PLW2901",  # "for loop variable overwritten"... noisy.
+    "PTH123",   # Fixes needed.
+    "UP007",    # Requires Python 3.9+, but 3.8 is still supported.
+]
+
+[tool.ruff.lint.per-file-ignores]
+"algobowl/cli/formatter.py" = ["A005"]  # Module shadows stdlib, needs fixed.
+"example_problems/**.py" = ["INP"]      # problem.py loaded by importlib.
+"migration/**.py" = ["INP"]             # No __init__.py, alembic imports.
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"

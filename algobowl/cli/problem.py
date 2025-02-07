@@ -10,7 +10,7 @@ from algobowl.cli import formatter
 
 
 def _parse_input(cli, path: Path):
-    with open(path, "r", encoding="ascii") as f:
+    with open(path, encoding="ascii") as f:
         try:
             return cli.problem.parse_input(f)
         except problemlib.FileFormatError as e:
@@ -21,7 +21,7 @@ def _parse_input(cli, path: Path):
 def _parse_output(cli, iput, oput_path: Path):
     if isinstance(iput, Path):
         iput = _parse_input(cli, iput)
-    with open(oput_path, "r", encoding="ascii") as f:
+    with open(oput_path, encoding="ascii") as f:
         try:
             return cli.problem.parse_output(iput, f)
         except problemlib.FileFormatError as e:
@@ -107,10 +107,7 @@ def verify(cli, input_file, output_files):
 @click.option("--seed", type=int, help="Seed to use.  Default: use SystemRandom.")
 @click.pass_obj
 def generate_input(cli, seed):
-    if seed:
-        rng = random.Random(seed)
-    else:
-        rng = random.SystemRandom()
+    rng = random.Random(seed) if seed else random.SystemRandom()
     iput = cli.problem.generate_input(rng)
     iput.write(sys.stdout)
 

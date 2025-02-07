@@ -4,12 +4,9 @@ import pathlib
 import click
 import requests
 
-import algobowl.cli.admin as admin
-import algobowl.cli.auth as auth
 import algobowl.cli.config as cfg
 import algobowl.cli.formatter as fmt
-import algobowl.cli.group as group
-import algobowl.cli.problem as problem
+from algobowl.cli import admin, auth, group, problem
 
 
 @dataclasses.dataclass

@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
 """Setup the algobowl application"""
-from __future__ import print_function
 
 import transaction
 from tg import config

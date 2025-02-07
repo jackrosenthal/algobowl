@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 import datetime
 import re
 from typing import Union
 
 import tg
 
-import algobowl.model as model
+from algobowl import model
 
 
 def input_redirector(group_id: str) -> model.Input:
@@ -28,6 +30,7 @@ def input_redirector(group_id: str) -> model.Input:
         return group.input
 
     tg.abort(403, "You do not have access to this file at this time.")
+    return None
 
 
 def output_redirector(from_group_id: str, to_group_id: str) -> model.Output:
@@ -61,6 +64,7 @@ def output_redirector(from_group_id: str, to_group_id: str) -> model.Output:
         return output
 
     tg.abort(403, "You do not have access to this file at this time.")
+    return None
 
 
 file_pattern_handlers = [
@@ -76,3 +80,4 @@ def get_file(filename: str) -> Union[model.Input, model.Output]:
             return func(*m.groups())
 
     tg.abort(404, "No handler found for filename.")
+    return None

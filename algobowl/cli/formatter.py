@@ -15,8 +15,7 @@ def err(text):
 
 
 def filter_table(table, keys):
-    table = [{k: row[k] for k in keys} for row in table]
-    return table
+    return [{k: row[k] for k in keys} for row in table]
 
 
 class JsonFormatter:

@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 from urllib.parse import urlencode
 
 import google_auth_oauthlib.flow as gflow
@@ -185,7 +185,7 @@ class GoogleAuth(BaseAuth):
     def flow(self):
         if not self._flow:
             client_secrets_file = tg.config["glogin.client_secrets_file"]
-            if not os.path.isfile(client_secrets_file):
+            if not Path(client_secrets_file).is_file():
                 return None
             self._flow = gflow.Flow.from_client_secrets_file(
                 client_secrets_file,
@@ -248,7 +248,7 @@ class GoogleAuth(BaseAuth):
             return None
         request = Request(environ)
         self.flow.redirect_uri = f"{request.application_url}/post_login"
-        auth_url, state = self.flow.authorization_url()
+        auth_url, _state = self.flow.authorization_url()
         headers = [
             ("Location", auth_url),
             *forget_headers,

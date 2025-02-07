@@ -17,7 +17,7 @@ from algobowl.model import (
     VerificationStatus,
 )
 
-__all__ = ["GroupsController", "GroupController"]
+__all__ = ["GroupController", "GroupsController"]
 
 newline_p = re.compile(rb"\s*\n")
 spacesep_p = re.compile(rb"[ \t\v\f]+")
@@ -28,7 +28,7 @@ class GroupController(BaseController):
 
     def __init__(self, group):
         self.group = group
-        self.base_url = "/group/{}".format(group.id)
+        self.base_url = f"/group/{group.id}"
         super().__init__()
 
     @expose("algobowl.templates.group.index")
@@ -68,7 +68,7 @@ class GroupController(BaseController):
                 .filter(Evaluation.from_student_id == user.id)
             )
             for member in self.group.users:
-                if member.id not in evals.keys():
+                if member.id not in evals:
                     evals[member.id] = 1.0
             d["evals"] = evals
         return d
@@ -131,7 +131,7 @@ class GroupController(BaseController):
 
         f = FileIntent(
             BytesIO(reformatted_contents.getvalue().encode("utf-8")),
-            "input_group{}.txt".format(self.group.id),
+            f"input_group{self.group.id}.txt",
             "application/octet-stream",
         )
         if self.group.input is None:
@@ -233,7 +233,7 @@ class GroupController(BaseController):
 
         f = FileIntent(
             BytesIO(new_contents.getvalue().encode("utf-8")),
-            "output_from_{}_to_{}.txt".format(self.group.id, to_group.id),
+            f"output_from_{self.group.id}_to_{to_group.id}.txt",
             "application/octet-stream",
         )
         try:
@@ -366,7 +366,7 @@ class GroupController(BaseController):
     @expose()
     def submit_evaluations(self):
         me = request.identity["user"]
-        students_allowed = set(user.id for user in self.group.users)
+        students_allowed = {user.id for user in self.group.users}
         for user_id, score in request.POST.items():
             user_id = int(user_id)
             if user_id not in students_allowed:
@@ -392,7 +392,7 @@ class GroupController(BaseController):
                 e.score = score
             DBSession.add(e)
         flash("Your evaluations have been saved. Thank you.", "success")
-        redirect("/group/{}".format(self.group.id))
+        redirect(f"/group/{self.group.id}")
 
 
 class GroupsController(BaseController):
@@ -431,6 +431,6 @@ class GroupsController(BaseController):
                 groups.append(group)
 
         if len(groups) == 1 and request.response_type != "application/json":
-            redirect(url("/group/{}".format(groups[0].id)))
+            redirect(url(f"/group/{groups[0].id}"))
 
         return {"groups": groups}

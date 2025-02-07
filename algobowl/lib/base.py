@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """The base Controller API."""
 
 import tg

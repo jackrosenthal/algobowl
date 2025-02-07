@@ -137,7 +137,7 @@ def check_bound(lineno, bound, value):
 def assert_linecount(lines, bounds):
     try:
         check_bound(-1, bounds, len(lines))
-    except FileFormatError:
+    except FileFormatError as e:
         # Try to be accommodating of extra blank lines at end of file.
         while lines and not lines[-1].rstrip():
             lines.pop()
@@ -146,16 +146,16 @@ def assert_linecount(lines, bounds):
                 return
             except FileFormatError:
                 continue
-        raise FileFormatError("File has invalid number of lines")
+        raise FileFormatError("File has invalid number of lines") from e
 
 
 def parse_int(lineno, value, bound=None):
     try:
         value = int(value)
-    except ValueError:
+    except ValueError as e:
         raise FileFormatError(
             f"Line #{lineno + 1}: Unable to interpret {value!r} as integer"
-        )
+        ) from e
     check_bound(lineno, bound, value)
     return value
 
@@ -165,11 +165,11 @@ def parse_line_ints(lines, lineno, bounds=None, count=None):
     line_split = line.split()
     try:
         check_bound(lineno, count, len(line_split))
-    except FileFormatError:
+    except FileFormatError as e:
         raise FileFormatError(
             f"Line #{lineno + 1}: Number of values ({len(line_split)}) "
             f"is out of expected bounds"
-        )
+        ) from e
     return [parse_int(lineno, value, bounds) for value in line_split]
 
 
@@ -224,8 +224,7 @@ class Problem:
         module = self.get_module()
         if not isinstance(input, module.Input):
             input = module.Input.read(input)
-        output = module.Output.read(input, output_file)
-        return output
+        return module.Output.read(input, output_file)
 
     def verify_output(self, input, output_file):
         output = self.parse_output(input, output_file)

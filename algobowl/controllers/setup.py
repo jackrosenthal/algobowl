@@ -5,9 +5,9 @@ import random
 import tg
 from depot.io.utils import FileIntent
 
-import algobowl.lib.base as base
 import algobowl.lib.problem as problemlib
-import algobowl.model as model
+from algobowl import model
+from algobowl.lib import base
 
 
 def get_user(username):

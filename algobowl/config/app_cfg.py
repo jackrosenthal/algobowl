@@ -5,6 +5,10 @@ Default configuration for AlgoBOWL
 Configuration in this file is overridden by the paste config.
 """
 
+from __future__ import annotations
+
+from typing import ClassVar
+
 import tg
 from depot.manager import DepotManager
 from markupsafe import Markup
@@ -101,10 +105,10 @@ milestones.config_ready.register(config_ready)
 class AdminTableFiller(BootstrapAdminTableFiller):
     def __actions__(self, obj):
         primary_fields = self.__provider__.get_primary_fields(self.__entity__)
-        pklist = "/".join(map(lambda x: str(getattr(obj, x)), primary_fields))
+        pklist = "/".join(str(getattr(obj, x)) for x in primary_fields)
 
         return Markup(
-            """
+            f"""
     <a href="{pklist}/edit" class="btn btn-secondary">
         <i class="fas fa-pen fa-fw"></i>
     </a>
@@ -114,15 +118,13 @@ class AdminTableFiller(BootstrapAdminTableFiller):
                 onclick="return confirm('Are you sure?')">
             <i class="fas fa-trash fa-fw"></i>
         </button>
-    </form>""".format(
-                pklist=pklist
-            )
+    </form>"""
         )
 
 
 class AdminLayout(BootstrapAdminLayout):
     template_index = "algobowl.templates.admin.index"
-    crud_templates = {
+    crud_templates: ClassVar[dict[str, list[str]]] = {
         "get_all": ["kajiki:algobowl.templates.admin.get_all"],
         "edit": ["kajiki:algobowl.templates.admin.edit"],
         "new": ["kajiki:algobowl.templates.admin.new"],

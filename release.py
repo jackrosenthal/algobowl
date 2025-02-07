@@ -16,12 +16,16 @@ HERE = Path(__file__).resolve().parent
 VERSION_FILE = HERE / "VERSION"
 
 
-def run(argv, **kwargs) -> subprocess.CompletedProcess:
-    kwargs.setdefault("cwd", HERE)
-    kwargs.setdefault("check", True)
-    kwargs.setdefault("encoding", "utf-8")
+def run(
+    argv,
+    *,
+    check: bool = True,
+    cwd: Path = HERE,
+    encoding: str | None = "utf-8",
+    **kwargs,
+) -> subprocess.CompletedProcess:
     logging.info("Run command: %s", " ".join(shlex.quote(x) for x in argv))
-    return subprocess.run(argv, **kwargs)
+    return subprocess.run(argv, check=check, cwd=cwd, encoding=encoding, **kwargs)
 
 
 @dataclasses.dataclass(frozen=True)

@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 """WSGI environment setup for algobowl."""
+
 from algobowl.config.app_cfg import base_config
 
 __all__ = ["load_environment"]

@@ -3,8 +3,8 @@ import datetime
 import sqlalchemy
 import tg
 
-import algobowl.lib.base as base
-import algobowl.model as model
+from algobowl import model
+from algobowl.lib import base
 
 
 class PrefController(base.BaseController):
@@ -48,7 +48,7 @@ class PrefController(base.BaseController):
             for token in user.auth_tokens
         ]
 
-        return dict(auth_tokens=auth_tokens_json)
+        return {"auth_tokens": auth_tokens_json}
 
     @tg.expose()
     def revoke_auth_token(self, token_id):

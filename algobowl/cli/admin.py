@@ -147,7 +147,7 @@ def create_group_(cli, name, competition, user, incognito, benchmark):
 @click.argument("json_file", type=click.Path(exists=True))
 @click.pass_obj
 def create_groups(cli, competition, json_file):
-    with open(json_file, "r", encoding="utf-8") as f:
+    with open(json_file, encoding="utf-8") as f:
         groups = json.load(f)
     failed_groups = []
     with click.progressbar(groups, label="Create groups") as bar:

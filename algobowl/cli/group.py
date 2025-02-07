@@ -4,8 +4,8 @@ import sys
 
 import click
 
-import algobowl.cli.auth as auth
 import algobowl.cli.formatter as fmt
+from algobowl.cli import auth
 
 
 def get_active_groups(cli, params=None):
