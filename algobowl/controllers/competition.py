@@ -4,7 +4,6 @@ import dataclasses
 import datetime
 from collections import defaultdict
 from io import StringIO
-from typing import Optional
 
 from recordclass import recordclass
 from sqlalchemy.sql.expression import case
@@ -30,10 +29,10 @@ __all__ = ["CompetitionController", "CompetitionsController"]
 
 @dataclasses.dataclass
 class ScoreTuple:
-    score: Optional[str]
+    score: str | None
     verification: VerificationStatus
-    rank: Optional[int]
-    output: Optional[Output]
+    rank: int | None
+    output: Output | None
     vdiffer: bool
 
 

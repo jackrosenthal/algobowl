@@ -31,8 +31,7 @@ def stringio_from_path(path, ascii_format=False):
     contents = path.read_text(encoding="ascii")
     assert "\r\n" not in contents
     if ascii_format != ASCIIFormat.UNIX:
-        if contents.endswith("\n"):
-            contents = contents[:-1]
+        contents = contents.removesuffix("\n")
         contents = contents.replace("\n", "\r\n")
         if ascii_format == ASCIIFormat.DOS_WITH_FINAL_TERMINATOR:
             contents += "\r\n"

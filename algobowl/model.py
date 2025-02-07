@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import datetime
 import enum
-from typing import Optional
 
 import sqlalchemy as sa
 import tg
@@ -290,7 +289,7 @@ user_group_xref = sa.Table(
 )
 
 
-def _get_depot_url(filename: str, file_id: Optional[str]) -> str:
+def _get_depot_url(filename: str, file_id: str | None) -> str:
     """Helper to implement .url property of Input/Output objects."""
     rewrite_rule = tg.config.get("algobowl.depot_url_rewrite")
     if rewrite_rule and file_id:

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import datetime
 import re
-from typing import Union
 
 import tg
 
@@ -73,7 +72,7 @@ file_pattern_handlers = [
 ]
 
 
-def get_file(filename: str) -> Union[model.Input, model.Output]:
+def get_file(filename: str) -> model.Input | model.Output:
     for pattern, func in file_pattern_handlers:
         m = pattern.fullmatch(filename)
         if m:

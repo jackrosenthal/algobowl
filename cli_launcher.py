@@ -5,7 +5,7 @@
 This is a small little launcher script for the AlgoBOWL CLI.  It launches the
 CLI creating a Python virtual environment and installing it from GitHub.  The
 launcher will update the CLI on startup every 24 hours.  By design, this has no
-dependencies other than Python 3.8+ and is a single file.  You should be able to
+dependencies other than Python 3.9+ and is a single file.  You should be able to
 "chmod +x" this script and put it in your PATH, or put it in your team's Git
 repo for everyone on your team to use.
 
@@ -30,7 +30,7 @@ import sys
 import venv
 from pathlib import Path
 
-assert sys.version_info >= (3, 8), "AlgoBOWL CLI requires Python 3.8+"
+assert sys.version_info >= (3, 9), "AlgoBOWL CLI requires Python 3.9+"
 
 
 def quiet_run(argv) -> None:

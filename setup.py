@@ -47,7 +47,7 @@ setuptools.setup(
     author_email="jack@rosenth.al",
     url="https://github.com/jackrosenthal/algobowl",
     packages=setuptools.find_packages(),
-    python_requires=">=3.8,<4",
+    python_requires=">=3.9,<4",
     install_requires=BASE_DEPENDS,
     extras_require={
         "web": WEB_DEPENDS,

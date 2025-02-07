@@ -13,7 +13,7 @@ The rest of this `README` assumes you're interested in hacking on the AlgoBOWL
 code, and want to install the web app locally.  For other topics of interest,
 check out the `docs/` directory.
 
-You'll need a system running Linux and Python 3.8+.
+You'll need a system running Linux and Python 3.9+.
 
 Create and activate a virtual environment to install in:
 

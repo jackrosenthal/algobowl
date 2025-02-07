@@ -8,7 +8,7 @@ Improvements are welcome (send patches!)
 
 ## System Requirements
 
-The only requirement is Python 3.8 or newer.  The CLI is best-supported on
+The only requirement is Python 3.9 or newer.  The CLI is best-supported on
 Linux, however, it may work on Windows and Mac as well.  Patches are welcome
 if it doesn't work on Windows or Mac.
 
