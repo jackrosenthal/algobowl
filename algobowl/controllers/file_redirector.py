@@ -41,7 +41,7 @@ def output_redirector(from_group_id: str, to_group_id: str) -> model.Output:
         .filter(model.Input.group_id == to_group_id)
         .filter(model.Output.group_id == from_group_id)
         .filter(model.Output.active == True)
-        .one()
+        .one_or_none()
     )
     if not output:
         tg.abort(404, "Output does not exist.")
