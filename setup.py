@@ -15,7 +15,7 @@ BASE_DEPENDS = [
 ]
 
 WEB_DEPENDS = [
-    "TurboGears2 >= 2.3.12",
+    "TurboGears2==2.4.3",
     "tgext.admin-jmr",
     "decorator",
     "google-api-python-client",
