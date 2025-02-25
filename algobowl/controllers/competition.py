@@ -63,6 +63,9 @@ class GradingVerificationTuple:
     false_positives: int = 0
     false_negatives: int = 0
 
+    def __iter__(self):
+        yield from dataclasses.asdict(self).values()
+
 
 @dataclasses.dataclass
 class CompetitionYearTuple:
