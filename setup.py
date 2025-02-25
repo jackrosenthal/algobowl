@@ -27,7 +27,7 @@ WEB_DEPENDS = [
     "zope.sqlalchemy >= 1.2",
     "sqlalchemy>=1.3,<1.4",
     "alembic>=0.8.8",
-    "repoze.who",
+    "repoze.who==3.0.0",
     "WebHelpers2",
     "requests",
 ]
