@@ -33,7 +33,7 @@ WEB_DEPENDS = [
 ]
 
 DEV_DEPENDS = [
-    "tg.devtools",
+    "tg.devtools==2.4.3",
 ]
 
 setuptools.setup(
