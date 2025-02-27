@@ -110,18 +110,6 @@ class GroupEntry:
     def __eq__(self, other):
         return self.reject_count == other.reject_count and self.score == other.score
 
-    def to_dict(self):
-        return {
-            "reject_count": self.reject_count,
-            "sum_of_ranks": self.sum_of_ranks,
-            "penalties": self.penalties,
-            "score": self.score,
-            "place": self.place,
-            "input_ranks": {
-                k.id: (v[0], str(v[1]), v[2]) for k, v in self.input_ranks.items()
-            },
-        }
-
 
 def compute_rankings_grade(gt: GradingTuple, fleet_num: int, fleet: int) -> int | float:
     place_in_fleet = 0
@@ -292,7 +280,26 @@ class CompetitionController(BaseController):
         if request.response_type == "application/json":
             return {
                 "status": "success",
-                "groups": {k.id: v.to_dict() for k, v in groups.items()},
+                "groups": [
+                    {
+                        "group_name": group.name,
+                        "reject_count": rankings.reject_count,
+                        "sum_of_ranks": rankings.sum_of_ranks,
+                        "penalties": rankings.penalties,
+                        "score": rankings.score,
+                        "place": rankings.place,
+                        "input_ranks": [
+                            {
+                                "group_id": k.group.id,
+                                "score": v.score,
+                                "verification": str(v.verification),
+                                "rank": v.rank,
+                            }
+                            for k, v in rankings.input_ranks.items()
+                        ],
+                    }
+                    for group, rankings in groups.items()
+                ],
             }
         return {
             "groups": groups,
