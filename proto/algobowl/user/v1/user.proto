@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package algobowl.user.v1;
+
+message User {
+  uint64 id = 1;
+  string username = 2;
+  string email = 3;
+  string display_name = 4;
+  bool is_admin = 5;
+}
+
+message GetUserInfoRequest {
+  string username = 1;
+}
+
+message GetUserInfoResponse {
+  User user = 1;
+}
+
+service UserService {
+  rpc GetUserInfo(GetUserInfoRequest) returns (GetUserInfoResponse);
+}
