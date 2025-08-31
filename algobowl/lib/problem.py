@@ -255,7 +255,7 @@ class DefaultProblem(Problem):
 def load_problem(competition):
     # Deferred import so this module does not depend on TurboGears for
     # most functionality.
-    import tg
+    import tg  # noqa: PLC0415
 
     if not competition.problem:
         return DefaultProblem()

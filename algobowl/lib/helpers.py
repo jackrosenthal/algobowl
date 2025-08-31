@@ -43,7 +43,7 @@ def ftime(dt, duration=None):
 
 def url(path: str) -> str:
     try:
-        from algobowl.lib import algocdn
+        from algobowl.lib import algocdn  # noqa: PLC0415
     except ImportError:
         pass
     else:

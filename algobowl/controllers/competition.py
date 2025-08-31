@@ -73,7 +73,7 @@ class CompetitionYearTuple:
     competitions: list[Competition]
 
 
-class GroupEntry:
+class GroupEntry:  # noqa: PLW1641
     def __init__(self):
         self.reject_count = 0
         self.sum_of_ranks = 0
