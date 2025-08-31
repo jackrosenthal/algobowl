@@ -14,6 +14,7 @@ import dataclasses
 import enum
 import pathlib
 import random
+import sys
 import types
 import typing
 
@@ -203,6 +204,7 @@ class Problem:
         def loader(path):
             contents = path.read_text()
             module = types.ModuleType("problem")
+            sys.modules["problem"] = module
             code = compile(contents, str(path), "exec")
             exec(code, module.__dict__)
             return module
