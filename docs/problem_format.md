@@ -423,6 +423,9 @@ parse_line_ints(lines, lineno, bounds=None, count=None)
 Parse a certain line from a file, asserting it contains space-separated
 integers.  Return the parsed list of integers.
 
+Note: when `count` is an integer, and `bounds` is a list of length `count`, each
+bound in `bounds` will be used for the corresponding element on the line.
+
 Arguments:
 
 * `lines`: The list of all lines in the file.

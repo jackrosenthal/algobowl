@@ -17,6 +17,7 @@ import random
 import sys
 import types
 import typing
+from collections.abc import Sequence
 
 from typing_extensions import Self
 
@@ -171,7 +172,14 @@ def parse_line_ints(lines, lineno, bounds=None, count=None):
             f"Line #{lineno + 1}: Number of values ({len(line_split)}) "
             f"is out of expected bounds"
         ) from e
-    return [parse_int(lineno, value, bounds) for value in line_split]
+    if isinstance(bounds, range) or not (
+        isinstance(bounds, Sequence) and len(bounds) == count
+    ):
+        bounds = [bounds] * len(line_split)
+    return [
+        parse_int(lineno, value, bound=bound)
+        for bound, value in zip(bounds, line_split)
+    ]
 
 
 def parse_line_int(lines, lineno, bounds=None):
