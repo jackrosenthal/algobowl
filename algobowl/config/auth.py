@@ -177,41 +177,37 @@ class MPAPIAuthenticator(BaseAuth):
 
 @implementer(IIdentifier, IChallenger, IAuthenticator)
 class GoogleAuth(BaseAuth):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._flow = None
+    def _is_configured(self):
+        client_secrets_file = tg.config.get("glogin.client_secrets_file", "")
+        return bool(client_secrets_file) and Path(client_secrets_file).is_file()
 
-    @property
-    def flow(self):
-        if not self._flow:
-            client_secrets_file = tg.config["glogin.client_secrets_file"]
-            if not Path(client_secrets_file).is_file():
-                return None
-            self._flow = gflow.Flow.from_client_secrets_file(
-                client_secrets_file,
-                scopes=[
-                    "openid",
-                    "https://www.googleapis.com/auth/userinfo.email",
-                    "https://www.googleapis.com/auth/userinfo.profile",
-                ],
-            )
-        return self._flow
+    def _make_flow(self):
+        """Create a fresh Flow instance for a single OAuth dance."""
+        client_secrets_file = tg.config["glogin.client_secrets_file"]
+        return gflow.Flow.from_client_secrets_file(
+            client_secrets_file,
+            scopes=[
+                "openid",
+                "https://www.googleapis.com/auth/userinfo.email",
+                "https://www.googleapis.com/auth/userinfo.profile",
+            ],
+        )
 
     def identify(self, environ):
-        if not self.flow:
+        if not self._is_configured():
             return None
 
         request = Request(environ)
-        self.flow.redirect_uri = f"{request.application_url}/post_login"
         try:
             code = request.GET["code"]
         except KeyError:
             return None
 
-        return {"code": code, "identifier": "glogin"}
+        code_verifier = request.cookies.get("glogin_code_verifier")
+        return {"code": code, "identifier": "glogin", "code_verifier": code_verifier}
 
     def authenticate(self, environ, identity):
-        if not self.flow:
+        if not self._is_configured():
             return None
 
         try:
@@ -222,9 +218,15 @@ class GoogleAuth(BaseAuth):
         if identity["identifier"] != "glogin":
             return None
 
-        self.flow.fetch_token(code=code)
+        request = Request(environ)
+        flow = self._make_flow()
+        flow.redirect_uri = f"{request.application_url}/post_login"
+        code_verifier = identity.get("code_verifier")
+        if code_verifier:
+            flow.code_verifier = code_verifier
+        flow.fetch_token(code=code)
         with gdiscovery.build(
-            "oauth2", "v2", credentials=self.flow.credentials
+            "oauth2", "v2", credentials=flow.credentials
         ) as service:
             userinfo = service.userinfo().get().execute()
 
@@ -240,17 +242,23 @@ class GoogleAuth(BaseAuth):
         """
         Provide ``IChallenger`` interface.
         """
-        if not self.flow:
+        if not self._is_configured():
             return None
 
         challenger = environ.get("repoze.who.challenge")
         if challenger != "glogin":
             return None
         request = Request(environ)
-        self.flow.redirect_uri = f"{request.application_url}/post_login"
-        auth_url, _state = self.flow.authorization_url()
+        flow = self._make_flow()
+        flow.redirect_uri = f"{request.application_url}/post_login"
+        auth_url, _state = flow.authorization_url()
+        secure = request.application_url.startswith("https")
+        cookie = f"glogin_code_verifier={flow.code_verifier}; HttpOnly; Path=/; SameSite=Lax"
+        if secure:
+            cookie += "; Secure"
         headers = [
             ("Location", auth_url),
+            ("Set-Cookie", cookie),
             *forget_headers,
             *((h, v) for h, v in app_headers if h.lower() == "set-cookie"),
         ]
