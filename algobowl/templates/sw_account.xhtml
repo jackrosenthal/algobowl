@@ -1,0 +1,28 @@
+<html py:extends="master.xhtml" py:strip="True">
+  <py:block name="title">
+    Wrong Account
+  </py:block>
+  <body py:block="body" py:strip="True">
+    <div class="container">
+      <div class="jumbotron mt-4">
+        <h1 class="display-4">
+          Whoops, wrong account!
+        </h1>
+        <p class="lead">
+          It looks like you signed in with your student worker account.
+          ${tg.config['site.branding.name']} needs you to sign in with your
+          regular Mines student account instead.
+        </p>
+        <hr />
+        <p>
+          Click the button below to sign out, then sign back in using your
+          regular Mines username (without the <code>_sw</code> at the end).
+        </p>
+        <a class="btn btn-primary btn-lg" href="${slo_url}" role="button">
+          <i class="fas fa-sign-out-alt fa-fw"></i>
+          Sign Out and Try Again
+        </a>
+      </div>
+    </div>
+  </body>
+</html>

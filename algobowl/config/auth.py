@@ -98,6 +98,11 @@ class MPAPIAuthenticator(BaseAuth):
         if data["result"] != "success":
             raise ValueError("MPAPI Failure")
         username = data["uid"]
+
+        if username.endswith("_sw"):
+            environ["algobowl.sw_account_login"] = True
+            return None
+
         attributes = data["attributes"]
         uid = attributes["uidNumber"]
         full_name = "{} {}".format(attributes["first"], attributes["sn"])

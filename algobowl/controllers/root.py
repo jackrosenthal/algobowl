@@ -83,7 +83,7 @@ class RootController(BaseController):
         headers = who_api.logout()
         return HTTPFound(headers=headers)
 
-    @expose()
+    @expose("algobowl.templates.sw_account")
     def post_login(self, came_from="/"):
         if tg.request.identity:
             user = tg.request.identity["user"]
@@ -93,6 +93,9 @@ class RootController(BaseController):
                 flash("Dangerous redirect prevented", "warning")
                 tg.redirect("/")
             tg.redirect(u)
+        elif tg.request.environ.get("algobowl.sw_account_login"):
+            slo_url = tg.config["auth.mpapi.url"].rstrip("/") + "/slo"
+            return {"slo_url": slo_url}
         else:
             flash("Login failure", "error")
             tg.redirect("/")
