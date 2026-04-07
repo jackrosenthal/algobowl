@@ -68,7 +68,8 @@ class SetupController(base.BaseController):
             benchmark=bool(benchmark),
         )
         model.DBSession.add(group)
-        group.input = generate_default_input(problem=problem, group=group)
+        if datetime.datetime.now() < competition.output_upload_begins:
+            group.input = generate_default_input(problem=problem, group=group)
         model.DBSession.flush()
         return {"group_id": group.id}
 

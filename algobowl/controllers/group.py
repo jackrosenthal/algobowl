@@ -190,6 +190,8 @@ class GroupController(BaseController):
             abort(400, "Cannot submit to a group in another competition")
         if not hasattr(output_file, "file"):
             abort(400, "Must include file in submission")
+        if to_group.input is None:
+            abort(400, "That group has no input")
         comp = self.group.competition
         existing = (
             DBSession.query(Output)
