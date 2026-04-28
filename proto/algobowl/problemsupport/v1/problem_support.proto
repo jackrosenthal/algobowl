@@ -1,0 +1,120 @@
+syntax = "proto3";
+
+package algobowl.problemsupport.v1;
+
+enum RankSort {
+  RANK_SORT_UNSPECIFIED = 0;
+  RANK_SORT_MINIMIZATION = 1;
+  RANK_SORT_MAXIMIZATION = 2;
+}
+
+enum StatementFormat {
+  STATEMENT_FORMAT_UNSPECIFIED = 0;
+  STATEMENT_FORMAT_PDF = 1;
+  STATEMENT_FORMAT_MARKDOWN = 2;
+}
+
+enum SolverType {
+  SOLVER_TYPE_UNSPECIFIED = 0;
+  SOLVER_TYPE_TRIVIAL = 1;
+  SOLVER_TYPE_BENCH1 = 2;
+  SOLVER_TYPE_BENCH2 = 3;
+}
+
+message StatementInfo {
+  StatementFormat format = 1;
+  string url = 2;
+}
+
+message SolverInfo {
+  SolverType solver_type = 1;
+}
+
+// ---------- GetProblemInfo ----------
+
+message GetProblemInfoRequest {}
+
+message GetProblemInfoResponse {
+  RankSort rank_sort = 1;
+  // Divide the integer score by 10^score_decimal_places for display.
+  int32 score_decimal_places = 2;
+  repeated StatementInfo statements = 3;
+  repeated SolverInfo supported_solvers = 4;
+  bool supports_generate_input = 5;
+}
+
+// ---------- VerifyInput ----------
+
+message VerifyInputRequest {
+  bytes content = 1;
+}
+
+message VerifyInputResponse {
+  oneof result {
+    bytes normalized_content = 1;
+    string format_error = 2;
+  }
+}
+
+// ---------- VerifyOutput ----------
+
+message AcceptedOutput {}
+
+message RejectedOutput {
+  string rejection_reason = 1;
+}
+
+message VerifiedOutput {
+  bytes normalized_content = 1;
+  int64 reported_score = 2;
+  // Absent if the verifier crashed before computing the actual score.
+  optional int64 actual_score = 3;
+  oneof verification {
+    AcceptedOutput accepted = 4;
+    RejectedOutput rejected = 5;
+  }
+}
+
+message VerifyOutputRequest {
+  bytes input_content = 1;
+  bytes output_content = 2;
+}
+
+message VerifyOutputResponse {
+  oneof result {
+    VerifiedOutput output = 1;
+    string format_error = 2;
+  }
+}
+
+// ---------- GenerateInput ----------
+
+message GenerateInputRequest {
+  // If absent, a true RNG is used.
+  optional int64 seed = 1;
+}
+
+message GenerateInputResponse {
+  bytes content = 1;
+}
+
+// ---------- Solve ----------
+
+message SolveRequest {
+  bytes input_content = 1;
+  SolverType solver_type = 2;
+}
+
+message SolveResponse {
+  bytes output_content = 1;
+}
+
+// ---------- Service ----------
+
+service ProblemSupportService {
+  rpc GetProblemInfo(GetProblemInfoRequest) returns (GetProblemInfoResponse);
+  rpc VerifyInput(VerifyInputRequest) returns (VerifyInputResponse);
+  rpc VerifyOutput(VerifyOutputRequest) returns (VerifyOutputResponse);
+  rpc GenerateInput(GenerateInputRequest) returns (GenerateInputResponse);
+  rpc Solve(SolveRequest) returns (SolveResponse);
+}

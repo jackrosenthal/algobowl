@@ -1,0 +1,6 @@
+version: v2
+plugins:
+  - remote: buf.build/protocolbuffers/python:v34.1
+    out: algobowl-python-problem-server/src/algops/proto
+  - remote: buf.build/protocolbuffers/pyi:v34.1
+    out: algobowl-python-problem-server/src/algops/proto
