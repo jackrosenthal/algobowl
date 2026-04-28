@@ -15,9 +15,9 @@ Then set auth.mpapi.url = http://localhost:8081 in your development.ini.
 import argparse
 import hashlib
 import uuid
-from urllib.parse import urlencode, urlparse, parse_qs
+from urllib.parse import urlencode
 
-from flask import Flask, request, redirect, jsonify, abort
+from flask import Flask, jsonify, redirect, request
 
 app = Flask(__name__)
 
@@ -126,5 +126,5 @@ if __name__ == "__main__":
     parser.add_argument("--port", type=int, default=8081)
     args = parser.parse_args()
     print(f"Fake MPAPI running at http://localhost:{args.port}")
-    print("Set auth.mpapi.url = http://localhost:{} in development.ini".format(args.port))
+    print(f"Set auth.mpapi.url = http://localhost:{args.port} in development.ini")
     app.run(port=args.port, debug=True)
