@@ -5,6 +5,7 @@ import setuptools
 HERE = Path(__file__).resolve().parent
 
 BASE_DEPENDS = [
+    "algobowl-python-problem-support",
     "click>=8.0",
     "pytest>=4.6",
     "pytest-cov>=4.1.0",

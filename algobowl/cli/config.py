@@ -6,8 +6,8 @@ from pathlib import Path
 import click
 import toml
 
-import algobowl.lib.problem as problemlib
 from algobowl.cli import formatter
+from algobowl.lib import problem_loader
 
 
 def get_default_config_path():
@@ -85,7 +85,7 @@ class CLIConfig:
 
         for path in _propose_paths():
             if path.is_dir() and (path / "problem.py").is_file():
-                return problemlib.Problem(path)
+                return problem_loader.Problem(path)
 
         raise FileNotFoundError(f"Unable to find problem {name!r}")
 

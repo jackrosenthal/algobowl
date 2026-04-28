@@ -11,6 +11,9 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: 3.11
+      - uses: astral-sh/setup-uv@v6
+      - name: "Install Problem Support Package"
+        run: uv build algobowl-python-problem-support && pip install algobowl-python-problem-support/dist/*.whl
       - name: "Install Application with pip"
         run: pip install .
       - name: "Run Problem Tester"
@@ -24,6 +27,9 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: 3.11
+      - uses: astral-sh/setup-uv@v6
+      - name: "Install Problem Support Package"
+        run: uv build algobowl-python-problem-support && pip install algobowl-python-problem-support/dist/*.whl
       - name: "Install Application with pip"
         run: pip install .[dev]
       - name: "Setup App"
@@ -38,6 +44,9 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: 3.11
+      - uses: astral-sh/setup-uv@v6
+      - name: "Install Problem Support Package"
+        run: uv build algobowl-python-problem-support && pip install algobowl-python-problem-support/dist/*.whl
       - name: "Install Application with pip"
         run: pip install .[dev]
       - name: "Setup App"
@@ -60,7 +69,7 @@ jobs:
       - uses: astral-sh/ruff-action@v3
       - run: ruff format --check
   build-dist:
-    name: "Build Wheel"
+    name: "Build Wheels"
     runs-on: ubuntu-24.04
     if: github.event_name == 'push'
     env:
@@ -71,12 +80,19 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: 3.11
+      - uses: astral-sh/setup-uv@v6
       - name: "Install build dependencies"
         run: pip install --upgrade build wheel setuptools click s3fs
+      - name: "Build Problem Support Package"
+        run: uv build algobowl-python-problem-support
       - name: "Upload assets to CDN"
         run: ./cdnify.py
       - name: "Build"
         run: python -m build
+      - name: "Collect dist artifacts"
+        run: |
+          mkdir -p dist
+          cp algobowl-python-problem-support/dist/* dist/
       - name: "Upload Artifacts"
         uses: actions/upload-artifact@v4
         with:

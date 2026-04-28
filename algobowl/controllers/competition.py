@@ -10,6 +10,7 @@ from tg import abort, expose, flash, redirect, request, require, response
 from tg.predicates import has_permission
 
 import algobowl.lib.problem as problemlib
+from algobowl.lib import problem_loader
 from algobowl.lib.base import BaseController
 from algobowl.lib.logoutput import logoutput
 from algobowl.model import (
@@ -136,7 +137,7 @@ class CompetitionController(BaseController):
         user = request.identity and request.identity["user"]
         now = datetime.datetime.now()
         comp = self.competition
-        problem = problemlib.load_problem(comp)
+        problem = problem_loader.load_problem(comp)
         show_scores = request.environ["is_admin"] or comp.open_verification_open
         if user:
             my_groups = (
@@ -436,7 +437,7 @@ class CompetitionController(BaseController):
     @logoutput
     @require(has_permission("admin"))
     def reverify(self):
-        problem = problemlib.load_problem(self.competition)
+        problem = problem_loader.load_problem(self.competition)
 
         changes = 0
         for group in self.competition.groups:
@@ -485,7 +486,7 @@ class CompetitionController(BaseController):
         else:
             group = None
 
-        problem = problemlib.load_problem(self.competition)
+        problem = problem_loader.load_problem(self.competition)
         problem_module = problem.get_module()
         message = request.POST.get("message")
         if group and message:
@@ -520,7 +521,7 @@ class CompetitionController(BaseController):
                 "The problem statement is no longer available as the "
                 "competition has been archived.",
             )
-        problem = problemlib.load_problem(self.competition)
+        problem = problem_loader.load_problem(self.competition)
         response.content_type = "application/pdf"
         return problem.get_statement_pdf()
 

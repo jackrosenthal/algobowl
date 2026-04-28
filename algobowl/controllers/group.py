@@ -7,6 +7,7 @@ from tg import abort, expose, flash, redirect, request, require, url
 from tg.predicates import has_permission, not_anonymous
 
 import algobowl.lib.problem as problemlib
+from algobowl.lib import problem_loader
 from algobowl.lib.base import BaseController
 from algobowl.model import (
     DBSession,
@@ -115,7 +116,7 @@ class GroupController(BaseController):
                 ),
             }
 
-        problem = problemlib.load_problem(self.group.competition)
+        problem = problem_loader.load_problem(self.group.competition)
         try:
             input = problem.parse_input(StringIO(contents))
         except problemlib.FileFormatError as e:
@@ -217,7 +218,7 @@ class GroupController(BaseController):
         except UnicodeDecodeError:
             return {"status": "error", "msg": "Output contains invalid characters."}
 
-        problem = problemlib.load_problem(comp)
+        problem = problem_loader.load_problem(comp)
 
         try:
             output = problem.parse_output(

@@ -9,6 +9,7 @@ import sys
 import pytest
 
 import algobowl.lib.problem as problemlib
+from algobowl.lib import problem_loader
 
 
 class ASCIIFormat(enum.Enum):
@@ -19,7 +20,7 @@ class ASCIIFormat(enum.Enum):
 
 @pytest.fixture
 def problem(problem_dir):
-    return problemlib.Problem(problem_dir)
+    return problem_loader.Problem(problem_dir)
 
 
 @pytest.fixture(params=[1337, 0xDEADBEEF, 0xDEADD00D, 55378008])

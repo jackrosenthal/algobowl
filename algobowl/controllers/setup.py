@@ -5,9 +5,8 @@ import random
 import tg
 from depot.io.utils import FileIntent
 
-import algobowl.lib.problem as problemlib
 from algobowl import model
-from algobowl.lib import base
+from algobowl.lib import base, problem_loader
 
 
 def get_user(username):
@@ -24,7 +23,7 @@ def get_user(username):
 
 
 def generate_default_input(
-    problem: problemlib.Problem,
+    problem: problem_loader.Problem,
     group: model.Group,
 ) -> model.Input:
     reformatted_contents = io.StringIO()
@@ -58,7 +57,7 @@ class SetupController(base.BaseController):
             .filter(model.Competition.id == int(competition_id))
             .one()
         )
-        problem = problemlib.load_problem(competition)
+        problem = problem_loader.load_problem(competition)
         users = [get_user(username) for username in users.split(",")]
         group = model.Group(
             users=users,
