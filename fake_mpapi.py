@@ -89,20 +89,24 @@ def fetch():
     username = tickets.pop(tkt, None)
     if username is None:
         return jsonify({"result": "failure", "reason": "unknown ticket"})
-    return jsonify({
-        "result": "success",
-        "uid": username,
-        "attributes": user_attributes(username),
-    })
+    return jsonify(
+        {
+            "result": "success",
+            "uid": username,
+            "attributes": user_attributes(username),
+        }
+    )
 
 
 @app.get("/uid/<username>")
 def uid_lookup(username: str):
-    return jsonify({
-        "result": "success",
-        "uid": username,
-        "attributes": user_attributes(username),
-    })
+    return jsonify(
+        {
+            "result": "success",
+            "uid": username,
+            "attributes": user_attributes(username),
+        }
+    )
 
 
 @app.get("/slo")

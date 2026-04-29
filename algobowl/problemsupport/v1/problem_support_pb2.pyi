@@ -25,7 +25,6 @@ class SolverType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     SOLVER_TYPE_TRIVIAL: _ClassVar[SolverType]
     SOLVER_TYPE_BENCH1: _ClassVar[SolverType]
     SOLVER_TYPE_BENCH2: _ClassVar[SolverType]
-
 RANK_SORT_UNSPECIFIED: RankSort
 RANK_SORT_MINIMIZATION: RankSort
 RANK_SORT_MAXIMIZATION: RankSort
@@ -43,32 +42,20 @@ class StatementInfo(_message.Message):
     URL_FIELD_NUMBER: _ClassVar[int]
     format: StatementFormat
     url: str
-    def __init__(
-        self,
-        format: _Optional[_Union[StatementFormat, str]] = ...,
-        url: _Optional[str] = ...,
-    ) -> None: ...
+    def __init__(self, format: _Optional[_Union[StatementFormat, str]] = ..., url: _Optional[str] = ...) -> None: ...
 
 class SolverInfo(_message.Message):
     __slots__ = ("solver_type",)
     SOLVER_TYPE_FIELD_NUMBER: _ClassVar[int]
     solver_type: SolverType
-    def __init__(
-        self, solver_type: _Optional[_Union[SolverType, str]] = ...
-    ) -> None: ...
+    def __init__(self, solver_type: _Optional[_Union[SolverType, str]] = ...) -> None: ...
 
 class GetProblemInfoRequest(_message.Message):
     __slots__ = ()
     def __init__(self) -> None: ...
 
 class GetProblemInfoResponse(_message.Message):
-    __slots__ = (
-        "rank_sort",
-        "score_decimal_places",
-        "statements",
-        "supported_solvers",
-        "supports_generate_input",
-    )
+    __slots__ = ("rank_sort", "score_decimal_places", "statements", "supported_solvers", "supports_generate_input")
     RANK_SORT_FIELD_NUMBER: _ClassVar[int]
     SCORE_DECIMAL_PLACES_FIELD_NUMBER: _ClassVar[int]
     STATEMENTS_FIELD_NUMBER: _ClassVar[int]
@@ -79,14 +66,7 @@ class GetProblemInfoResponse(_message.Message):
     statements: _containers.RepeatedCompositeFieldContainer[StatementInfo]
     supported_solvers: _containers.RepeatedCompositeFieldContainer[SolverInfo]
     supports_generate_input: bool
-    def __init__(
-        self,
-        rank_sort: _Optional[_Union[RankSort, str]] = ...,
-        score_decimal_places: _Optional[int] = ...,
-        statements: _Optional[_Iterable[_Union[StatementInfo, _Mapping]]] = ...,
-        supported_solvers: _Optional[_Iterable[_Union[SolverInfo, _Mapping]]] = ...,
-        supports_generate_input: _Optional[bool] = ...,
-    ) -> None: ...
+    def __init__(self, rank_sort: _Optional[_Union[RankSort, str]] = ..., score_decimal_places: _Optional[int] = ..., statements: _Optional[_Iterable[_Union[StatementInfo, _Mapping]]] = ..., supported_solvers: _Optional[_Iterable[_Union[SolverInfo, _Mapping]]] = ..., supports_generate_input: _Optional[bool] = ...) -> None: ...
 
 class VerifyInputRequest(_message.Message):
     __slots__ = ("content",)
@@ -100,11 +80,7 @@ class VerifyInputResponse(_message.Message):
     FORMAT_ERROR_FIELD_NUMBER: _ClassVar[int]
     normalized_content: bytes
     format_error: str
-    def __init__(
-        self,
-        normalized_content: _Optional[bytes] = ...,
-        format_error: _Optional[str] = ...,
-    ) -> None: ...
+    def __init__(self, normalized_content: _Optional[bytes] = ..., format_error: _Optional[str] = ...) -> None: ...
 
 class AcceptedOutput(_message.Message):
     __slots__ = ()
@@ -117,13 +93,7 @@ class RejectedOutput(_message.Message):
     def __init__(self, rejection_reason: _Optional[str] = ...) -> None: ...
 
 class VerifiedOutput(_message.Message):
-    __slots__ = (
-        "normalized_content",
-        "reported_score",
-        "actual_score",
-        "accepted",
-        "rejected",
-    )
+    __slots__ = ("normalized_content", "reported_score", "actual_score", "accepted", "rejected")
     NORMALIZED_CONTENT_FIELD_NUMBER: _ClassVar[int]
     REPORTED_SCORE_FIELD_NUMBER: _ClassVar[int]
     ACTUAL_SCORE_FIELD_NUMBER: _ClassVar[int]
@@ -134,14 +104,7 @@ class VerifiedOutput(_message.Message):
     actual_score: int
     accepted: AcceptedOutput
     rejected: RejectedOutput
-    def __init__(
-        self,
-        normalized_content: _Optional[bytes] = ...,
-        reported_score: _Optional[int] = ...,
-        actual_score: _Optional[int] = ...,
-        accepted: _Optional[_Union[AcceptedOutput, _Mapping]] = ...,
-        rejected: _Optional[_Union[RejectedOutput, _Mapping]] = ...,
-    ) -> None: ...
+    def __init__(self, normalized_content: _Optional[bytes] = ..., reported_score: _Optional[int] = ..., actual_score: _Optional[int] = ..., accepted: _Optional[_Union[AcceptedOutput, _Mapping]] = ..., rejected: _Optional[_Union[RejectedOutput, _Mapping]] = ...) -> None: ...
 
 class VerifyOutputRequest(_message.Message):
     __slots__ = ("input_content", "output_content")
@@ -149,11 +112,7 @@ class VerifyOutputRequest(_message.Message):
     OUTPUT_CONTENT_FIELD_NUMBER: _ClassVar[int]
     input_content: bytes
     output_content: bytes
-    def __init__(
-        self,
-        input_content: _Optional[bytes] = ...,
-        output_content: _Optional[bytes] = ...,
-    ) -> None: ...
+    def __init__(self, input_content: _Optional[bytes] = ..., output_content: _Optional[bytes] = ...) -> None: ...
 
 class VerifyOutputResponse(_message.Message):
     __slots__ = ("output", "format_error")
@@ -161,11 +120,7 @@ class VerifyOutputResponse(_message.Message):
     FORMAT_ERROR_FIELD_NUMBER: _ClassVar[int]
     output: VerifiedOutput
     format_error: str
-    def __init__(
-        self,
-        output: _Optional[_Union[VerifiedOutput, _Mapping]] = ...,
-        format_error: _Optional[str] = ...,
-    ) -> None: ...
+    def __init__(self, output: _Optional[_Union[VerifiedOutput, _Mapping]] = ..., format_error: _Optional[str] = ...) -> None: ...
 
 class GenerateInputRequest(_message.Message):
     __slots__ = ("seed",)
@@ -185,11 +140,7 @@ class SolveRequest(_message.Message):
     SOLVER_TYPE_FIELD_NUMBER: _ClassVar[int]
     input_content: bytes
     solver_type: SolverType
-    def __init__(
-        self,
-        input_content: _Optional[bytes] = ...,
-        solver_type: _Optional[_Union[SolverType, str]] = ...,
-    ) -> None: ...
+    def __init__(self, input_content: _Optional[bytes] = ..., solver_type: _Optional[_Union[SolverType, str]] = ...) -> None: ...
 
 class SolveResponse(_message.Message):
     __slots__ = ("output_content",)

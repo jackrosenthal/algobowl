@@ -12,65 +12,29 @@ from connectrpc.errors import ConnectError
 from connectrpc.interceptor import Interceptor, InterceptorSync
 from connectrpc.method import IdempotencyLevel, MethodInfo
 from connectrpc.request import Headers, RequestContext
-from connectrpc.server import (
-    ConnectASGIApplication,
-    ConnectWSGIApplication,
-    Endpoint,
-    EndpointSync,
-)
+from connectrpc.server import ConnectASGIApplication, ConnectWSGIApplication, Endpoint, EndpointSync
 import algobowl.problemsupport.v1.problem_support_pb2 as algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2
 
 
 class ProblemSupportService(Protocol):
-    async def get_problem_info(
-        self,
-        request: algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.GetProblemInfoRequest,
-        ctx: RequestContext,
-    ) -> algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.GetProblemInfoResponse:
+    async def get_problem_info(self, request: algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.GetProblemInfoRequest, ctx: RequestContext) -> algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.GetProblemInfoResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def verify_input(
-        self,
-        request: algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.VerifyInputRequest,
-        ctx: RequestContext,
-    ) -> (
-        algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.VerifyInputResponse
-    ):
+    async def verify_input(self, request: algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.VerifyInputRequest, ctx: RequestContext) -> algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.VerifyInputResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def verify_output(
-        self,
-        request: algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.VerifyOutputRequest,
-        ctx: RequestContext,
-    ) -> algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.VerifyOutputResponse:
+    async def verify_output(self, request: algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.VerifyOutputRequest, ctx: RequestContext) -> algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.VerifyOutputResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def generate_input(
-        self,
-        request: algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.GenerateInputRequest,
-        ctx: RequestContext,
-    ) -> algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.GenerateInputResponse:
+    async def generate_input(self, request: algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.GenerateInputRequest, ctx: RequestContext) -> algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.GenerateInputResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def solve(
-        self,
-        request: algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.SolveRequest,
-        ctx: RequestContext,
-    ) -> algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.SolveResponse:
+    async def solve(self, request: algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.SolveRequest, ctx: RequestContext) -> algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.SolveResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
 
-class ProblemSupportServiceASGIApplication(
-    ConnectASGIApplication[ProblemSupportService]
-):
-    def __init__(
-        self,
-        service: ProblemSupportService | AsyncGenerator[ProblemSupportService],
-        *,
-        interceptors: Iterable[Interceptor] = (),
-        read_max_bytes: int | None = None,
-        compressions: Iterable[Compression] | None = None,
-    ) -> None:
+class ProblemSupportServiceASGIApplication(ConnectASGIApplication[ProblemSupportService]):
+    def __init__(self, service: ProblemSupportService | AsyncGenerator[ProblemSupportService], *, interceptors: Iterable[Interceptor]=(), read_max_bytes: int | None = None, compressions: Iterable[Compression] | None = None) -> None:
         super().__init__(
             service=service,
             endpoints=lambda svc: {
@@ -163,9 +127,7 @@ class ProblemSupportServiceClient(ConnectClient):
         *,
         headers: Headers | Mapping[str, str] | None = None,
         timeout_ms: int | None = None,
-    ) -> (
-        algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.VerifyInputResponse
-    ):
+    ) -> algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.VerifyInputResponse:
         return await self.execute_unary(
             request=request,
             method=MethodInfo(
@@ -241,52 +203,20 @@ class ProblemSupportServiceClient(ConnectClient):
 
 
 class ProblemSupportServiceSync(Protocol):
-    def get_problem_info(
-        self,
-        request: algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.GetProblemInfoRequest,
-        ctx: RequestContext,
-    ) -> algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.GetProblemInfoResponse:
+    def get_problem_info(self, request: algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.GetProblemInfoRequest, ctx: RequestContext) -> algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.GetProblemInfoResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-
-    def verify_input(
-        self,
-        request: algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.VerifyInputRequest,
-        ctx: RequestContext,
-    ) -> (
-        algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.VerifyInputResponse
-    ):
+    def verify_input(self, request: algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.VerifyInputRequest, ctx: RequestContext) -> algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.VerifyInputResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-
-    def verify_output(
-        self,
-        request: algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.VerifyOutputRequest,
-        ctx: RequestContext,
-    ) -> algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.VerifyOutputResponse:
+    def verify_output(self, request: algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.VerifyOutputRequest, ctx: RequestContext) -> algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.VerifyOutputResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-
-    def generate_input(
-        self,
-        request: algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.GenerateInputRequest,
-        ctx: RequestContext,
-    ) -> algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.GenerateInputResponse:
+    def generate_input(self, request: algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.GenerateInputRequest, ctx: RequestContext) -> algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.GenerateInputResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-
-    def solve(
-        self,
-        request: algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.SolveRequest,
-        ctx: RequestContext,
-    ) -> algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.SolveResponse:
+    def solve(self, request: algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.SolveRequest, ctx: RequestContext) -> algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.SolveResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
 
 class ProblemSupportServiceWSGIApplication(ConnectWSGIApplication):
-    def __init__(
-        self,
-        service: ProblemSupportServiceSync,
-        interceptors: Iterable[InterceptorSync] = (),
-        read_max_bytes: int | None = None,
-        compressions: Iterable[Compression] | None = None,
-    ) -> None:
+    def __init__(self, service: ProblemSupportServiceSync, interceptors: Iterable[InterceptorSync]=(), read_max_bytes: int | None = None, compressions: Iterable[Compression] | None = None) -> None:
         super().__init__(
             endpoints={
                 "/algobowl.problemsupport.v1.ProblemSupportService/GetProblemInfo": EndpointSync.unary(
@@ -378,9 +308,7 @@ class ProblemSupportServiceClientSync(ConnectClientSync):
         *,
         headers: Headers | Mapping[str, str] | None = None,
         timeout_ms: int | None = None,
-    ) -> (
-        algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.VerifyInputResponse
-    ):
+    ) -> algobowl_dot_problemsupport_dot_v1_dot_problem__support__pb2.VerifyInputResponse:
         return self.execute_unary(
             request=request,
             method=MethodInfo(
