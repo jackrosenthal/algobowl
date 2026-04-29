@@ -12,13 +12,33 @@ jobs:
         with:
           python-version: 3.11
       - uses: astral-sh/setup-uv@v6
-      - name: "Install Problem Support Package"
-        run: uv build algobowl-python-problem-support && pip install algobowl-python-problem-support/dist/*.whl
       - name: "Install Application with pip"
-        run: pip install .
+        run: pip install .[dev]
+      - name: "Sync Example Problem Dependencies"
+        working-directory: example_problems/number_in_range
+        run: uv run pywrangler sync --force
+      - name: "Start Example Problem"
+        working-directory: example_problems/number_in_range
+        run: |
+          uv run pywrangler dev --local --port 8788 > /tmp/number-in-range.log 2>&1 &
+          echo "$!" > /tmp/number-in-range.pid
+          for i in {1..30}; do
+            if curl -sS http://127.0.0.1:8788/ >/dev/null 2>&1; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/number-in-range.log
+          exit 1
       - name: "Run Problem Tester"
         run: |
-          python -m algobowl.lib.problem_tester example_problems/number_in_range
+          python -m algobowl.lib.problem_tester http://127.0.0.1:8788 example_problems/number_in_range/test_data
+      - name: "Stop Example Problem"
+        if: always()
+        run: |
+          if [ -f /tmp/number-in-range.pid ]; then
+            kill "$(cat /tmp/number-in-range.pid)" || true
+          fi
   migration-test:
     name: "Migration Test"
     runs-on: ubuntu-24.04
@@ -28,8 +48,6 @@ jobs:
         with:
           python-version: 3.11
       - uses: astral-sh/setup-uv@v6
-      - name: "Install Problem Support Package"
-        run: uv build algobowl-python-problem-support && pip install algobowl-python-problem-support/dist/*.whl
       - name: "Install Application with pip"
         run: pip install .[dev]
       - name: "Setup App"
@@ -45,8 +63,6 @@ jobs:
         with:
           python-version: 3.11
       - uses: astral-sh/setup-uv@v6
-      - name: "Install Problem Support Package"
-        run: uv build algobowl-python-problem-support && pip install algobowl-python-problem-support/dist/*.whl
       - name: "Install Application with pip"
         run: pip install .[dev]
       - name: "Setup App"
@@ -83,8 +99,8 @@ jobs:
       - uses: astral-sh/setup-uv@v6
       - name: "Install build dependencies"
         run: pip install --upgrade build wheel setuptools click s3fs
-      - name: "Build Problem Support Package"
-        run: uv build algobowl-python-problem-support
+      - name: "Build Problem Server Package"
+        run: uv build algobowl-python-problem-server
       - name: "Upload assets to CDN"
         run: ./cdnify.py
       - name: "Build"
@@ -92,7 +108,7 @@ jobs:
       - name: "Collect dist artifacts"
         run: |
           mkdir -p dist
-          cp algobowl-python-problem-support/dist/* dist/
+          cp algobowl-python-problem-server/dist/* dist/
       - name: "Upload Artifacts"
         uses: actions/upload-artifact@v4
         with:

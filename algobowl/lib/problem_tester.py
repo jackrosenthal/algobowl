@@ -1,15 +1,13 @@
 """Automated tester for the problem format."""
 
 import enum
-import io
 import pathlib
 import random
 import sys
 
 import pytest
 
-import algobowl.lib.problem as problemlib
-from algobowl.lib import problem_loader
+from algobowl.lib import problem_client
 
 
 class ASCIIFormat(enum.Enum):
@@ -19,8 +17,8 @@ class ASCIIFormat(enum.Enum):
 
 
 @pytest.fixture
-def problem(problem_dir):
-    return problem_loader.Problem(problem_dir)
+def problem(problem_url):
+    return problem_client.ProblemClient(problem_url)
 
 
 @pytest.fixture(params=[1337, 0xDEADBEEF, 0xDEADD00D, 55378008])
@@ -28,7 +26,16 @@ def rng(request):
     return random.Random(request.param)
 
 
-def stringio_from_path(path, ascii_format=False):
+def content_from_path(path, ascii_format=False):
+    """Reads an ASCII test data file with an alternate newline format.
+
+    Args:
+        path: File path to read.
+        ascii_format: Newline format to emulate.
+
+    Returns:
+        The file contents with the requested newline format.
+    """
     contents = path.read_text(encoding="ascii")
     assert "\r\n" not in contents
     if ascii_format != ASCIIFormat.UNIX:
@@ -36,80 +43,77 @@ def stringio_from_path(path, ascii_format=False):
         contents = contents.replace("\n", "\r\n")
         if ascii_format == ASCIIFormat.DOS_WITH_FINAL_TERMINATOR:
             contents += "\r\n"
-    return io.StringIO(contents)
+    return contents
 
 
 def test_good_input(problem, good_input_path, ascii_format):
-    input = problem.parse_input(
-        stringio_from_path(good_input_path, ascii_format=ascii_format)
+    input_ = problem.normalize_input(
+        content_from_path(good_input_path, ascii_format=ascii_format)
     )
-    output_buf = io.StringIO()
-    input.write(output_buf)
 
-    reformatted = output_buf.getvalue()
+    reformatted = input_.text()
     assert reformatted.endswith("\n")
 
     # The reformatted data should also parse OK.
-    problem.parse_input(io.StringIO(reformatted))
+    problem.normalize_input(reformatted)
 
 
 def test_bad_input(problem, bad_input_path, ascii_format):
-    with pytest.raises(problemlib.FileFormatError):
-        problem.parse_input(
-            stringio_from_path(bad_input_path, ascii_format=ascii_format)
+    with pytest.raises(problem_client.FileFormatError):
+        problem.normalize_input(
+            content_from_path(bad_input_path, ascii_format=ascii_format)
         )
 
 
 def test_empty_input(problem):
     # The empty input should never be valid.
-    with pytest.raises(problemlib.FileFormatError):
-        problem.parse_input(io.StringIO(""))
+    with pytest.raises(problem_client.FileFormatError):
+        problem.normalize_input("")
 
 
 def test_good_output(problem, good_output_path, ascii_format):
     input_path, output_path = good_output_path
-    input = problem.parse_input(stringio_from_path(input_path))
-    output = problem.parse_output(
-        input, stringio_from_path(output_path, ascii_format=ascii_format)
+    input_ = problem.normalize_input(content_from_path(input_path))
+    output = problem.verify_output(
+        input_.content,
+        content_from_path(output_path, ascii_format=ascii_format),
     )
-    output.verify()
+    output.require_accepted()
 
     # Reformatting the output should still result in a good output.
-    output_buf = io.StringIO()
-    output.write(output_buf)
-    reformatted = output_buf.getvalue()
+    reformatted = output.text()
     assert reformatted.endswith("\n")
-    reformatted_output = problem.parse_output(input, io.StringIO(reformatted))
-    reformatted_output.verify()
+    reformatted_output = problem.verify_output(input_.content, reformatted)
+    reformatted_output.require_accepted()
     assert output.score == reformatted_output.score
 
 
 def test_bad_output(problem, bad_output_path, ascii_format):
     input_path, output_path = bad_output_path
-    input = problem.parse_input(stringio_from_path(input_path))
-    with pytest.raises(problemlib.FileFormatError):
-        problem.parse_output(
-            input, stringio_from_path(output_path, ascii_format=ascii_format)
+    input_ = problem.normalize_input(content_from_path(input_path))
+    with pytest.raises(problem_client.FileFormatError):
+        problem.verify_output(
+            input_.content,
+            content_from_path(output_path, ascii_format=ascii_format),
         )
 
 
 def test_rejected_output(problem, rejected_output_path, ascii_format):
     input_path, output_path = rejected_output_path
-    input = problem.parse_input(stringio_from_path(input_path))
-    output = problem.parse_output(
-        input, stringio_from_path(output_path, ascii_format=ascii_format)
+    input_ = problem.normalize_input(content_from_path(input_path))
+    output = problem.verify_output(
+        input_.content,
+        content_from_path(output_path, ascii_format=ascii_format),
     )
-    with pytest.raises(problemlib.VerificationError):
-        output.verify()
+    with pytest.raises(problem_client.VerificationError):
+        output.require_accepted()
 
     # Reformatting an output should still result in a rejected output.
-    output_buf = io.StringIO()
-    output.write(output_buf)
-    reformatted = output_buf.getvalue()
+    reformatted = output.text()
     assert reformatted.endswith("\n")
-    reformatted_output = problem.parse_output(input, io.StringIO(reformatted))
-    with pytest.raises(problemlib.VerificationError):
-        output.verify()
+    reformatted_output = problem.verify_output(input_.content, reformatted)
+    with pytest.raises(problem_client.VerificationError):
+        reformatted_output.require_accepted()
     assert output.score == reformatted_output.score
 
 
@@ -119,35 +123,44 @@ def test_generate_input(problem, rng):
     except NotImplementedError:
         pytest.skip("Input.generate() is not required (yet!)")
 
-    # The input should be writable.
-    input_buf = io.StringIO()
-    input.write(input_buf)
-
     # We should be able to parse the generated input.
-    problem.parse_input(io.StringIO(input_buf.getvalue()))
+    problem.normalize_input(input.content)
 
     # Solve the generated input.
     try:
-        output = input.trivial_solve()
+        output = problem.trivial_solve(input.content)
     except NotImplementedError:
         pytest.skip("Input.trivial_solve() not implemented")
 
     # The solved output should be valid.
-    output.verify()
-
-    # The solved output should be writable.
-    output_buf = io.StringIO()
-    output.write(output_buf)
+    output.require_accepted()
 
     # We should be able to parse the written output.
-    problem.parse_output(input, io.StringIO(output_buf.getvalue()))
+    reparsed_output = problem.verify_output(input.content, output.content)
+    reparsed_output.require_accepted()
 
 
 def load_inputs_from_dir(path):
+    """Loads input test data paths from a directory.
+
+    Args:
+        path: Directory containing input files.
+
+    Returns:
+        A list of input file paths.
+    """
     return list(path.glob("*.in"))
 
 
 def load_outputs_from_dir(path):
+    """Loads paired input and output test data paths from a directory.
+
+    Args:
+        path: Directory containing output symlinks and output files.
+
+    Returns:
+        A list of input path and output path pairs.
+    """
     result = []
     for input_path in load_inputs_from_dir(path):
         assert input_path.is_symlink()
@@ -156,9 +169,18 @@ def load_outputs_from_dir(path):
     return result
 
 
-def run_problem_tests(problem_dir, pytest_extra_args=()):
-    problem_dir = pathlib.Path(problem_dir).resolve()
-    test_data_dir = problem_dir / "test_data"
+def run_problem_tests(problem_url, test_data_dir, pytest_extra_args=()):
+    """Runs the algops problem tester.
+
+    Args:
+        problem_url: Base URL for the algops problem support service.
+        test_data_dir: Directory containing problem test data.
+        pytest_extra_args: Extra arguments to pass to pytest.
+
+    Returns:
+        The pytest return code.
+    """
+    test_data_dir = pathlib.Path(test_data_dir).resolve()
 
     good_inputs = load_inputs_from_dir(test_data_dir / "inputs" / "good")
     bad_inputs = load_inputs_from_dir(test_data_dir / "inputs" / "bad")
@@ -178,14 +200,19 @@ def run_problem_tests(problem_dir, pytest_extra_args=()):
             _add_param("good_output_path", good_outputs)
             _add_param("bad_output_path", bad_outputs)
             _add_param("rejected_output_path", rejected_outputs)
-            _add_param("problem_dir", [problem_dir])
+            _add_param("problem_url", [problem_url])
             _add_param("ascii_format", list(ASCIIFormat))
 
     return pytest.main([*pytest_extra_args, __file__], plugins=[ProblemDataPlugin()])
 
 
 def main(argv=sys.argv):
-    sys.exit(run_problem_tests(argv[1], pytest_extra_args=argv[2:]))
+    """Runs the problem tester command-line entry point.
+
+    Args:
+        argv: Command-line arguments.
+    """
+    sys.exit(run_problem_tests(argv[1], argv[2], pytest_extra_args=argv[3:]))
 
 
 if __name__ == "__main__":

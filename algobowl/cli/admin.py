@@ -52,7 +52,7 @@ def admin(cli):
 @click.option(
     "--problem",
     type=str,
-    help="Name of the problem",
+    help="URL of the algops problem service",
     required=True,
 )
 @click.option(

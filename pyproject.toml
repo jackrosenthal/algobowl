@@ -1,5 +1,8 @@
 [tool.ruff]
-target-version = "py39"
+target-version = "py310"
+extend-exclude = [
+    "algobowl/problemsupport",
+]
 
 [tool.ruff.lint]
 preview = true

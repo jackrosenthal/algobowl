@@ -1,0 +1,9 @@
+{
+  "name": "number-in-range",
+  "main": "worker.py",
+  "compatibility_date": "2026-04-16",
+  "compatibility_flags": ["python_workers"],
+  "assets": {
+    "directory": "public"
+  }
+}

@@ -5,52 +5,79 @@ from pathlib import Path
 
 import click
 
-import algobowl.lib.problem as problemlib
 from algobowl.cli import formatter
+from algobowl.lib import problem_client, problem_tester
+
+
+def _read_text(path: Path) -> str:
+    """Reads an ASCII text file.
+
+    Args:
+        path: File path to read.
+
+    Returns:
+        The file contents.
+    """
+    with open(path, encoding="ascii") as file_obj:
+        return file_obj.read()
 
 
 def _parse_input(cli, path: Path):
+    """Parses an input file through the configured problem client.
+
+    Args:
+        cli: CLI context.
+        path: Input file path.
+
+    Returns:
+        Normalized input.
+    """
     with open(path, encoding="ascii") as f:
         try:
-            return cli.problem.parse_input(f)
-        except problemlib.FileFormatError as e:
+            return cli.problem.normalize_input(f.read())
+        except problem_client.FileFormatError as e:
             formatter.err(f"Input has formatting errors: {e}")
             sys.exit(1)
 
 
 def _parse_output(cli, iput, oput_path: Path):
+    """Parses an output file through the configured problem client.
+
+    Args:
+        cli: CLI context.
+        iput: Normalized input or input file path.
+        oput_path: Output file path.
+
+    Returns:
+        Verified output.
+    """
     if isinstance(iput, Path):
         iput = _parse_input(cli, iput)
-    with open(oput_path, encoding="ascii") as f:
-        try:
-            return cli.problem.parse_output(iput, f)
-        except problemlib.FileFormatError as e:
-            formatter.err(f"Output has formatting errors: {e}")
-            sys.exit(1)
+    try:
+        return cli.problem.verify_output(iput.content, _read_text(oput_path))
+    except problem_client.FileFormatError as e:
+        formatter.err(f"Output has formatting errors: {e}")
+        sys.exit(1)
 
 
-@click.group(help="Work with local problems")
+@click.group(help="Work with algops problems")
 @click.argument("problem", type=str)
 @click.pass_obj
 def problem(cli, problem):
-    cli.problem = cli.config.load_problem(problem)
+    cli.problem = problem_client.ProblemClient(problem)
 
 
 @problem.command(help="Run tests on a problem")
+@click.argument("test_data_dir", type=Path)
 @click.argument("pytest_args", nargs=-1)
 @click.pass_obj
-def test(cli, pytest_args):
-    pytest_args = [
-        "--cov",
-        "problem",
-        "--cov-report",
-        "term-missing:skip-covered",
-        *pytest_args,
-    ]
-    try:
-        cli.problem.run_tests(pytest_args)
-    except problemlib.ProblemTestError:
-        sys.exit(1)
+def test(cli, test_data_dir, pytest_args):
+    retcode = problem_tester.run_problem_tests(
+        cli.problem.url,
+        test_data_dir,
+        pytest_args,
+    )
+    sys.exit(retcode)
 
 
 @problem.command(help="Parse an input file and print the normalized version")
@@ -58,7 +85,7 @@ def test(cli, pytest_args):
 @click.pass_obj
 def parse_input(cli, input_file):
     iput = _parse_input(cli, input_file)
-    iput.write(sys.stdout)
+    sys.stdout.write(iput.text())
 
 
 @problem.command(help="Parse an output file and print the normalized version")
@@ -67,7 +94,7 @@ def parse_input(cli, input_file):
 @click.pass_obj
 def parse_output(cli, input_file, output_file):
     oput = _parse_output(cli, input_file, output_file)
-    oput.write(sys.stdout)
+    sys.stdout.write(oput.text())
 
 
 @problem.command(help="Verify an output")
@@ -83,8 +110,8 @@ def verify(cli, input_file, output_files):
         oput = _parse_output(cli, iput, output_file)
         message = click.style("OK!", fg="green", bold=True)
         try:
-            oput.verify()
-        except problemlib.VerificationError as e:
+            oput.require_accepted()
+        except problem_client.VerificationError as e:
             rv = 1
             message = click.style(f"BAD: {e}", fg="red", bold=True)
         message = f"{output_file}: {message}"
@@ -109,7 +136,7 @@ def verify(cli, input_file, output_files):
 def generate_input(cli, seed):
     rng = random.Random(seed) if seed else random.SystemRandom()
     iput = cli.problem.generate_input(rng)
-    iput.write(sys.stdout)
+    sys.stdout.write(iput.text())
 
 
 @problem.command(help="Trivially solve an input")
@@ -117,5 +144,5 @@ def generate_input(cli, seed):
 @click.pass_obj
 def trivial_solve(cli, input_file):
     iput = _parse_input(cli, input_file)
-    output = iput.trivial_solve()
-    output.write(sys.stdout)
+    output = cli.problem.trivial_solve(iput.content)
+    sys.stdout.write(output.text())

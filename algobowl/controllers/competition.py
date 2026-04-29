@@ -3,14 +3,12 @@ from __future__ import annotations
 import dataclasses
 import datetime
 from collections import defaultdict
-from io import StringIO
 
 from sqlalchemy.sql.expression import case
 from tg import abort, expose, flash, redirect, request, require, response
 from tg.predicates import has_permission
 
-import algobowl.lib.problem as problemlib
-from algobowl.lib import problem_loader
+from algobowl.lib import problem_client
 from algobowl.lib.base import BaseController
 from algobowl.lib.logoutput import logoutput
 from algobowl.model import (
@@ -137,7 +135,7 @@ class CompetitionController(BaseController):
         user = request.identity and request.identity["user"]
         now = datetime.datetime.now()
         comp = self.competition
-        problem = problem_loader.load_problem(comp)
+        problem = problem_client.ProblemClient(comp.problem)
         show_scores = request.environ["is_admin"] or comp.open_verification_open
         if user:
             my_groups = (
@@ -180,11 +178,10 @@ class CompetitionController(BaseController):
 
         open_verification = user and comp.open_verification_open
 
-        problem_module = problem.get_module()
         score_sort = {
-            problemlib.RankSort.minimization: Output.score.asc(),
-            problemlib.RankSort.maximization: Output.score.desc(),
-        }[problem_module.Output.rank_sort]
+            problem_client.RankSort.MINIMIZATION: Output.score.asc(),
+            problem_client.RankSort.MAXIMIZATION: Output.score.desc(),
+        }[problem.rank_sort()]
 
         groups = defaultdict(GroupEntry)
         ir_query = (
@@ -215,7 +212,7 @@ class CompetitionController(BaseController):
             shown_score = None
             shown_output = None
             if show_scores:
-                shown_score = problem_module.Output.repr_score(output.score)
+                shown_score = problem.format_score(output.score)
                 shown_output = output
             if verif is VerificationStatus.rejected:
                 rank = None
@@ -437,18 +434,22 @@ class CompetitionController(BaseController):
     @logoutput
     @require(has_permission("admin"))
     def reverify(self):
-        problem = problem_loader.load_problem(self.competition)
+        problem = problem_client.ProblemClient(self.competition.problem)
 
         changes = 0
         for group in self.competition.groups:
             if group.input:
                 for output in group.input.outputs:
                     old_status = output.ground_truth
-                    input_file = StringIO(group.input.data.file.read().decode("utf-8"))
-                    output_file = StringIO(output.data.file.read().decode("utf-8"))
+                    input_content = group.input.data.file.read().decode("utf-8")
+                    output_content = output.data.file.read().decode("utf-8")
                     try:
-                        problem.verify_output(input_file, output_file)
-                    except problemlib.VerificationError as e:
+                        verified_output = problem.verify_output(
+                            input_content,
+                            output_content,
+                        )
+                        verified_output.require_accepted()
+                    except problem_client.VerificationError as e:
                         output.ground_truth = VerificationStatus.rejected
                         print(f"{output} rejected because: {e}")
                     except Exception as e:
@@ -486,8 +487,7 @@ class CompetitionController(BaseController):
         else:
             group = None
 
-        problem = problem_loader.load_problem(self.competition)
-        problem_module = problem.get_module()
+        problem = problem_client.ProblemClient(self.competition.problem)
         message = request.POST.get("message")
         if group and message:
             if output.use_ground_truth:
@@ -508,7 +508,7 @@ class CompetitionController(BaseController):
 
         return {
             "output": output,
-            "score": problem_module.Output.repr_score(output.score),
+            "score": problem.format_score(output.score),
             "group": group,
             "competition": self.competition,
         }
@@ -521,9 +521,9 @@ class CompetitionController(BaseController):
                 "The problem statement is no longer available as the "
                 "competition has been archived.",
             )
-        problem = problem_loader.load_problem(self.competition)
+        problem = problem_client.ProblemClient(self.competition.problem)
         response.content_type = "application/pdf"
-        return problem.get_statement_pdf()
+        return problem.statement_pdf()
 
 
 class CompetitionsController(BaseController):

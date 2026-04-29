@@ -5,8 +5,9 @@ import setuptools
 HERE = Path(__file__).resolve().parent
 
 BASE_DEPENDS = [
-    "algobowl-python-problem-support",
     "click>=8.0",
+    "connectrpc>=0.9",
+    "protobuf>=5.28",
     "pytest>=4.6",
     "pytest-cov>=4.1.0",
     "requests>=2.0",
@@ -48,7 +49,7 @@ setuptools.setup(
     author_email="jack@rosenth.al",
     url="https://github.com/jackrosenthal/algobowl",
     packages=setuptools.find_packages(),
-    python_requires=">=3.9,<4",
+    python_requires=">=3.10,<4",
     install_requires=BASE_DEPENDS,
     extras_require={
         "web": WEB_DEPENDS,

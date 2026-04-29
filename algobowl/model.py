@@ -42,8 +42,7 @@ class Competition(DeclarativeBase):
     id = sa.Column(sa.Integer, primary_key=True)
     name = sa.Column(sa.String, nullable=False)
 
-    # TODO(jrosenth): Make this non-nullable when all problems have
-    # been migrated to the new format.
+    # URL of the algops problem service.
     problem = sa.Column(sa.String, nullable=True)
 
     allow_custom_team_names = sa.Column(sa.Boolean, default=True)

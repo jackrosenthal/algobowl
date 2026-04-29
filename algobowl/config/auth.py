@@ -230,9 +230,7 @@ class GoogleAuth(BaseAuth):
         if code_verifier:
             flow.code_verifier = code_verifier
         flow.fetch_token(code=code)
-        with gdiscovery.build(
-            "oauth2", "v2", credentials=flow.credentials
-        ) as service:
+        with gdiscovery.build("oauth2", "v2", credentials=flow.credentials) as service:
             userinfo = service.userinfo().get().execute()
 
         email = userinfo["email"]
@@ -258,7 +256,9 @@ class GoogleAuth(BaseAuth):
         flow.redirect_uri = f"{request.application_url}/post_login"
         auth_url, _state = flow.authorization_url()
         secure = request.application_url.startswith("https")
-        cookie = f"glogin_code_verifier={flow.code_verifier}; HttpOnly; Path=/; SameSite=Lax"
+        cookie = (
+            f"glogin_code_verifier={flow.code_verifier}; HttpOnly; Path=/; SameSite=Lax"
+        )
         if secure:
             cookie += "; Secure"
         headers = [

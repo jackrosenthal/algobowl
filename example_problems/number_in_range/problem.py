@@ -1,6 +1,6 @@
 import dataclasses
 
-import algobowl.lib.problem as problemlib
+from algops import problemlib
 
 
 @dataclasses.dataclass

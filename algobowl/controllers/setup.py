@@ -6,7 +6,7 @@ import tg
 from depot.io.utils import FileIntent
 
 from algobowl import model
-from algobowl.lib import base, problem_loader
+from algobowl.lib import base, problem_client
 
 
 def get_user(username):
@@ -23,15 +23,13 @@ def get_user(username):
 
 
 def generate_default_input(
-    problem: problem_loader.Problem,
+    problem: problem_client.ProblemClient,
     group: model.Group,
 ) -> model.Input:
-    reformatted_contents = io.StringIO()
     iput = problem.generate_input(random.SystemRandom())
-    iput.write(reformatted_contents)
 
     input_file = FileIntent(
-        io.BytesIO(reformatted_contents.getvalue().encode("utf-8")),
+        io.BytesIO(iput.content),
         f"input_group{group.id}.txt",
         "application/octet-stream",
     )
@@ -57,7 +55,7 @@ class SetupController(base.BaseController):
             .filter(model.Competition.id == int(competition_id))
             .one()
         )
-        problem = problem_loader.load_problem(competition)
+        problem = problem_client.ProblemClient(competition.problem)
         users = [get_user(username) for username in users.split(",")]
         group = model.Group(
             users=users,

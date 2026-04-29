@@ -22,3 +22,8 @@ production.ini
 gearbox.pid
 client_secrets.json
 /algobowl/lib/algocdn.py
+.venv/
+.venv-workers/
+.wrangler/
+.dev.vars
+python_modules/

@@ -4,41 +4,42 @@ ASGI problem server support for AlgoBOWL problem packages.
 
 This package implements the `ProblemSupportService` protobuf API over unary
 Connect-compatible HTTP. Problem packages provide their `Input` and `Output`
-types from `algobowl-python-problem-support`; this package handles request
-routing, protobuf serialization, input normalization, output verification, input
-generation, and trivial solving.
+types by subclassing helpers in `algops.problemlib`; this package handles
+request routing, protobuf serialization, input normalization, output
+verification, input generation, and trivial solving.
 
 ## Usage
 
-Create an ASGI application from the problem's input and output types:
+Create an ASGI application from the problem's input and output types, and
+bridge it with the Cloudflare Workers runtime-provided `asgi` module:
 
 ```python
+import asgi
 import algops.app
+import workers
 import problem
 
 app = algops.app.ProblemSupportApplication(
     input_type=problem.Input,
     output_type=problem.Output,
+    rank_sort=algops.app.RANK_SORT_MINIMIZATION,
     score_decimal_places=0,
     statements=[
-        algops.app.Statement.pdf("https://example.com/statement.pdf"),
+        algops.app.Statement.pdf("/statement.pdf"),
+        algops.app.Statement.markdown("/statement.md"),
     ],
 )
-```
-
-For Cloudflare Workers Python, bridge the ASGI app with the runtime-provided
-`asgi` module:
-
-```python
-import asgi
-import problem_server
-import workers
 
 
 class Default(workers.WorkerEntrypoint):
     async def fetch(self, request):
-        return await asgi.fetch(problem_server.app, request, self.env)
+        return await asgi.fetch(app, request, self.env)
 ```
+
+Root-relative statement URLs (e.g. `"/statement.pdf"`) are resolved against
+the request origin at runtime, so the same worker code works in both local
+development and production without any configuration changes. Serve the
+statement files as static assets via `[assets]` in `wrangler.jsonc`.
 
 ## Supported Problem Hooks
 

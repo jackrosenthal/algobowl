@@ -1,13 +1,12 @@
 import datetime
 import re
-from io import BytesIO, StringIO
+from io import BytesIO
 
 from depot.io.utils import FileIntent
 from tg import abort, expose, flash, redirect, request, require, url
 from tg.predicates import has_permission, not_anonymous
 
-import algobowl.lib.problem as problemlib
-from algobowl.lib import problem_loader
+from algobowl.lib import problem_client
 from algobowl.lib.base import BaseController
 from algobowl.model import (
     DBSession,
@@ -116,10 +115,10 @@ class GroupController(BaseController):
                 ),
             }
 
-        problem = problem_loader.load_problem(self.group.competition)
+        problem = problem_client.ProblemClient(self.group.competition.problem)
         try:
-            input = problem.parse_input(StringIO(contents))
-        except problemlib.FileFormatError as e:
+            normalized_input = problem.normalize_input(contents)
+        except problem_client.FileFormatError as e:
             return {
                 "status": "error",
                 "msg": (
@@ -127,11 +126,8 @@ class GroupController(BaseController):
                 ),
             }
 
-        reformatted_contents = StringIO()
-        input.write(reformatted_contents)
-
         f = FileIntent(
-            BytesIO(reformatted_contents.getvalue().encode("utf-8")),
+            BytesIO(normalized_input.content),
             f"input_group{self.group.id}.txt",
             "application/octet-stream",
         )
@@ -218,30 +214,25 @@ class GroupController(BaseController):
         except UnicodeDecodeError:
             return {"status": "error", "msg": "Output contains invalid characters."}
 
-        problem = problem_loader.load_problem(comp)
+        problem = problem_client.ProblemClient(comp.problem)
+        input_contents = to_group.input.data.file.read().decode("utf-8")
 
         try:
-            output = problem.parse_output(
-                StringIO(to_group.input.data.file.read().decode("utf-8")),
-                StringIO(contents),
-            )
-        except problemlib.FileFormatError as e:
+            output = problem.verify_output(input_contents, contents)
+        except problem_client.FileFormatError as e:
             return {
                 "status": "error",
                 "msg": f"Output has formatting errors: {e}",
             }
 
-        new_contents = StringIO()
-        output.write(new_contents)
-
         f = FileIntent(
-            BytesIO(new_contents.getvalue().encode("utf-8")),
+            BytesIO(output.content),
             f"output_from_{self.group.id}_to_{to_group.id}.txt",
             "application/octet-stream",
         )
         try:
-            output.verify()
-        except problemlib.VerificationError:
+            output.require_accepted()
+        except problem_client.VerificationError:
             ground_truth = VerificationStatus.rejected
         except Exception:
             ground_truth = VerificationStatus.waiting
