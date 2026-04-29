@@ -234,8 +234,6 @@ class GroupController(BaseController):
             output.require_accepted()
         except problem_client.VerificationError:
             ground_truth = VerificationStatus.rejected
-        except Exception:
-            ground_truth = VerificationStatus.waiting
         else:
             ground_truth = VerificationStatus.accepted
 

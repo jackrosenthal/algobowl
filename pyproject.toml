@@ -48,6 +48,7 @@ ignore = [
     "A001",     # Fixes needed.
     "A002",     # Fixes needed.
     "COM812",   # Conflicts with formatter.
+    "DTZ005",   # Server runs UTC as localtime; DB stores naive UTC datetimes.
     "E712",     # Conflicts with SQLAlchemy filter expressions.
     "PLR0912",  # "too many branches"... noisy.
     "PLR0913",  # "too many arguments"... noisy.

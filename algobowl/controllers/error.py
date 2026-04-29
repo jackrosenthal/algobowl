@@ -25,7 +25,7 @@ class ErrorController(BaseController):
         try:
             # tg.abort exposes the message as .detail in response
             message = resp.detail
-        except Exception:
+        except AttributeError:
             message = None
 
         code = resp.status_int if hasattr(resp, "status_int") else 404

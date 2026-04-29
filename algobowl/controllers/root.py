@@ -99,6 +99,7 @@ class RootController(BaseController):
         else:
             flash("Login failure", "error")
             tg.redirect("/")
+        return None
 
     @expose()
     @require(predicates.has_permission("admin"))

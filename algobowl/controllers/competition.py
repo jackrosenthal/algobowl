@@ -452,9 +452,6 @@ class CompetitionController(BaseController):
                     except problem_client.VerificationError as e:
                         output.ground_truth = VerificationStatus.rejected
                         print(f"{output} rejected because: {e}")
-                    except Exception as e:
-                        output.ground_truth = VerificationStatus.waiting
-                        print(f"Verifier module failed on {output}: {e}")
                     else:
                         output.ground_truth = VerificationStatus.accepted
                     if old_status != output.ground_truth:

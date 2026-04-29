@@ -48,8 +48,10 @@ def sso_form():
 <head><title>Fake MPAPI Login</title>
 <style>
   body {{ font-family: sans-serif; max-width: 400px; margin: 4rem auto; }}
-  input, button {{ display: block; width: 100%; padding: 0.5rem; margin: 0.5rem 0; font-size: 1rem; box-sizing: border-box; }}
-  .notice {{ background: #fff3cd; border: 1px solid #ffc107; padding: 0.75rem; margin-bottom: 1rem; border-radius: 4px; }}
+  input, button {{ display: block; width: 100%; padding: 0.5rem;
+    margin: 0.5rem 0; font-size: 1rem; box-sizing: border-box; }}
+  .notice {{ background: #fff3cd; border: 1px solid #ffc107; padding: 0.75rem;
+    margin-bottom: 1rem; border-radius: 4px; }}
 </style>
 </head>
 <body>

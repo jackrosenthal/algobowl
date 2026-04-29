@@ -15,6 +15,8 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 VERSION_FILE = HERE / "VERSION"
 
+log = logging.getLogger(__name__)
+
 
 def run(
     argv,
@@ -24,7 +26,7 @@ def run(
     encoding: str | None = "utf-8",
     **kwargs,
 ) -> subprocess.CompletedProcess:
-    logging.info("Run command: %s", " ".join(shlex.quote(x) for x in argv))
+    log.info("Run command: %s", " ".join(shlex.quote(x) for x in argv))
     return subprocess.run(argv, check=check, cwd=cwd, encoding=encoding, **kwargs)
 
 
@@ -55,19 +57,19 @@ class Version:
 
     def write(self, commit: bool = True) -> None:
         VERSION_FILE.write_text(f"{self}\n", encoding="ascii")
-        logging.info("Wrote version: %s", self)
+        log.info("Wrote version: %s", self)
         if commit:
             run(["git", "add", VERSION_FILE.name])
             run(["git", "commit", "-m", f"Update VERSION to {self}"])
 
     @classmethod
     def today(cls) -> Version:
-        today = datetime.date.today()
+        today = datetime.datetime.now(tz=datetime.timezone.utc).date()
         return cls(year=today.year, month=today.month, day=today.day)
 
     @property
     def is_today(self):
-        today = datetime.date.today()
+        today = datetime.datetime.now(tz=datetime.timezone.utc).date()
         return (
             self.year == today.year
             and self.month == today.month
@@ -87,13 +89,13 @@ def main():
         stdout=subprocess.PIPE,
     ).stdout.strip()
     if upstream != "origin/main":
-        logging.error("Upstream must be origin/main")
+        log.error("Upstream must be origin/main")
         sys.exit(1)
     if run(
         ["git", "diff", "--name-only", "--cached"],
         stdout=subprocess.PIPE,
     ).stdout:
-        logging.error("Uncommitted changes exist")
+        log.error("Uncommitted changes exist")
         sys.exit(1)
     current_version = Version.read()
     if current_version.is_today:
