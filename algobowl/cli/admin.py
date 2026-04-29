@@ -83,7 +83,7 @@ def admin(cli):
     "--ov-hours",
     type=int,
     default=72,
-    help="Number of hours for open verification and evaluation.",
+    help="Number of hours for open verification.",
 )
 @click.pass_obj
 def setup_competition(

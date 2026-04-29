@@ -38,10 +38,6 @@ show_rankings = competition.output_upload_begins <= now
               <strong>Open Verification:</strong>
               ${literal(h.ftime(competition.open_verification_begins, competition.open_verification_ends))}
             </li>
-            <li py:if="competition.evaluation_begins">
-              <strong>Evaluation:</strong>
-              ${literal(h.ftime(competition.evaluation_begins, competition.evaluation_ends))}
-            </li>
           </ul>
           <p class="card-text" py:if="competition.open_verification_open">
             <strong>Open Verification</strong> is now available. View the
@@ -51,7 +47,7 @@ show_rankings = competition.output_upload_begins <= now
              py:if="request.identity and request.identity['user'].admin">
             <strong>Switch Stage (admin only):</strong>
             <ul class="nav nav-pills">
-              <li py:for="sw_stage in ('input_upload', 'output_upload', 'verification', 'resolution', 'evaluation')"
+              <li py:for="sw_stage in ('input_upload', 'output_upload', 'verification', 'resolution')"
                   class="nav-item">
                 <a href="${tg.url('/group/{}/stage/{}'.format(group.id, sw_stage))}"
                    class="nav-link ${'active' if sw_stage == stage else ''}"
@@ -78,7 +74,6 @@ show_rankings = competition.output_upload_begins <= now
       <py:include href="algobowl.templates.group.output_upload" />
       <py:include href="algobowl.templates.group.verification" />
       <py:include href="algobowl.templates.group.resolution" />
-      <py:include href="algobowl.templates.group.evaluation" />
     </div>
   </body>
 </html>

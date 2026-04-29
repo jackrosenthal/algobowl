@@ -93,13 +93,6 @@ class Competition(DeclarativeBase):
         sa.CheckConstraint("open_verification_ends >= open_verification_begins"),
         nullable=True,
     )
-    evaluation_begins = sa.Column(sa.DateTime, nullable=True)
-    evaluation_ends = sa.Column(
-        sa.DateTime,
-        sa.CheckConstraint("evaluation_ends > evaluation_begins"),
-        nullable=True,
-    )
-
     groups = relationship(
         "Group",
         back_populates="competition",
@@ -143,12 +136,6 @@ class Competition(DeclarativeBase):
         )
 
     @property
-    def evaluation_open(self):
-        return self.evaluation_begins and (
-            self.evaluation_begins <= datetime.datetime.now() < self.evaluation_ends
-        )
-
-    @property
     def end(self):
         return max(
             filter(
@@ -158,7 +145,6 @@ class Competition(DeclarativeBase):
                     self.verification_ends,
                     self.resolution_ends,
                     self.open_verification_ends,
-                    self.evaluation_ends,
                 ),
             )
         )
@@ -190,18 +176,6 @@ class User(DeclarativeBase):
     email = sa.Column(sa.Unicode, unique=True, nullable=False)
     full_name = sa.Column(sa.Unicode)
     admin = sa.Column(sa.Boolean, nullable=False, default=False)
-
-    submitted_evaluations = relationship(
-        "Evaluation",
-        back_populates="from_student",
-        foreign_keys="Evaluation.from_student_id",
-        lazy="dynamic",
-    )
-    received_evaluations = relationship(
-        "Evaluation",
-        back_populates="to_student",
-        foreign_keys="Evaluation.to_student_id",
-    )
 
     groups = relation("Group", secondary="user_group_xref", back_populates="users")
     auth_tokens = relationship(
@@ -256,8 +230,6 @@ class Group(DeclarativeBase):
     )
 
     protests = relationship("Protest", back_populates="submitter", lazy="dynamic")
-
-    evaluations = relationship("Evaluation", back_populates="group")
 
     def __repr__(self):
         if self.name:
@@ -388,24 +360,3 @@ class Protest(DeclarativeBase):
 
     def __repr__(self):
         return f"Protest {self.id}, from [{self.submitter!r}] on {self.output!r}"
-
-
-class Evaluation(DeclarativeBase):
-    __tablename__ = "evaluation"
-    db_icon = "fas fa-sliders-h"
-
-    id = sa.Column(sa.Integer, primary_key=True)
-    score = sa.Column(sa.Float, nullable=False)
-
-    from_student_id = sa.Column(sa.Integer, sa.ForeignKey("user.id"), nullable=False)
-    from_student = relationship(
-        "User", back_populates="submitted_evaluations", foreign_keys=from_student_id
-    )
-
-    to_student_id = sa.Column(sa.Integer, sa.ForeignKey("user.id"), nullable=False)
-    to_student = relationship(
-        "User", back_populates="received_evaluations", foreign_keys=to_student_id
-    )
-
-    group_id = sa.Column(sa.Integer, sa.ForeignKey("group.id"), nullable=False)
-    group = relationship("Group", back_populates="evaluations")

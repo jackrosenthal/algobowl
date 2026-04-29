@@ -57,23 +57,9 @@
                 ${grade}
               </td>
             </tr>
-            <tr py:for="u in g.users"
-                class="${'bg-warning text-dark'
-                         if max(gt.evaluations[u].values()) > 0.45
-                         else 'bg-secondary text-light'}"
-                py:with="mult=sum(gt.evaluations[u].values())">
-              <td colspan="3">
-                ${u}
-              </td>
-              <td colspan="4">
-                Evaluation Multiplier: ${'{:.4f}'.format(mult)}
-                <small>
-                  (${', '.join('{}: {:.2f}%'.format(k, v * 100) for k, v in gt.evaluations[u].items())})
-                </small>
-              </td>
-              <td>
-                Grade: <strong>${format_percent(min(grade * mult, 100))}</strong>
-              </td>
+            <tr py:for="u in g.users" class="bg-secondary text-light">
+              <td colspan="7">${u}</td>
+              <td>Grade: <strong>${format_percent(min(grade, 100))}</strong></td>
             </tr>
           </py:for>
         </tbody>

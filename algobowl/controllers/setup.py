@@ -106,8 +106,6 @@ class SetupController(base.BaseController):
             resolution_ends=resolution_ends,
             open_verification_begins=resolution_ends,
             open_verification_ends=ov_ends,
-            evaluation_begins=resolution_ends,
-            evaluation_ends=ov_ends,
         )
         model.DBSession.add(competition)
         model.DBSession.flush()

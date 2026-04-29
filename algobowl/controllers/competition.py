@@ -14,7 +14,6 @@ from algobowl.lib.logoutput import logoutput
 from algobowl.model import (
     Competition,
     DBSession,
-    Evaluation,
     Group,
     Input,
     Output,
@@ -41,7 +40,6 @@ class GradingTuple:
     verification: GradingVerificationTuple
     input_ones: int
     contributions: GradingContributionTuple
-    evaluations: defaultdict[dict]
 
 
 @dataclasses.dataclass
@@ -328,7 +326,6 @@ class CompetitionController(BaseController):
                 verification=GradingVerificationTuple(),
                 input_ones=0,
                 contributions=GradingContributionTuple(),
-                evaluations=defaultdict(dict),
             )
 
         groups = {k: new_gt(v) for k, v in rankings["groups"].items()}
@@ -413,21 +410,6 @@ class CompetitionController(BaseController):
             else:
                 gt.contributions.input_submitted = 0
                 gt.contributions.input_difficulty = 0
-
-        for group, gt in groups.items():
-            for from_member in group.users:
-                q = (
-                    DBSession.query(Evaluation, Evaluation.score)
-                    .filter(Evaluation.group_id == group.id)
-                    .filter(Evaluation.from_student_id == from_member.id)
-                    .all()
-                )
-                evals = {e.to_student: s for e, s in q}
-                for to_member in group.users:
-                    if to_member not in evals:
-                        evals[to_member] = 1.0
-                for to_member, score in evals.items():
-                    gt.evaluations[to_member][from_member] = score / sum(evals.values())
 
         return {"groups": groups, "competition": self.competition}
 
