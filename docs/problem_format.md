@@ -450,7 +450,7 @@ Like `parse_line_ints_array`, but with a separate bound for each integer.
 
 ### Other helpers
 
-* `split_python_whitespace(line)`: splits a line on whitespace, like Python's
+* `split_whitespace(line)`: splits a line on whitespace, like Python's
   `str.split()`.
 * `python_repr(value)`: formats a string like Python's `repr()`, which is useful
   for showing unexpected characters in error messages.

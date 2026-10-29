@@ -153,7 +153,7 @@ pub fn assert_linecount(
 ///
 /// Returns `None` if the value is not an integer, and `Some(Err(_))` with the
 /// normalized digits if the value is too large to represent.
-fn parse_python_int(value: &str) -> Option<Result<i128, String>> {
+fn parse_integer(value: &str) -> Option<Result<i128, String>> {
     let (negative, digits) = match value.as_bytes().first() {
         Some(b'+') => (false, &value[1..]),
         Some(b'-') => (true, &value[1..]),
@@ -204,17 +204,18 @@ fn parse_ascii_int(token: &[u8]) -> Option<i64> {
     }
 }
 
-/// Returns whether a byte is ASCII whitespace for Python's `str.split()`.
-fn is_ascii_python_whitespace(b: u8) -> bool {
+/// Returns whether an ASCII byte separates values on a line.  These are the
+/// ASCII characters Python's `str.split()` treats as whitespace.
+fn is_separator(b: u8) -> bool {
     matches!(b, b' ' | b'\t' | b'\n' | b'\r' | 0x0b | 0x0c | 0x1c..=0x1f)
 }
 
 /// Splits a line on whitespace, like Python's `str.split()`.
-pub fn split_python_whitespace(line: &str) -> impl Iterator<Item = &str> {
+pub fn split_whitespace(line: &str) -> impl Iterator<Item = &str> {
     let ascii = line.is_ascii();
     line.split(move |c: char| {
         if ascii {
-            is_ascii_python_whitespace(c as u8)
+            is_separator(c as u8)
         } else {
             c.is_whitespace() || matches!(c, '\x1c'..='\x1f')
         }
@@ -238,7 +239,7 @@ pub fn parse_int(
             lineno + 1
         ))
     };
-    match parse_python_int(value) {
+    match parse_integer(value) {
         None => Err(FileFormatError(format!(
             "Line #{}: Unable to interpret {} as integer",
             lineno + 1,
@@ -268,14 +269,14 @@ pub fn parse_line_ints(
     let line = lines
         .get(lineno)
         .ok_or_else(|| FileFormatError(format!("Line #{}: Missing line", lineno + 1)))?;
-    let num_values = split_python_whitespace(line).count();
+    let num_values = split_whitespace(line).count();
     if !count.into().contains(num_values as i128) {
         return Err(FileFormatError(format!(
             "Line #{}: Number of values ({num_values}) is out of expected bounds",
             lineno + 1,
         )));
     }
-    split_python_whitespace(line)
+    split_whitespace(line)
         .map(|value| parse_int(lineno, value, bound))
         .collect()
 }
@@ -319,7 +320,7 @@ pub fn parse_line_ints_each<const N: usize>(
         let mut count = 0;
         let mut tokens = line
             .as_bytes()
-            .split(|&b| is_ascii_python_whitespace(b))
+            .split(|&b| is_separator(b))
             .filter(|token| !token.is_empty());
         let valid = tokens.by_ref().take(N).all(|token| {
             let value = parse_ascii_int(token)
@@ -337,14 +338,14 @@ pub fn parse_line_ints_each<const N: usize>(
 
     // Check the count first, then each value in order, like the general
     // parser, so that errors are the same.
-    let num_values = split_python_whitespace(line).count();
+    let num_values = split_whitespace(line).count();
     if num_values != N {
         return Err(FileFormatError(format!(
             "Line #{}: Number of values ({num_values}) is out of expected bounds",
             lineno + 1,
         )));
     }
-    for (index, value) in split_python_whitespace(line).enumerate() {
+    for (index, value) in split_whitespace(line).enumerate() {
         values[index] = parse_int(lineno, value, bounds[index])?;
     }
     Ok(values)
