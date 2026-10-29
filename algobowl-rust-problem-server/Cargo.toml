@@ -1,0 +1,17 @@
+[package]
+name = "algops"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.91"
+description = "Framework for AlgoBOWL problem support services on Cloudflare Workers"
+license = "MIT"
+repository = "https://github.com/jackrosenthal/algobowl"
+
+[dependencies]
+buffa = "0.9.2"
+bytes = "1.6"
+connectrpc = { version = "0.9.1", default-features = false }
+http = "1"
+http-body-util = "0.1"
+tower = { version = "0.5", features = ["util"] }
+worker = "0.8.7"
