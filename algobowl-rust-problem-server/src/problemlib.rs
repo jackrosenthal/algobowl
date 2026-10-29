@@ -40,6 +40,9 @@ pub enum Bound {
     Exact(i64),
     /// Values in the half-open range `[start, end)` are allowed.
     Range(i64, i64),
+    /// Values in the half-open range `[start, end)` are allowed, except for
+    /// the third value.
+    RangeExcluding(i64, i64, i64),
 }
 
 impl Bound {
@@ -48,6 +51,9 @@ impl Bound {
             Bound::Any => true,
             Bound::Exact(expected) => value == i128::from(expected),
             Bound::Range(start, end) => i128::from(start) <= value && value < i128::from(end),
+            Bound::RangeExcluding(start, end, excluded) => {
+                Bound::Range(start, end).contains(value) && value != i128::from(excluded)
+            }
         }
     }
 }
@@ -204,7 +210,7 @@ fn is_ascii_python_whitespace(b: u8) -> bool {
 }
 
 /// Splits a line on whitespace, like Python's `str.split()`.
-fn split_python_whitespace(line: &str) -> impl Iterator<Item = &str> {
+pub fn split_python_whitespace(line: &str) -> impl Iterator<Item = &str> {
     let ascii = line.is_ascii();
     line.split(move |c: char| {
         if ascii {
@@ -288,16 +294,36 @@ pub fn parse_line_ints_array<const N: usize>(
     lineno: usize,
     bound: impl Into<Bound>,
 ) -> Result<[i64; N], FileFormatError> {
-    let bound = bound.into();
-    if let Some(line) = lines.get(lineno).filter(|line| line.is_ascii()) {
-        let mut values = [0; N];
+    parse_line_ints_each(lines, lineno, [bound.into(); N])
+}
+
+/// Parses exactly `N` whitespace-separated integers from a line, each with
+/// its own bound.
+///
+/// This does not allocate, for parsing large files.
+///
+/// # Errors
+///
+/// Returns an error if the line is missing, has the wrong number of values,
+/// or has an invalid value.
+pub fn parse_line_ints_each<const N: usize>(
+    lines: &[&str],
+    lineno: usize,
+    bounds: [Bound; N],
+) -> Result<[i64; N], FileFormatError> {
+    let line = lines
+        .get(lineno)
+        .ok_or_else(|| FileFormatError(format!("Line #{}: Missing line", lineno + 1)))?;
+    let mut values = [0; N];
+    if line.is_ascii() {
         let mut count = 0;
         let mut tokens = line
             .as_bytes()
             .split(|&b| is_ascii_python_whitespace(b))
             .filter(|token| !token.is_empty());
         let valid = tokens.by_ref().take(N).all(|token| {
-            let value = parse_ascii_int(token).filter(|&value| bound.contains(i128::from(value)));
+            let value = parse_ascii_int(token)
+                .filter(|&value| count < N && bounds[count].contains(i128::from(value)));
             if let Some(value) = value {
                 values[count] = value;
                 count += 1;
@@ -308,9 +334,20 @@ pub fn parse_line_ints_array<const N: usize>(
             return Ok(values);
         }
     }
-    // Produce the same error as the general parser.
-    let values = parse_line_ints(lines, lineno, bound, N as i64)?;
-    Ok(values.try_into().expect("count was checked"))
+
+    // Check the count first, then each value in order, like the general
+    // parser, so that errors are the same.
+    let num_values = split_python_whitespace(line).count();
+    if num_values != N {
+        return Err(FileFormatError(format!(
+            "Line #{}: Number of values ({num_values}) is out of expected bounds",
+            lineno + 1,
+        )));
+    }
+    for (index, value) in split_python_whitespace(line).enumerate() {
+        values[index] = parse_int(lineno, value, bounds[index])?;
+    }
+    Ok(values)
 }
 
 /// Parses one integer from a line.
@@ -512,6 +549,46 @@ mod tests {
         assert_eq!(
             parse_line_ints_array::<3>(&file, 6, Bound::Any),
             Ok([1, 2, 3])
+        );
+    }
+
+    #[test]
+    fn parse_line_ints_each_checks_each_bound_in_order() {
+        let bounds = [Bound::Range(1, 9), Bound::Range(2, 5), Bound::Any];
+        let file = split_lines("1 4 100\n9 x 1\n1 x\n1 9 0\n");
+        assert_eq!(parse_line_ints_each(&file, 0, bounds), Ok([1, 4, 100]));
+        assert_eq!(
+            parse_line_ints_each(&file, 1, bounds),
+            Err(FileFormatError(
+                "Line #2: Value 9 out of expected bounds".to_owned()
+            ))
+        );
+        assert_eq!(
+            parse_line_ints_each(&file, 2, bounds),
+            Err(FileFormatError(
+                "Line #3: Number of values (2) is out of expected bounds".to_owned()
+            ))
+        );
+        assert_eq!(
+            parse_line_ints_each(&file, 3, bounds),
+            Err(FileFormatError(
+                "Line #4: Value 9 out of expected bounds".to_owned()
+            ))
+        );
+    }
+
+    #[test]
+    fn range_excluding_bound() {
+        let file = split_lines("-3 0\n-3 3\n");
+        assert_eq!(
+            parse_line_ints_array::<2>(&file, 0, Bound::RangeExcluding(-3, 4, 0)),
+            Err(FileFormatError(
+                "Line #1: Value 0 out of expected bounds".to_owned()
+            ))
+        );
+        assert_eq!(
+            parse_line_ints_array::<2>(&file, 1, Bound::RangeExcluding(-3, 4, 0)),
+            Ok([-3, 3])
         );
     }
 
