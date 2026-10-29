@@ -13,5 +13,6 @@ bytes = "1.6"
 connectrpc = { version = "0.9.1", default-features = false }
 http = "1"
 http-body-util = "0.1"
+rand = { version = "0.10.3", default-features = false, features = ["std", "std_rng"] }
 tower = { version = "0.5", features = ["util"] }
 worker = "0.8.7"

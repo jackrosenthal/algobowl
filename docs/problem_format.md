@@ -110,7 +110,8 @@ Worker's `fetch` handler:
 ```rust
 use std::fmt::Write;
 
-use algops::problemlib::{self, FileFormatError, Rng, VerificationError};
+use algops::problemlib::{self, FileFormatError, VerificationError};
+use algops::rand::prelude::*;
 use algops::{Problem, RankSort, Statement};
 use worker::{Context, Env, Request, Response, event};
 
@@ -154,8 +155,8 @@ impl algops::Input for Input {
 }
 ```
 
-Lines are split like Python's `readlines()`: each line keeps its trailing
-newline, and Windows and old Mac line endings are translated to `\n`.
+Lines are split with `str::lines`, so they do not include their line endings.
+Windows (`\r\n`) and old Mac (`\r`) line endings are both handled.
 
 If the input does not conform to the specifications, `read` should return a
 `FileFormatError`.  Make sure to use a good error message.  This is what students
@@ -194,15 +195,16 @@ fn write(&self, out: &mut String) {
 
 The `Input` type should also provide a `generate` function to generate a random
 input.  This will be used to create default inputs for each group should they
-fail to upload an input.  It takes a seeded `problemlib::Rng`.  *You should not
-use random numbers except from this object.*  The tests use a fixed set of
-seeds so they are reproducible.
+fail to upload an input.  It takes a seeded `StdRng` from the
+[`rand`](https://docs.rs/rand/0.10) crate, which `algops` re-exports as
+`algops::rand`.  *You should not use random numbers except from this object.*
+The tests use a fixed set of seeds so they are reproducible.
 
 For example:
 
 ```rust
-fn generate(rng: &mut Rng) -> Self {
-    let list_of_ints = (0..20).map(|_| rng.below(101) as i64).collect();
+fn generate(rng: &mut StdRng) -> Self {
+    let list_of_ints = (0..20).map(|_| rng.random_range(0..=100)).collect();
     Input { list_of_ints, ... }
 }
 ```
@@ -330,7 +332,8 @@ efficient:
 * Parse lines with a fixed number of integers using `parse_line_ints_array` or
   `parse_line_ints_each`, which do not allocate.
 * Prefer flat `Vec`s indexed by position over maps and sets.
-* Use `problemlib::push_int` instead of `write!` when writing many integers.
+* Use the [`itoa`](https://docs.rs/itoa) crate instead of `write!` when writing
+  many integers.
 
 Test your problem with the largest possible inputs on Cloudflare itself by
 serving it with `npx wrangler@4.151.0 dev --remote` and running the problem
@@ -411,8 +414,8 @@ Asserts a value found on a line is within the bound.
 parse_int(lineno: usize, value: &str, bound: impl Into<Bound>) -> i64
 ```
 
-Parses an integer, accepting the same syntax as Python's `int()`, and checks
-its bound.  Normally you should use the line parsing functions below instead.
+Parses an integer with `str::parse` and checks its bound.  Normally you should
+use the line parsing functions below instead.
 
 ### `parse_line_ints`
 
@@ -448,12 +451,8 @@ parse_line_ints_each::<N>(lines: &[&str], lineno: usize, bounds: [Bound; N]) -> 
 
 Like `parse_line_ints_array`, but with a separate bound for each integer.
 
-### Other helpers
+### Everything else
 
-* `split_whitespace(line)`: splits a line on whitespace, like Python's
-  `str.split()`.
-* `python_repr(value)`: formats a string like Python's `repr()`, which is useful
-  for showing unexpected characters in error messages.
-* `push_int(out, value)`: appends an integer to a string, faster than `write!`.
-* `Rng`: the random number generator passed to `generate`.  `below(n)` returns
-  an integer from 0 to `n - 1`, and `choice(items)` returns a random item.
+Use the standard library for anything else.  For example, `str::split_whitespace`
+splits a line into values, and formatting a character or string with `{:?}`
+quotes it for an error message.

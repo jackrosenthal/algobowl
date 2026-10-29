@@ -5,10 +5,12 @@ use std::sync::Arc;
 use bytes::Bytes;
 use connectrpc::{ConnectError, ConnectRpcService, RequestContext, ServiceRequest, ServiceResult};
 use http_body_util::{BodyExt, Full};
+use rand::SeedableRng;
+use rand::rngs::StdRng;
 use tower::ServiceExt;
 use worker::{Headers, Request, Response};
 
-use crate::problemlib::{FileFormatError, Rng, VerificationError, decode_text, split_lines};
+use crate::problemlib::{FileFormatError, VerificationError, decode_text};
 use crate::proto::algobowl::problemsupport::v1 as pb;
 use pb::__buffa::oneof::{verified_output, verify_input_response, verify_output_response};
 
@@ -87,7 +89,7 @@ pub struct Problem<I, O> {
     /// Problem statements.
     pub statements: &'static [Statement],
     /// Generates a random input, if supported.
-    pub generate: Option<fn(&mut Rng) -> I>,
+    pub generate: Option<fn(&mut StdRng) -> I>,
     /// Produces a trivial solution for an input, if supported.
     pub trivial_solve: Option<fn(&I) -> O>,
 }
@@ -193,7 +195,7 @@ impl<I: Input + 'static, O: Output<I> + 'static> Problem<I, O> {
     ) -> pb::VerifyOutputResponse {
         let parsed = read_input::<I>(input_content).and_then(|input| {
             let text = decode_text(output_content)?;
-            let output = O::read(&input, split_lines(&text))?;
+            let output = O::read(&input, text.lines().collect())?;
             Ok((input, output))
         });
         let (input, output) = match parsed {
@@ -246,7 +248,7 @@ impl<I: Input + 'static, O: Output<I> + 'static> Problem<I, O> {
             .generate
             .ok_or_else(|| ConnectError::unimplemented("generate_input is not implemented"))?;
         let seed = seed.map_or_else(random_seed, |seed| seed as u64);
-        let input = generate(&mut Rng::new(seed));
+        let input = generate(&mut StdRng::seed_from_u64(seed));
         Ok(pb::GenerateInputResponse {
             content: write_input(&input),
             ..Default::default()
@@ -341,7 +343,7 @@ fn random_seed() -> u64 {
 
 fn read_input<I: Input>(content: &[u8]) -> Result<I, FileFormatError> {
     let text = decode_text(content)?;
-    I::read(split_lines(&text))
+    I::read(text.lines().collect())
 }
 
 fn write_input<I: Input>(input: &I) -> Vec<u8> {

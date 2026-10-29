@@ -5,7 +5,8 @@
 
 use std::fmt::Write;
 
-use algops::problemlib::{self, FileFormatError, Rng, VerificationError};
+use algops::problemlib::{self, FileFormatError, VerificationError};
+use algops::rand::prelude::*;
 use algops::{Problem, RankSort, Statement};
 use worker::{Context, Env, Request, Response, event};
 
@@ -31,9 +32,9 @@ pub struct Input {
 }
 
 impl Input {
-    fn generate(rng: &mut Rng) -> Self {
-        let low = 1 + rng.below(100) as i64;
-        let high = low + rng.below((101 - low) as u64) as i64;
+    fn generate(rng: &mut StdRng) -> Self {
+        let low = rng.random_range(1..=100);
+        let high = rng.random_range(low..=100);
         Input { low, high }
     }
 
