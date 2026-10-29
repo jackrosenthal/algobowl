@@ -31,7 +31,7 @@ class BaseInput:
         """Reads an input file.
 
         Args:
-            f: File-like object to read from.
+            f: Text file-like object to read from.
 
         Returns:
             Parsed input.
@@ -42,7 +42,7 @@ class BaseInput:
         """Writes an input file.
 
         Args:
-            f: File-like object to write to.
+            f: Text file-like object to write to.
         """
         raise NotImplementedError
 
@@ -80,7 +80,7 @@ class BaseOutput:
 
         Args:
             input_: Parsed input corresponding to the output.
-            f: File-like object to read from.
+            f: Text file-like object to read from.
 
         Returns:
             Parsed output.
@@ -125,7 +125,7 @@ class BaseOutput:
         """Writes an output file.
 
         Args:
-            f: File-like object to write to.
+            f: Text file-like object to write to.
         """
         raise NotImplementedError
 

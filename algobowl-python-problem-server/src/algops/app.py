@@ -253,7 +253,7 @@ class ProblemSupportApplication:
         """
         del scope
         try:
-            parsed_input = self._input_type.read(io.BytesIO(request.input_content))
+            parsed_input = self._input_type.read(_text_stream(request.input_content))
         except problemlib.FileFormatError as exc:
             raise _connect.ConnectError("invalid_argument", str(exc)) from exc
 
@@ -286,7 +286,7 @@ class ProblemSupportApplication:
         """
         del scope
         try:
-            parsed = self._input_type.read(io.BytesIO(request.content))
+            parsed = self._input_type.read(_text_stream(request.content))
         except problemlib.FileFormatError as exc:
             return problem_support_pb2.VerifyInputResponse(format_error=str(exc))
         return problem_support_pb2.VerifyInputResponse(
@@ -310,9 +310,9 @@ class ProblemSupportApplication:
         """
         del scope
         try:
-            parsed_input = self._input_type.read(io.BytesIO(request.input_content))
+            parsed_input = self._input_type.read(_text_stream(request.input_content))
             parsed_output = self._output_type.read(
-                parsed_input, io.BytesIO(request.output_content)
+                parsed_input, _text_stream(request.output_content)
             )
         except problemlib.FileFormatError as exc:
             return problem_support_pb2.VerifyOutputResponse(format_error=str(exc))
@@ -414,6 +414,25 @@ class ProblemSupportApplication:
             self._input_type.generate.__func__
             is not problemlib.BaseInput.generate.__func__
         )
+
+
+def _text_stream(content: bytes) -> io.TextIOWrapper:
+    """Creates a text stream for reading problem file content.
+
+    Args:
+        content: UTF-8 encoded file content.
+
+    Returns:
+        Text stream over the content.
+
+    Raises:
+        problemlib.FileFormatError: The content is not valid UTF-8.
+    """
+    try:
+        content.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise problemlib.FileFormatError("File is not valid UTF-8 text") from exc
+    return io.TextIOWrapper(io.BytesIO(content), encoding="utf-8")
 
 
 def _write_to_bytes(value: problemlib.BaseInput | problemlib.BaseOutput) -> bytes:
