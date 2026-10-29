@@ -11,16 +11,27 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: 3.11
-      - uses: astral-sh/setup-uv@v6
       - name: "Install Application with pip"
         run: pip install .[dev]
-      - name: "Sync Example Problem Dependencies"
+      - name: "Cache Rust Build"
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            algobowl-rust-problem-server
+            example_problems/number_in_range
+          cache-directories: |
+            example_problems/number_in_range/.worker-build
+            ~/.cache/worker-build
+      - name: "Test Rust Problem Server"
+        working-directory: algobowl-rust-problem-server
+        run: cargo test
+      - name: "Build Example Problem"
         working-directory: example_problems/number_in_range
-        run: uv run pywrangler sync --force
+        run: npx -y wrangler@4.151.0 deploy --dry-run --outdir /tmp/worker-dry-run
       - name: "Start Example Problem"
         working-directory: example_problems/number_in_range
         run: |
-          uv run pywrangler dev --local --port 8788 > /tmp/number-in-range.log 2>&1 &
+          npx -y wrangler@4.151.0 dev --local --port 8788 > /tmp/number-in-range.log 2>&1 &
           echo "$!" > /tmp/number-in-range.pid
           for i in {1..30}; do
             if curl -sS http://127.0.0.1:8788/ >/dev/null 2>&1; then
@@ -96,19 +107,12 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: 3.11
-      - uses: astral-sh/setup-uv@v6
       - name: "Install build dependencies"
         run: pip install --upgrade build wheel setuptools click s3fs
-      - name: "Build Problem Server Package"
-        run: uv build algobowl-python-problem-server
       - name: "Upload assets to CDN"
         run: ./cdnify.py
       - name: "Build"
         run: python -m build
-      - name: "Collect dist artifacts"
-        run: |
-          mkdir -p dist
-          cp algobowl-python-problem-server/dist/* dist/
       - name: "Upload Artifacts"
         uses: actions/upload-artifact@v4
         with:

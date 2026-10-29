@@ -1,0 +1,16 @@
+[package]
+name = "algobowl-problem-number-in-range"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+algops = { path = "../../algobowl-rust-problem-server" }
+worker = "0.8.7"
+
+[profile.release]
+codegen-units = 1
+lto = true

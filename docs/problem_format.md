@@ -5,10 +5,11 @@ support code for an AlgoBOWL problem.  This code provides problem-specific
 support to the AlgoBOWL website.  The website uses it to do all of the
 following:
 
-* Determine if problem is a minimization or maximization problem.
+* Determine if the problem is a minimization or maximization problem.
 * Validate input files are of correct format.
 * Re-format and normalize input files so they are presented in a consistent
   manner to everyone.
+* Generate random inputs for groups that do not upload one.
 * Validate output files are of correct format.
 * Re-format and normalize output files so they are presented in a consistent
   manner to everyone.
@@ -16,6 +17,13 @@ following:
 * Verify outputs, which is used behind the scenes to provide the instructor a
   view of verification accuracy (and reduce the grade of groups with inaccurate
   verifications).
+* Serve the problem statement.
+
+Each problem is a Rust program that runs as a [Cloudflare
+Worker](https://developers.cloudflare.com/workers/), using the `algops` crate in
+the `algobowl-rust-problem-server` directory of this repository.  The website
+talks to it using the problem support service defined in
+`proto/algobowl/problemsupport/v1/problem_support.proto`.
 
 ## Get access to the private problems repository
 
@@ -32,175 +40,176 @@ required to implement on their own.
 Validate you have access (requesting it from Jack if necessary).  This is where
 you are going to push your problem implementation.
 
-## Set up the AlgoBOWL CLI
+## Set up your tools
 
-The AlgoBOWL CLI is used to run the problem tester.  Set it up by following
-[these instructions](./cli.md).
+You'll need:
 
-Clone this repository, and create a new Python virtual environment:
+* [rustup](https://rustup.rs/).  Each problem pins its Rust version in
+  `rust-toolchain.toml`, and rustup installs it automatically.
+* [Node.js](https://nodejs.org/), to run `wrangler`, the Cloudflare Workers
+  tool.  Problems are built and served with `npx wrangler@4.151.0`.
+* The AlgoBOWL CLI, which runs the problem tester.  Set it up by following
+  [these instructions](./cli.md).
+
+Validate you can run the problem tester on the example problem.  In one
+terminal, serve the example problem:
 
 ```shellsession
-$ git clone https://github.com/jackrosenthal/algobowl
-$ cd algobowl
-$ python -m venv venv
+$ cd example_problems/number_in_range
+$ npx wrangler@4.151.0 dev --local
 ```
 
-Source the virtual environment:
+The first build takes a few minutes.  Then, in another terminal, run the
+problem tester against it:
 
 ```shellsession
-$ . venv/bin/activate
-```
-
-Install using pip:
-
-```shellsession
-$ pip install .
-```
-
-Finally, validate you can now run the problem tester on the example problem:
-
-```shellsession
-$ algobowl problem example_problems/number_in_range test
+$ algobowl problem http://127.0.0.1:8787 test example_problems/number_in_range/test_data
 ```
 
 ## Writing a new problem
 
 A problem is a directory containing:
 
-* `problem.py` containing the problem support code.
-* `statement.pdf`, which has the problem statement.
+* `Cargo.toml`, `rust-toolchain.toml`, and `wrangler.jsonc`, which describe how
+  to build and serve the problem.
+* `src/lib.rs`, containing the problem support code.
+* `public/statement.pdf`, which has the problem statement.  You may also
+  provide `public/statement.md`.  Everything in `public` is served alongside the
+  problem.
 * `test_data`, a directory containing sample inputs and outputs (explained
   further later).
 
-Go ahead and create a new directory in the private problems repository.  By
-convention, please use `snake_case` for the directory name.  In this directory,
-copy in the problem statement under `statement.pdf`, add an empty `problem.py`,
-and create the empty `test_data` directory and subdirectories.
+Start by copying the example problem into the private problems repository.  By
+convention, please use `snake_case` for the directory name.  Then copy in the
+problem statement, and clear out the example's test data:
 
 ```shellsession
-$ cd ~/algobowl-problems
-$ mkdir my_problem
-$ cd my_problem
-$ cp ~/Downloads/AlgoBOWL.pdf statement.pdf
-$ touch problem.py
-$ mkdir -p test_data/inputs/{good,bad} test_data/outputs/{good,bad,rejected}
+$ cp -r ~/algobowl/example_problems/number_in_range ~/algobowl-problems/my_problem
+$ cd ~/algobowl-problems/my_problem
+$ cp ~/Downloads/AlgoBOWL.pdf public/statement.pdf
+$ rm -rf public/statement.md Cargo.lock test_data/*/*/*
 ```
 
-## `problem.py` essentials
+Then update the following:
 
-The AlgoBOWL application expects `problem.py` to be a Python module containing:
+* In `Cargo.toml`, rename the package to `algobowl-problem-my-problem`, and
+  change the `algops` dependency from a path to a git revision, the same way as
+  the other problems.  Use the latest commit that changed
+  `algobowl-rust-problem-server`.
+* In `wrangler.jsonc`, rename the worker to `my-problem`.  Worker names may only
+  contain lowercase letters, numbers, and dashes.
 
-- A dataclass named `Input`, which provides the input implementation.  This
-  should subclass from `algobowl.lib.problem.BaseInput`.
-- A dataclass named `Output`, which provides the output implementation.  This
-  should subclass from `algobowl.lib.problem.BaseOutput`.
+Keep `"workers_dev": false` and `"preview_urls": true` in `wrangler.jsonc`.  This
+makes the problem reachable only through version URLs (explained later).
 
-You may create other members in this module (e.g., helper functions), but
-AlgoBOWL only looks at the `Input` and `Output` members.
+## `src/lib.rs` essentials
 
-Besides the base classes you subclass, the `algobowl.lib.problem`
-module also provides you with many other convenient helpers.  By
-convention, this module is typically imported under the name
-`problemlib`.
+`src/lib.rs` describes the problem with a `Problem`, and serves it from the
+Worker's `fetch` handler:
 
-You can copy-paste this into your `problem.py` to start out:
+```rust
+use std::fmt::Write;
 
-```python
-import dataclasses
+use algops::problemlib::{self, FileFormatError, Rng, VerificationError};
+use algops::{Problem, RankSort, Statement};
+use worker::{Context, Env, Request, Response, event};
 
-import algobowl.lib.problem as problemlib
+static PROBLEM: Problem<Input, Output> = Problem {
+    rank_sort: RankSort::Minimization,
+    score_decimal_places: 0,
+    statements: &[Statement::pdf("/statement.pdf")],
+    generate: Some(Input::generate),
+    trivial_solve: Some(Input::trivial_solve),
+};
 
-
-@dataclasses.dataclass
-class Input(problemlib.BaseInput):
-    ...
-
-
-@dataclasses.dataclass
-class Output(problemlib.BaseOutput):
-    ...
+#[event(fetch)]
+async fn fetch(req: Request, _env: Env, _ctx: Context) -> worker::Result<Response> {
+    PROBLEM.serve(req).await
+}
 ```
 
-## Implementing the `Input` class
+* `rank_sort` is `RankSort::Minimization` if lower scores are better, or
+  `RankSort::Maximization` if higher scores are better.
+* `score_decimal_places` controls how scores are displayed.  Scores are always
+  integers, so a problem with scores like `23.25` stores them in hundredths
+  (`2325`), and sets this to `2`.
+* `statements` lists the problem statements.  URLs starting with `/` are served
+  from `public`.
+* `generate` and `trivial_solve` are optional (`None` if not implemented), and
+  are explained below.
 
-The `Input` class should provide a `classmethod` named `read`, which takes a
-file-like object and returns an `Input`.
+You then implement the `algops::Input` trait for your `Input` type, and the
+`algops::Output<Input>` trait for your `Output` type.
 
-```python
-def read(cls, f):
-    ...
-    return cls(...)
+## Implementing the `Input` type
+
+The `read` function receives the lines of the input file, and returns an
+`Input`:
+
+```rust
+impl algops::Input for Input {
+    fn read(mut lines: Vec<&str>) -> Result<Self, FileFormatError> {
+        ...
+    }
+}
 ```
 
-If the input does not conform to the specifications, `read` should raise a
-`problemlib.FileFormatError`.  Make sure to use a good exception message.
-This is what students will see when they get an error during upload.
+Lines are split like Python's `readlines()`: each line keeps its trailing
+newline, and Windows and old Mac line endings are translated to `\n`.
+
+If the input does not conform to the specifications, `read` should return a
+`FileFormatError`.  Make sure to use a good error message.  This is what students
+will see when they get an error during upload.
 
 While you could do all the input parsing yourself, `problemlib` provides a
-number of helpers that will make this easier.  Most of these helpers
-take a list of lines as input, so it's advised to do a `lines = f.readlines()`
-at the top of your function.
+number of helpers that will make this easier.  The typical pattern is:
 
-The typical pattern is:
+```rust
+// Assert the input has a valid number of lines.  Below, we say we need at least
+// 3 lines, and no more than 20 lines.
+problemlib::assert_linecount(&mut lines, 3..21)?;
 
-```python
-# Read lines into an array.
-lines = f.readlines()
+// Read an integer from the first line.
+let n = problemlib::parse_line_int(&lines, 0, 0..101)?;
 
-# Assert the input has a valid number of lines.  Below, we say we need at least
-# 3 lines, and no more than 20 lines.
-problemlib.assert_linecount(lines, range(3, 21))
-
-# Read an integer from the first line.
-n = problemlib.parse_line_int(lines, 0, bounds=range(0, 101))
-
-# Read n integers from the second line.
-list_of_ints = problemlib.parse_line_ints(lines, 1, count=n, bounds=range(0, n))
+// Read n integers from the second line.
+let list_of_ints = problemlib::parse_line_ints(&lines, 1, 0..n, n)?;
 
 ...
 
-return cls(n=n, list_of_ints=list_of_ints, ...)
+Ok(Input { n, list_of_ints, ... })
 ```
 
 The above code doesn't make much sense, but hopefully it provides for a source
 of inspiration.  You can also read other problems for further inspiration.
 
-The `Input` class should also provide a method named `write`, which prints a
-normalized input to a file.
+The `Input` type should also implement `write`, which writes a normalized input:
 
-```python
-def write(self, f):
-    print(..., file=f)
+```rust
+fn write(&self, out: &mut String) {
+    writeln!(out, "{}", self.n).unwrap();
+    ...
+}
 ```
 
-For example:
-
-```python
-def write(self, f):
-    print(self.n, file=f)
-    print(*self.list_of_ints, file=f)
-```
-
-The `Input` class should also provide a `generate` method to generate a random
+The `Input` type should also provide a `generate` function to generate a random
 input.  This will be used to create default inputs for each group should they
-fail to upload an input.
-
-The `generate` method takes a pre-seeded
-[`random.Random`](https://docs.python.org/3/library/random.html#random.Random)
-object to generate random numbers.  *You should not use random numbers except
-from this object.*  The tests use a fixed-set of seeds so they are reproducible.
+fail to upload an input.  It takes a seeded `problemlib::Rng`.  *You should not
+use random numbers except from this object.*  The tests use a fixed set of
+seeds so they are reproducible.
 
 For example:
 
-```python
-@classmethod
-def generate(cls, rng):
-    return cls(list_of_ints=[rng.randint(0, 100) for _ in range(20)], ...)
+```rust
+fn generate(rng: &mut Rng) -> Self {
+    let list_of_ints = (0..20).map(|_| rng.below(101) as i64).collect();
+    Input { list_of_ints, ... }
+}
 ```
 
 ## Writing example inputs
 
-Now that you've written the `Input` class, it's time to write example inputs.
+Now that you've written the `Input` type, it's time to write example inputs.
 
 You should write two kinds of inputs:
 
@@ -212,89 +221,66 @@ Typically, the example input from the problem statement should be put
 in `test_data/inputs/good/example.in`.  You should write more inputs as well
 (for example, inputs which are at the bounds of the problem).
 
-Once you've written some example inputs, you can run the problem tester and to
-test them on your `Input` class:
+Once you've written some example inputs, serve your problem with
+`npx wrangler@4.151.0 dev --local`, and run the problem tester to test them:
 
 ```shellsession
-$ algobowl problem . test
+$ algobowl problem http://127.0.0.1:8787 test test_data
 ```
 
-## Implementing the `Output` class
+`wrangler dev` rebuilds the problem when you change `src`.
 
-The output class should provide a `classmethod` called `read`, which takes an
-`Input` and a file-like object and produces an `Output`:
+## Implementing the `Output` type
 
-```python
-@classmethod
-def read(cls, input, f):
-    ...
-    return cls(input=input, score=score, ...)
+The `read` function receives the input and the lines of the output file, and
+returns an `Output`:
+
+```rust
+impl algops::Output<Input> for Output {
+    fn read(input: &Input, mut lines: Vec<&str>) -> Result<Self, FileFormatError> {
+        ...
+    }
+}
 ```
 
 Make good use of the helpers in `problemlib` to help you with the parsing here,
-similar to what you did in the `Input` class.
+similar to what you did for the `Input` type.
 
-Your `read` method should raise a `problemlib.FileFormatError` if there's an
-error in the file format.  **Note:** the `read` method is not the right place to
-point out verification errors.  Simply parse the input and create your object,
-even if there's verification issues.
+Your `read` function should return a `FileFormatError` if there's an error in
+the file format.  **Note:** `read` is not the right place to point out
+verification errors.  Simply parse the output, even if there's verification
+issues.
 
-**Note:** the `score` attribute should be the score the student reported in the
-output, not the actual score of the output.
+Similar to the `Input` type, you should also implement `write`.
 
-Similar to the `Input` class, you should also implement a `write` method:
+`score` returns the score the student reported in the output, not the actual
+score of the output.
 
-```python
-def write(self, f):
-    print(..., file=f)
+Finally, you need to implement `verify`, which returns the actual score of the
+output (which may not be what `score` returns).  If the scores differ, this will
+result in a verification issue.
+
+```rust
+fn verify(&self, input: &Input) -> Result<Option<i64>, VerificationError> {
+    ...
+    Ok(Some(score))
+}
 ```
 
-Finally, you need to implement a verification method.  This is named
-`compute_actual_score`, and it should return the actual score of the output
-(which may not be what the `score` attribute is).  If the `score` attribute
-differs from what your method returns, this will result in a verification issue.
-
-Your `compute_actual_score` method may also raise a
-`problemlib.VerificationError` if there's a verification issue that's not the
-score differing from the reported value.  As with file format errors, your
-exception message should be descriptive, however, it will not be seen by
-students.  The message will be logged in the backend for the instructor's
+`verify` may also return a `VerificationError` if there's a verification issue
+that's not the score differing from the reported value.  As with file format
+errors, your error message should be descriptive, however, it will not be seen
+by students.  The message will be logged in the backend for the instructor's
 viewing purposes.
 
-For example:
-
-```python
-def compute_actual_score(self):
-    ...
-    return score
-```
-
-There's one more `staticmethod` you may optionally implement (and is only
-required by some quite special problems), `repr_score`.  The default is:
-
-```python
-@staticmethod
-def repr_score(score):
-    return str(score)
-```
-
-If the score is non-integer, you'll want to implement this method.  Internally,
-the `score` attribute, as well as what you return from `compute_actual_score`
-should be an integer.  However, if you want the score to show differently in the
-leaderboard, you can implement this.  For example, to show as a decimal number
-with two digits:
-
-```python
-@staticmethod
-def repr_score(score):
-    whole_part, decimal_part = divmod(score, 100)
-    return f"{whole_part}.{decimal_part:>02}"
-```
+If the reported score cannot be wrong (for example, if the score is the number
+of lines in the output), `verify` may check validity only, and return
+`Ok(None)`.
 
 ## Writing example outputs
 
-Now that you've implemented the `Output` class, you're nearly done.
-It's time to make test data.
+Now that you've implemented the `Output` type, you're nearly done.  It's time to
+make test data.
 
 Populate the following files:
 
@@ -320,34 +306,39 @@ flag to `cp` will preserve the symlink.
 Once you've created sufficient examples, run the tester again and watch your new
 test cases pass!
 
-## Test Coverage
-
-Ideally, you want to bring your module to 100% test coverage, as then you know
-that each edge case students may hit is tested.  Keep adding example inputs and
-outputs until you've reached 100% test coverage.
-
 ## Optional: Implement a trivial solver
 
 While it's not required, it's highly recommended to implement a trivial solver
 for the problem.  This solver will be used by tests to provide a little fuzz
-coverage when coupled with `Input.generate()`.
+coverage when coupled with `generate`.
 
 You should implement the absolute most trivial solution for the problem
 possible.  Think: *how can I make the answer as bad as possible?*
 
-The method is called `trivial_solve` on your `Input` class, and returns
-an `Output` object.
-
-For example:
-
-```python
-def trivial_solve(self):
-    return Output(...)
+```rust
+fn trivial_solve(&self) -> Output {
+    Output { ... }
+}
 ```
+
+## Performance
+
+Cloudflare limits the CPU time each request may use, and the limit is small on
+the free plan.  Inputs and outputs can be large, so keep the support code
+efficient:
+
+* Parse lines with a fixed number of integers using `parse_line_ints_array` or
+  `parse_line_ints_each`, which do not allocate.
+* Prefer flat `Vec`s indexed by position over maps and sets.
+* Use `problemlib::push_int` instead of `write!` when writing many integers.
+
+Test your problem with the largest possible inputs on Cloudflare itself by
+serving it with `npx wrangler@4.151.0 dev --remote` and running the problem
+tester against it.  Look for `Worker exceeded CPU time limit` in the output.
 
 ## Uploading for review
 
-Create a new branch and commit your changes:
+Create a new branch and commit your changes (including `Cargo.lock`):
 
 ```shellsession
 $ git checkout -b problem_id
@@ -356,95 +347,113 @@ $ git commit -m "Add new problem problem_id"
 $ git push -u origin problem_id
 ```
 
-Then, open a pull request in the GitHub UI.
+Then, open a pull request in the GitHub UI.  CI will build your problem and run
+the problem tester on it.
 
 When changes are requested, please amend/rebase your commits instead of creating
 "fixup commits".  You'll need to use `--force` when updating your PR for review.
 
+## Deploying
+
+When changes to a problem are merged to `main`, CI deploys a new version of the
+problem.  Each version is only reachable at its own version URL:
+
+```
+https://<version>-<worker name>.<subdomain>.workers.dev
+```
+
+where `<version>` is the first eight characters of the version ID.  List the
+versions of a problem with `npx wrangler@4.151.0 versions list --name <worker
+name>`.
+
+A competition's problem is the version URL, so a competition keeps using the
+same version even when the problem is changed later.
+
 ## Reference: problemlib helpers
 
-Here's what `problemlib` provides to you to help you with parsing:
+Here's what `problemlib` provides to you to help you with parsing.  Line numbers
+passed to these functions are zero-based, and error messages show them
+one-based.
 
-### `check_bound`
+### `Bound`
 
-```
-check_bound(lineno, bound, value)
-```
+The allowed values for an integer or a line count.  Most functions take
+`impl Into<Bound>`, so you can pass an integer for an exact value, or a range
+like `1..101` for values from 1 to 100.
 
-Assert a value is within certain bounds.
-
-Arguments:
-
-* `lineno`: The line number (zero indexed) the value was found on.
-* `bound`: May be an integer, a callable, or a container (e.g., list).  If an
-  integer, this will assert that `value` is exactly equal to `bound`.  If a
-  callable, this will assert `bound(value)` returns true.  If a container, this
-  will assert `value in bound`.
-* `value` is the integer value to check.
+* `Bound::Any`: any value is allowed.
+* `Bound::Exact(value)`: only this value is allowed.
+* `Bound::Range(start, end)`: values from `start` (inclusive) to `end`
+  (exclusive) are allowed.
+* `Bound::RangeExcluding(start, end, excluded)`: like `Range`, but `excluded` is
+  not allowed.
 
 ### `assert_linecount`
 
+```rust
+assert_linecount(lines: &mut Vec<&str>, bound: impl Into<Bound>)
 ```
-assert_linecount(lines, bounds)
+
+Asserts the number of lines in the file is within the bound.  If not, blank
+lines at the end of the file are removed until it is.
+
+### `check_bound`
+
+```rust
+check_bound(lineno: usize, bound: impl Into<Bound>, value: i64)
 ```
 
-This takes a list of all lines in the file, and asserts the number of lines in
-the file is within certain bounds.
-
-Arguments:
-
-* `lines`: The list of lines in the file.  Note: this will be modified to remove
-  empty lines at the end of the file if the list of lines is not within the
-  bounds.
-* `bounds`: See the documentation for `check_bound`.
+Asserts a value found on a line is within the bound.
 
 ### `parse_int`
 
+```rust
+parse_int(lineno: usize, value: &str, bound: impl Into<Bound>) -> i64
 ```
-parse_int(lineno, value, bound=None)
-```
 
-Parse an integer value and return it.  **Note:** normally you do not need call
-this function directly.  Instead, you should probably use `parse_line_int` or
-`parse_line_ints`.
-
-Arguments:
-
-* `lineno`: The zero-indexed line number the integer was found on.
-* `value`: The string to convert to an integer.
-* `bound`: An optional bound, see `check_bound`.
+Parses an integer, accepting the same syntax as Python's `int()`, and checks
+its bound.  Normally you should use the line parsing functions below instead.
 
 ### `parse_line_ints`
 
-```
-parse_line_ints(lines, lineno, bounds=None, count=None)
-```
-
-Parse a certain line from a file, asserting it contains space-separated
-integers.  Return the parsed list of integers.
-
-Note: when `count` is an integer, and `bounds` is a list of length `count`, each
-bound in `bounds` will be used for the corresponding element on the line.
-
-Arguments:
-
-* `lines`: The list of all lines in the file.
-* `lineno`: The zero-indexed line number to parse.
-* `bounds`: An optional bound for all integers, see `check_bound`.
-* `count`: The expected number of integers on the line (this is also a `bound`
-   parsed by `check_bound`).
-
-## `parse_line_int`
-
-```
-parse_line_int(lines, lineno, bounds=None)
+```rust
+parse_line_ints(lines: &[&str], lineno: usize, bound: impl Into<Bound>, count: impl Into<Bound>) -> Vec<i64>
 ```
 
-Convenience version of `parse_line_ints` with `count=1`, and returns an integer
-instead of a list.
+Parses the whitespace-separated integers on a line.  `count` bounds the number
+of integers on the line.
 
-Arguments:
+### `parse_line_int`
 
-* `lines`: The list of all lines in the file.
-* `lineno`: The zero-indexed line number to parse.
-* `bounds`: An optional bound for the integer, see `check_bound`.
+```rust
+parse_line_int(lines: &[&str], lineno: usize, bound: impl Into<Bound>) -> i64
+```
+
+Parses a line containing exactly one integer.
+
+### `parse_line_ints_array`
+
+```rust
+parse_line_ints_array::<N>(lines: &[&str], lineno: usize, bound: impl Into<Bound>) -> [i64; N]
+```
+
+Parses a line containing exactly `N` integers, without allocating.  Errors are
+the same as `parse_line_ints`.
+
+### `parse_line_ints_each`
+
+```rust
+parse_line_ints_each::<N>(lines: &[&str], lineno: usize, bounds: [Bound; N]) -> [i64; N]
+```
+
+Like `parse_line_ints_array`, but with a separate bound for each integer.
+
+### Other helpers
+
+* `split_python_whitespace(line)`: splits a line on whitespace, like Python's
+  `str.split()`.
+* `python_repr(value)`: formats a string like Python's `repr()`, which is useful
+  for showing unexpected characters in error messages.
+* `push_int(out, value)`: appends an integer to a string, faster than `write!`.
+* `Rng`: the random number generator passed to `generate`.  `below(n)` returns
+  an integer from 0 to `n - 1`, and `choice(items)` returns a random item.

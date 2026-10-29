@@ -1,8 +1,12 @@
 {
   "name": "number-in-range",
-  "main": "worker.py",
+  "main": "build/index.js",
   "compatibility_date": "2026-04-16",
-  "compatibility_flags": ["python_workers"],
+  "workers_dev": false,
+  "preview_urls": true,
+  "build": {
+    "command": "cargo install -q worker-build@0.8.7 --locked --root .worker-build && .worker-build/bin/worker-build --release"
+  },
   "assets": {
     "directory": "public"
   }
