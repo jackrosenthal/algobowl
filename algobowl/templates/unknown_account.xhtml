@@ -1,0 +1,35 @@
+<html py:extends="master.xhtml" py:strip="True">
+  <py:block name="title">
+    Account Not Found
+  </py:block>
+  <body py:block="body" py:strip="True">
+    <div class="container">
+      <div class="jumbotron mt-4">
+        <h1 class="display-4">
+          Whoops, we don't know that account!
+        </h1>
+        <p class="lead">
+          You signed in with Google as <strong>${email}</strong>, but
+          ${tg.config['site.branding.name']} doesn't have a student registered
+          with that email address.
+        </p>
+        <hr />
+        <p>
+          Did you remember to sign in with your Mines Google account?  You need
+          to use your <code>@mines.edu</code> account, not a personal Gmail
+          account.  Click the button below to choose a different account.
+        </p>
+        <a class="btn btn-primary btn-lg" href="${tg.url('/login')}" role="button">
+          <i class="fas fa-sign-in-alt fa-fw"></i>
+          Sign In with a Different Account
+        </a>
+        <p class="mt-4 mb-0">
+          If you already signed in with your Mines account and you're still
+          seeing this page, contact your instructor.  You may not have been
+          added to a team yet, or your team may have been registered under a
+          different email address.
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

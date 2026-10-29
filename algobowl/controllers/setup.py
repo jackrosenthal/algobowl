@@ -1,7 +1,9 @@
 import datetime
 import io
+import json
 import random
 
+import sqlalchemy as sa
 import tg
 from depot.io.utils import FileIntent
 
@@ -9,17 +11,24 @@ from algobowl import model
 from algobowl.lib import base, problem_client
 
 
-def get_user(username):
-    user = (
-        model.DBSession.query(model.User)
-        .filter(model.User.username == username)
-        .one_or_none()
-    )
+def get_user(name, email, cwid):
+    """Find a user by CWID (the user ID) or email, creating them if needed."""
+    cwid = int(cwid)
+    email = email.strip().lower()
+    user = model.DBSession.query(model.User).filter(model.User.id == cwid).one_or_none()
+    if not user:
+        user = (
+            model.DBSession.query(model.User)
+            .filter(sa.func.lower(model.User.email) == email)
+            .one_or_none()
+        )
     if user:
         return user
 
-    mpapi = tg.request.environ["repoze.who.plugins"]["mpapi"]
-    return mpapi.new_user_by_username(username)
+    username, _, _ = email.partition("@")
+    user = model.User(id=cwid, username=username, full_name=name.strip(), email=email)
+    model.DBSession.add(user)
+    return user
 
 
 def generate_default_input(
@@ -46,7 +55,7 @@ class SetupController(base.BaseController):
         self,
         competition_id=None,
         name=None,
-        users="",
+        users="[]",
         incognito=False,
         benchmark=False,
     ):
@@ -56,7 +65,10 @@ class SetupController(base.BaseController):
             .one()
         )
         problem = problem_client.ProblemClient(competition.problem)
-        users = [get_user(username) for username in users.split(",")]
+        users = [
+            get_user(user["name"], user["email"], user["cwid"])
+            for user in json.loads(users)
+        ]
         group = model.Group(
             users=users,
             competition=competition,

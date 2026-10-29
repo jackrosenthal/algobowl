@@ -1,11 +1,10 @@
 from pathlib import Path
-from urllib.parse import urlencode
+from urllib.parse import quote
 
 import google_auth_oauthlib.flow as gflow
 import googleapiclient.discovery as gdiscovery
-import requests
+import sqlalchemy as sa
 import tg
-import transaction
 from repoze.who.interfaces import IAuthenticator, IChallenger, IIdentifier
 from tg.configuration.auth import TGAuthMetadata
 from tg.exceptions import HTTPFound, HTTPUnauthorized
@@ -64,123 +63,6 @@ class TokenAuth:
 
 
 @implementer(IIdentifier, IChallenger, IAuthenticator)
-class MPAPIAuthenticator(BaseAuth):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.s = requests.Session()
-
-    def identify(self, environ):
-        request = Request(environ)
-        try:
-            ticket = request.GET["tkt"]
-        except KeyError:
-            return None
-
-        return {"login": ticket, "identifier": "mpapi"}
-
-    def forget(self, environ, identity):
-        headers = super().forget(environ, identity)
-        headers.append(("Location", self.mpapi_slo))
-        return headers
-
-    def authenticate(self, environ, identity):
-        try:
-            ticket = identity["login"]
-        except KeyError:
-            return None
-
-        if identity["identifier"] != "mpapi":
-            return None
-
-        r = requests.post(self.mpapi_fetch, data={"tkt": ticket})
-        r.raise_for_status()
-        data = r.json()
-        if data["result"] != "success":
-            raise ValueError("MPAPI Failure")
-        username = data["uid"]
-
-        if username.endswith("_sw"):
-            environ["algobowl.sw_account_login"] = True
-            return None
-
-        attributes = data["attributes"]
-        uid = attributes["uidNumber"]
-        full_name = "{} {}".format(attributes["first"], attributes["sn"])
-        email = attributes["mail"]
-
-        user = DBSession.query(User).filter(User.id == uid).one_or_none()
-        if user:
-            # Update attributes in case of username/full name change
-            user.username = username
-            user.full_name = full_name
-            user.email = email
-        else:
-            user = User(id=uid, username=username, full_name=full_name, email=email)
-            DBSession.add(user)
-
-        DBSession.flush()
-        transaction.commit()
-        return username
-
-    def new_user_by_username(self, username):
-        url = f"{self.mpapi_url}/uid/{username}"
-        r = requests.get(url)
-        r.raise_for_status()
-        data = r.json()
-        if data["result"] != "success":
-            raise ValueError(f"MPAPI Failure.  User {username} may not exist?")
-        attributes = data["attributes"]
-        uid = attributes["uidNumber"]
-        full_name = f"{attributes['first']} {attributes['sn']}"
-        email = attributes["mail"]
-        user = User(id=uid, username=username, full_name=full_name, email=email)
-        DBSession.add(user)
-        return user
-
-    @property
-    def mpapi_url(self) -> str:
-        return tg.config["auth.mpapi.url"].rstrip("/")
-
-    @property
-    def mpapi_sso(self) -> str:
-        return self.mpapi_url + "/sso"
-
-    @property
-    def mpapi_fetch(self) -> str:
-        return self.mpapi_url + "/fetch"
-
-    @property
-    def mpapi_slo(self) -> str:
-        return self.mpapi_url + "/slo"
-
-    def challenge(self, environ, status, app_headers, forget_headers):
-        """
-        Provide ``IChallenger`` interface.
-        """
-        challenger = environ.get("repoze.who.challenge")
-        if challenger and challenger != "mpapi":
-            return None
-        request = Request(environ)
-
-        # Never attempt to redirect the CLI to MPAPI.
-        if constants.CLI_COMPATIBLE_HEADER in request.headers:
-            return HTTPUnauthorized("Please run 'algobowl auth login' first.")
-
-        return_url = tg.url(
-            request.application_url + "/post_login", {"came_from": request.path_qs}
-        )
-        headers = [
-            (
-                "Location",
-                "{}?{}".format(self.mpapi_sso, urlencode({"return": return_url})),
-            ),
-            *forget_headers,
-            *((h, v) for h, v in app_headers if h.lower() == "set-cookie"),
-        ]
-        return HTTPFound(headers=headers)
-
-
-@implementer(IIdentifier, IChallenger, IAuthenticator)
 class GoogleAuth(BaseAuth):
     def _is_configured(self):
         client_secrets_file = tg.config.get("glogin.client_secrets_file", "")
@@ -233,10 +115,18 @@ class GoogleAuth(BaseAuth):
         with gdiscovery.build("oauth2", "v2", credentials=flow.credentials) as service:
             userinfo = service.userinfo().get().execute()
 
+        if not userinfo.get("verified_email"):
+            return None
+
         email = userinfo["email"]
-        user = DBSession.query(User).filter(User.email == email).one_or_none()
+        user = (
+            DBSession.query(User)
+            .filter(sa.func.lower(User.email) == email.lower())
+            .one_or_none()
+        )
         if not user:
-            # TODO: Handle unregistered users?
+            # Let post_login explain that this Google account isn't registered.
+            environ["algobowl.glogin_unknown_email"] = email
             return None
 
         return user.username
@@ -245,25 +135,25 @@ class GoogleAuth(BaseAuth):
         """
         Provide ``IChallenger`` interface.
         """
-        if not self._is_configured():
-            return None
-
-        challenger = environ.get("repoze.who.challenge")
-        if challenger != "glogin":
-            return None
         request = Request(environ)
+
+        # Never attempt to redirect the CLI to Google.
+        if constants.CLI_COMPATIBLE_HEADER in request.headers:
+            return HTTPUnauthorized("Please run 'algobowl auth login' first.")
+
         flow = self._make_flow()
         flow.redirect_uri = f"{request.application_url}/post_login"
-        auth_url, _state = flow.authorization_url()
-        secure = request.application_url.startswith("https")
-        cookie = (
-            f"glogin_code_verifier={flow.code_verifier}; HttpOnly; Path=/; SameSite=Lax"
-        )
-        if secure:
-            cookie += "; Secure"
+        # Always show the account chooser, as students commonly have both a
+        # personal and a school Google account signed in.
+        auth_url, _state = flow.authorization_url(prompt="select_account")
+        cookie_attrs = "; HttpOnly; Path=/; SameSite=Lax"
+        if request.application_url.startswith("https"):
+            cookie_attrs += "; Secure"
+        came_from = quote(request.path_qs, safe="")
         headers = [
             ("Location", auth_url),
-            ("Set-Cookie", cookie),
+            ("Set-Cookie", f"glogin_code_verifier={flow.code_verifier}{cookie_attrs}"),
+            ("Set-Cookie", f"glogin_came_from={came_from}{cookie_attrs}"),
             *forget_headers,
             *((h, v) for h, v in app_headers if h.lower() == "set-cookie"),
         ]

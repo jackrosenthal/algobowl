@@ -13,13 +13,13 @@ def create_group(
     cli,
     competition_id: int,
     name: str = "",
-    usernames: Iterable[str] = (),
+    users: Iterable[dict] = (),
     incognito: bool = False,
     benchmark: bool = False,
 ):
     data = {
         "competition_id": str(competition_id),
-        "users": ",".join(usernames),
+        "users": json.dumps(list(users)),
     }
     if name:
         data["name"] = name
@@ -123,7 +123,14 @@ def setup_competition(
 @click.option(
     "--competition", "-c", type=int, help="Competition ID for this group", required=True
 )
-@click.option("--user", "-u", type=str, help="Add user", multiple=True)
+@click.option(
+    "--user",
+    "-u",
+    type=(str, str, int),
+    metavar="NAME EMAIL CWID",
+    help="Add user",
+    multiple=True,
+)
 @click.pass_obj
 def create_group_(cli, name, competition, user, incognito, benchmark):
     cli.formatter.dump_table(
@@ -132,7 +139,10 @@ def create_group_(cli, name, competition, user, incognito, benchmark):
                 cli,
                 competition,
                 name=name,
-                usernames=user,
+                users=(
+                    {"name": full_name, "email": email, "cwid": cwid}
+                    for full_name, email, cwid in user
+                ),
                 incognito=incognito,
                 benchmark=benchmark,
             )
@@ -140,7 +150,14 @@ def create_group_(cli, name, competition, user, incognito, benchmark):
     )
 
 
-@admin.command(name="create-groups", help="Create groups from JSON file")
+@admin.command(
+    name="create-groups",
+    help="""Create groups from JSON file
+
+    The file should contain a list of groups, where each group is a list of
+    users in the format {"name": "...", "email": "...", "cwid": 12345678}.
+    """,
+)
 @click.option(
     "--competition", "-c", type=int, help="Competition ID for this group", required=True
 )
@@ -153,7 +170,7 @@ def create_groups(cli, competition, json_file):
     with click.progressbar(groups, label="Create groups") as bar:
         for group in bar:
             try:
-                create_group(cli, competition, usernames=group)
+                create_group(cli, competition, users=group)
             except (
                 requests.exceptions.HTTPError,
                 requests.exceptions.JSONDecodeError,

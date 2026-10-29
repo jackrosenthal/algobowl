@@ -1,3 +1,5 @@
+from urllib.parse import unquote
+
 import tg
 from repoze.who.api import get_api
 from tg import expose, flash, predicates, require, tmpl_context, url
@@ -61,16 +63,6 @@ class RootController(BaseController):
     @expose()
     def login(self):
         if not tg.request.identity:
-            tg.request.environ["repoze.who.challenge"] = "mpapi"
-            who_api = get_api(tg.request.environ)
-            return who_api.challenge()
-        tg.redirect(url("/"))
-        return None
-
-    @expose()
-    def glogin(self):
-        if not tg.request.identity:
-            tg.request.environ["repoze.who.challenge"] = "glogin"
             who_api = get_api(tg.request.environ)
             return who_api.challenge()
         tg.redirect(url("/"))
@@ -81,21 +73,23 @@ class RootController(BaseController):
     def logout(self):
         who_api = get_api(tg.request.environ)
         headers = who_api.logout()
+        headers.append(("Location", url("/")))
         return HTTPFound(headers=headers)
 
-    @expose("algobowl.templates.sw_account")
-    def post_login(self, came_from="/"):
+    @expose("algobowl.templates.unknown_account")
+    def post_login(self):
+        came_from = unquote(tg.request.cookies.get("glogin_came_from", "/"))
+        tg.response.delete_cookie("glogin_came_from")
         if tg.request.identity:
             user = tg.request.identity["user"]
             flash(f"Welcome, {user}!", "success")
-            u = tg.request.relative_url(str(came_from), to_application=True)
+            u = tg.request.relative_url(came_from, to_application=True)
             if not u.startswith(tg.request.application_url):
                 flash("Dangerous redirect prevented", "warning")
                 tg.redirect("/")
             tg.redirect(u)
-        elif tg.request.environ.get("algobowl.sw_account_login"):
-            slo_url = tg.config["auth.mpapi.url"].rstrip("/") + "/slo"
-            return {"slo_url": slo_url}
+        elif email := tg.request.environ.get("algobowl.glogin_unknown_email"):
+            return {"email": email}
         else:
             flash("Login failure", "error")
             tg.redirect("/")

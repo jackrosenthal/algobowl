@@ -21,7 +21,7 @@ from tgext.admin.widgets import BootstrapAdminTableFiller
 
 import algobowl
 from algobowl import model
-from algobowl.config.auth import AuthMetadata, GoogleAuth, MPAPIAuthenticator, TokenAuth
+from algobowl.config.auth import AuthMetadata, GoogleAuth, TokenAuth
 
 base_config = AppConfig()
 base_config.renderers = []
@@ -67,7 +67,6 @@ base_config["identity.allow_missing_user"] = False
 
 authenticators = [
     ("token", TokenAuth()),
-    ("mpapi", MPAPIAuthenticator()),
     ("glogin", GoogleAuth()),
 ]
 
@@ -79,8 +78,6 @@ base_config.sa_auth.identifiers = [
 base_config.sa_auth.challengers = [
     auth for auth in authenticators if IChallenger.providedBy(auth[1])
 ]
-
-base_config["auth.mpapi.url"] = "https://mastergo.mines.edu/mpapi"
 
 
 def variable_provider():
