@@ -4,6 +4,7 @@
 //! module, so a problem behaves the same regardless of which implementation
 //! serves it.
 
+use std::borrow::Cow;
 use std::fmt;
 
 /// An input or output file is malformed.
@@ -63,27 +64,49 @@ impl From<std::ops::Range<i64>> for Bound {
     }
 }
 
-/// Splits file content into lines, like `readlines()` on a Python text stream.
+/// Decodes file content as text, like a Python text stream.
 ///
 /// Newlines are translated the same way as Python's universal newlines mode:
-/// `\r\n` and `\r` both become `\n`.  Each line keeps its trailing newline.
+/// `\r\n` and `\r` both become `\n`.  The content is only copied if it
+/// contains a `\r`.
 ///
 /// # Errors
 ///
 /// Returns an error if the content is not valid UTF-8.
-pub fn read_lines(content: &[u8]) -> Result<Vec<String>, FileFormatError> {
+pub fn decode_text(content: &[u8]) -> Result<Cow<'_, str>, FileFormatError> {
     let text = std::str::from_utf8(content)
         .map_err(|_| FileFormatError("File is not valid UTF-8 text".to_owned()))?;
-    let text = text.replace("\r\n", "\n").replace('\r', "\n");
-    Ok(text.split_inclusive('\n').map(str::to_owned).collect())
+    if text.contains('\r') {
+        Ok(Cow::Owned(text.replace("\r\n", "\n").replace('\r', "\n")))
+    } else {
+        Ok(Cow::Borrowed(text))
+    }
+}
+
+/// Splits text into lines, like `readlines()` on a Python text stream.
+///
+/// Each line keeps its trailing newline.
+pub fn split_lines(text: &str) -> Vec<&str> {
+    text.split_inclusive('\n').collect()
 }
 
 /// Checks whether an integer value is inside a bound.
 ///
+/// `lineno` is the zero-based line number of the value, for the error
+/// message.
+///
 /// # Errors
 ///
 /// Returns an error if the value is outside the bound.
-fn check_bound(lineno: i64, bound: Bound, value: i128) -> Result<(), FileFormatError> {
+pub fn check_bound(
+    lineno: usize,
+    bound: impl Into<Bound>,
+    value: i64,
+) -> Result<(), FileFormatError> {
+    check_parsed_bound(lineno, bound.into(), i128::from(value))
+}
+
+fn check_parsed_bound(lineno: usize, bound: Bound, value: i128) -> Result<(), FileFormatError> {
     if bound.contains(value) {
         return Ok(());
     }
@@ -102,7 +125,7 @@ fn check_bound(lineno: i64, bound: Bound, value: i128) -> Result<(), FileFormatE
 ///
 /// Returns an error if the file has an invalid number of lines.
 pub fn assert_linecount(
-    lines: &mut Vec<String>,
+    lines: &mut Vec<&str>,
     bound: impl Into<Bound>,
 ) -> Result<(), FileFormatError> {
     let bound = bound.into();
@@ -130,6 +153,9 @@ fn parse_python_int(value: &str) -> Option<Result<i128, String>> {
         Some(b'-') => (true, &value[1..]),
         _ => (false, value),
     };
+    if let Some(parsed) = parse_ascii_digits(digits.as_bytes()) {
+        return Some(Ok(i128::from(if negative { -parsed } else { parsed })));
+    }
     if digits.is_empty()
         || digits.starts_with('_')
         || digits.ends_with('_')
@@ -144,6 +170,50 @@ fn parse_python_int(value: &str) -> Option<Result<i128, String>> {
         Ok(parsed) => Ok(if negative { -parsed } else { parsed }),
         Err(_) => Err(format!("{sign}{}", digits.trim_start_matches('0'))),
     })
+}
+
+/// Parses plain ASCII digits that cannot overflow, in a single pass.
+///
+/// Returns `None` for anything else, which callers handle with a slower path.
+fn parse_ascii_digits(digits: &[u8]) -> Option<i64> {
+    if digits.is_empty() || digits.len() > 18 {
+        return None;
+    }
+    let mut value = 0;
+    for &b in digits {
+        if !b.is_ascii_digit() {
+            return None;
+        }
+        value = value * 10 + i64::from(b - b'0');
+    }
+    Some(value)
+}
+
+/// Parses a plain ASCII integer with an optional sign, in a single pass.
+fn parse_ascii_int(token: &[u8]) -> Option<i64> {
+    match token.first() {
+        Some(b'-') => parse_ascii_digits(&token[1..]).map(|value| -value),
+        Some(b'+') => parse_ascii_digits(&token[1..]),
+        _ => parse_ascii_digits(token),
+    }
+}
+
+/// Returns whether a byte is ASCII whitespace for Python's `str.split()`.
+fn is_ascii_python_whitespace(b: u8) -> bool {
+    matches!(b, b' ' | b'\t' | b'\n' | b'\r' | 0x0b | 0x0c | 0x1c..=0x1f)
+}
+
+/// Splits a line on whitespace, like Python's `str.split()`.
+fn split_python_whitespace(line: &str) -> impl Iterator<Item = &str> {
+    let ascii = line.is_ascii();
+    line.split(move |c: char| {
+        if ascii {
+            is_ascii_python_whitespace(c as u8)
+        } else {
+            c.is_whitespace() || matches!(c, '\x1c'..='\x1f')
+        }
+    })
+    .filter(|token| !token.is_empty())
 }
 
 /// Parses an integer and checks its bounds.
@@ -170,7 +240,7 @@ pub fn parse_int(
         ))),
         Some(Err(digits)) => Err(out_of_bounds(&digits)),
         Some(Ok(parsed)) => {
-            check_bound(lineno as i64, bound.into(), parsed)?;
+            check_parsed_bound(lineno, bound.into(), parsed)?;
             i64::try_from(parsed).map_err(|_| out_of_bounds(&parsed))
         }
     }
@@ -183,7 +253,7 @@ pub fn parse_int(
 /// Returns an error if the line is missing, has the wrong number of values,
 /// or has an invalid value.
 pub fn parse_line_ints(
-    lines: &[String],
+    lines: &[&str],
     lineno: usize,
     bound: impl Into<Bound>,
     count: impl Into<Bound>,
@@ -192,18 +262,55 @@ pub fn parse_line_ints(
     let line = lines
         .get(lineno)
         .ok_or_else(|| FileFormatError(format!("Line #{}: Missing line", lineno + 1)))?;
-    let values: Vec<&str> = line.split_whitespace().collect();
-    if !count.into().contains(values.len() as i128) {
+    let num_values = split_python_whitespace(line).count();
+    if !count.into().contains(num_values as i128) {
         return Err(FileFormatError(format!(
-            "Line #{}: Number of values ({}) is out of expected bounds",
+            "Line #{}: Number of values ({num_values}) is out of expected bounds",
             lineno + 1,
-            values.len()
         )));
     }
-    values
-        .into_iter()
+    split_python_whitespace(line)
         .map(|value| parse_int(lineno, value, bound))
         .collect()
+}
+
+/// Parses exactly `N` whitespace-separated integers from a line.
+///
+/// This is equivalent to [`parse_line_ints`] with a count of `N`, but does not
+/// allocate, for parsing large files.
+///
+/// # Errors
+///
+/// Returns an error if the line is missing, has the wrong number of values,
+/// or has an invalid value.
+pub fn parse_line_ints_array<const N: usize>(
+    lines: &[&str],
+    lineno: usize,
+    bound: impl Into<Bound>,
+) -> Result<[i64; N], FileFormatError> {
+    let bound = bound.into();
+    if let Some(line) = lines.get(lineno).filter(|line| line.is_ascii()) {
+        let mut values = [0; N];
+        let mut count = 0;
+        let mut tokens = line
+            .as_bytes()
+            .split(|&b| is_ascii_python_whitespace(b))
+            .filter(|token| !token.is_empty());
+        let valid = tokens.by_ref().take(N).all(|token| {
+            let value = parse_ascii_int(token).filter(|&value| bound.contains(i128::from(value)));
+            if let Some(value) = value {
+                values[count] = value;
+                count += 1;
+            }
+            value.is_some()
+        });
+        if valid && count == N && tokens.next().is_none() {
+            return Ok(values);
+        }
+    }
+    // Produce the same error as the general parser.
+    let values = parse_line_ints(lines, lineno, bound, N as i64)?;
+    Ok(values.try_into().expect("count was checked"))
 }
 
 /// Parses one integer from a line.
@@ -212,11 +319,32 @@ pub fn parse_line_ints(
 ///
 /// Returns an error if the line does not contain exactly one valid integer.
 pub fn parse_line_int(
-    lines: &[String],
+    lines: &[&str],
     lineno: usize,
     bound: impl Into<Bound>,
 ) -> Result<i64, FileFormatError> {
     Ok(parse_line_ints(lines, lineno, bound, 1)?[0])
+}
+
+/// Appends an integer to a string.
+///
+/// This is faster than `write!`, for writing large files.
+pub fn push_int(out: &mut String, value: i64) {
+    let mut digits = [0u8; 20];
+    let mut start = digits.len();
+    let mut remaining = value.unsigned_abs();
+    loop {
+        start -= 1;
+        digits[start] = b'0' + (remaining % 10) as u8;
+        remaining /= 10;
+        if remaining == 0 {
+            break;
+        }
+    }
+    if value < 0 {
+        out.push('-');
+    }
+    out.extend(digits[start..].iter().map(|&digit| char::from(digit)));
 }
 
 /// Formats a string the way Python's `repr()` does, for error messages.
@@ -309,32 +437,30 @@ impl Rng {
 mod tests {
     use super::*;
 
-    fn lines(text: &str) -> Vec<String> {
-        read_lines(text.as_bytes()).unwrap()
+    #[test]
+    fn decode_text_translates_newlines() {
+        let text = decode_text(b"a\r\nb\rc\n").unwrap();
+        assert_eq!(split_lines(&text), ["a\n", "b\n", "c\n"]);
+        assert!(matches!(decode_text(b"a\nb").unwrap(), Cow::Borrowed(_)));
+        assert_eq!(split_lines("a\nb"), ["a\n", "b"]);
+        assert!(split_lines("").is_empty());
     }
 
     #[test]
-    fn read_lines_translates_newlines() {
-        assert_eq!(lines("a\r\nb\rc\n"), ["a\n", "b\n", "c\n"]);
-        assert_eq!(lines("a\nb"), ["a\n", "b"]);
-        assert!(lines("").is_empty());
-    }
-
-    #[test]
-    fn read_lines_rejects_invalid_utf8() {
+    fn decode_text_rejects_invalid_utf8() {
         assert_eq!(
-            read_lines(b"\xff"),
+            decode_text(b"\xff"),
             Err(FileFormatError("File is not valid UTF-8 text".to_owned()))
         );
     }
 
     #[test]
     fn assert_linecount_drops_trailing_blank_lines() {
-        let mut file = lines("1\n2\n\n  \n");
+        let mut file = split_lines("1\n2\n\n  \n");
         assert_linecount(&mut file, 2).unwrap();
         assert_eq!(file, ["1\n", "2\n"]);
 
-        let mut file = lines("1\n2\n");
+        let mut file = split_lines("1\n2\n");
         assert!(assert_linecount(&mut file, 3).is_err());
     }
 
@@ -365,7 +491,7 @@ mod tests {
 
     #[test]
     fn parse_line_ints_checks_count() {
-        let file = lines("1 2 3\n");
+        let file = split_lines("1 2 3\n");
         assert_eq!(parse_line_ints(&file, 0, Bound::Any, 3), Ok(vec![1, 2, 3]));
         assert_eq!(
             parse_line_ints(&file, 0, Bound::Any, 2),
@@ -373,6 +499,29 @@ mod tests {
                 "Line #1: Number of values (3) is out of expected bounds".to_owned()
             ))
         );
+    }
+
+    #[test]
+    fn parse_line_ints_array_matches_general_parser() {
+        let file = split_lines("1 -2 +3\n1 2\n1 2 3 4\n1 x 3\n1 99 3\n1_0 2 3\n\x1c1\x1f2\x0b3\n");
+        for lineno in 0..file.len() {
+            let general = parse_line_ints(&file, lineno, 0..50, 3)
+                .map(|values| <[i64; 3]>::try_from(values).unwrap());
+            assert_eq!(parse_line_ints_array::<3>(&file, lineno, 0..50), general);
+        }
+        assert_eq!(
+            parse_line_ints_array::<3>(&file, 6, Bound::Any),
+            Ok([1, 2, 3])
+        );
+    }
+
+    #[test]
+    fn push_int_matches_display() {
+        for value in [0, 7, -7, 1_234_567_890, i64::MIN, i64::MAX] {
+            let mut out = String::new();
+            push_int(&mut out, value);
+            assert_eq!(out, value.to_string());
+        }
     }
 
     #[test]

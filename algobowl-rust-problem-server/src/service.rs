@@ -8,7 +8,7 @@ use http_body_util::{BodyExt, Full};
 use tower::ServiceExt;
 use worker::{Headers, Request, Response};
 
-use crate::problemlib::{FileFormatError, Rng, VerificationError, read_lines};
+use crate::problemlib::{FileFormatError, Rng, VerificationError, decode_text, split_lines};
 use crate::proto::algobowl::problemsupport::v1 as pb;
 use pb::__buffa::oneof::{verified_output, verify_input_response, verify_output_response};
 
@@ -19,7 +19,7 @@ pub trait Input: Sized {
     /// # Errors
     ///
     /// Returns an error if the file is malformed.
-    fn read(lines: Vec<String>) -> Result<Self, FileFormatError>;
+    fn read(lines: Vec<&str>) -> Result<Self, FileFormatError>;
 
     /// Writes the normalized input file.
     fn write(&self, out: &mut String);
@@ -32,7 +32,7 @@ pub trait Output<I>: Sized {
     /// # Errors
     ///
     /// Returns an error if the file is malformed.
-    fn read(input: &I, lines: Vec<String>) -> Result<Self, FileFormatError>;
+    fn read(input: &I, lines: Vec<&str>) -> Result<Self, FileFormatError>;
 
     /// Writes the normalized output file.
     fn write(&self, out: &mut String);
@@ -40,7 +40,7 @@ pub trait Output<I>: Sized {
     /// Returns the score reported in the output file.
     fn score(&self) -> i64;
 
-    /// Verifies the output.
+    /// Verifies the output for its input.
     ///
     /// Returns the actual score of the output, or `None` if the problem only
     /// checks validity.  An output whose actual score differs from its
@@ -49,7 +49,7 @@ pub trait Output<I>: Sized {
     /// # Errors
     ///
     /// Returns an error if the output is not a valid solution.
-    fn verify(&self) -> Result<Option<i64>, VerificationError>;
+    fn verify(&self, input: &I) -> Result<Option<i64>, VerificationError>;
 }
 
 /// A problem statement served alongside the problem.
@@ -191,10 +191,13 @@ impl<I: Input + 'static, O: Output<I> + 'static> Problem<I, O> {
         input_content: &[u8],
         output_content: &[u8],
     ) -> pb::VerifyOutputResponse {
-        let parsed = read_input::<I>(input_content)
-            .and_then(|input| O::read(&input, read_lines(output_content)?));
-        let output = match parsed {
-            Ok(output) => output,
+        let parsed = read_input::<I>(input_content).and_then(|input| {
+            let text = decode_text(output_content)?;
+            let output = O::read(&input, split_lines(&text))?;
+            Ok((input, output))
+        });
+        let (input, output) = match parsed {
+            Ok(parsed) => parsed,
             Err(FileFormatError(message)) => {
                 return pb::VerifyOutputResponse {
                     result: Some(verify_output_response::Result::FormatError(message)),
@@ -211,7 +214,7 @@ impl<I: Input + 'static, O: Output<I> + 'static> Problem<I, O> {
                 ..Default::default()
             }))
         };
-        let (actual_score, verification) = match output.verify() {
+        let (actual_score, verification) = match output.verify(&input) {
             Ok(Some(actual)) if actual == reported_score => (Some(actual), accepted()),
             Ok(Some(actual)) => (
                 Some(actual),
@@ -337,7 +340,8 @@ fn random_seed() -> u64 {
 }
 
 fn read_input<I: Input>(content: &[u8]) -> Result<I, FileFormatError> {
-    I::read(read_lines(content)?)
+    let text = decode_text(content)?;
+    I::read(split_lines(&text))
 }
 
 fn write_input<I: Input>(input: &I) -> Vec<u8> {
