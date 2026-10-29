@@ -6,8 +6,8 @@ HERE = Path(__file__).resolve().parent
 
 BASE_DEPENDS = [
     "click>=8.0",
-    "connectrpc>=0.9",
-    "protobuf>=5.28",
+    "connectrpc>=0.9,<0.11",
+    "protobuf>=7.34.1",
     "pytest>=4.6",
     "pytest-cov>=4.1.0",
     "requests>=2.0",
