@@ -13,7 +13,7 @@ def create_group(
     cli,
     competition_id: int,
     name: str = "",
-    users: Iterable[dict] = (),
+    users: Iterable[str | dict] = (),
     incognito: bool = False,
     benchmark: bool = False,
 ):
@@ -123,14 +123,7 @@ def setup_competition(
 @click.option(
     "--competition", "-c", type=int, help="Competition ID for this group", required=True
 )
-@click.option(
-    "--user",
-    "-u",
-    type=(str, str, int),
-    metavar="NAME EMAIL CWID",
-    help="Add user",
-    multiple=True,
-)
+@click.option("--user", "-u", type=str, help="Add user", multiple=True)
 @click.pass_obj
 def create_group_(cli, name, competition, user, incognito, benchmark):
     cli.formatter.dump_table(
@@ -139,10 +132,7 @@ def create_group_(cli, name, competition, user, incognito, benchmark):
                 cli,
                 competition,
                 name=name,
-                users=(
-                    {"name": full_name, "email": email, "cwid": cwid}
-                    for full_name, email, cwid in user
-                ),
+                users=user,
                 incognito=incognito,
                 benchmark=benchmark,
             )

@@ -11,6 +11,18 @@ from algobowl import model
 from algobowl.lib import base, problem_client
 
 
+def find_user(username):
+    """Find an existing user by username."""
+    user = (
+        model.DBSession.query(model.User)
+        .filter(model.User.username == username)
+        .one_or_none()
+    )
+    if not user:
+        tg.abort(400, f"No user with username {username!r}")
+    return user
+
+
 def get_user(name, email, cwid):
     """Find a user by CWID (the user ID) or email, creating them if needed."""
     cwid = int(cwid)
@@ -65,8 +77,12 @@ class SetupController(base.BaseController):
             .one()
         )
         problem = problem_client.ProblemClient(competition.problem)
+        # Each user is either the username of an existing user, or the name,
+        # email, and CWID of a user to find or create.
         users = [
-            get_user(user["name"], user["email"], user["cwid"])
+            find_user(user)
+            if isinstance(user, str)
+            else get_user(user["name"], user["email"], user["cwid"])
             for user in json.loads(users)
         ]
         group = model.Group(
